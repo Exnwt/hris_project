@@ -11,8 +11,6 @@ class Company(models.Model):
     company_code = models.CharField(max_length=100)
     address = models.TextField(null=True,blank=True)
     phone_number = models.CharField(max_length=20)
-    number = models.CharField(max_length=20)
-
 
     def __str__(self):
         return self.name
