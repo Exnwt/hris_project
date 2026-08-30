@@ -17,13 +17,44 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
   const fetchData = async () => {
     setLoading(true);
     setAlert({ type: '', msg: '' });
+  
+    console.group(`🔵 CRUD DEBUG: ${title}`);
+  
     try {
+      console.log("📌 Model/Resource :", title);
+      console.log("🌐 API Endpoint   :", endpoint);
+      console.log("📤 Method         :", "GET");
+  
       const res = await api.get(endpoint);
-      setDataList(res.data.results || res.data || []);
+  
+      console.log("✅ Status         :", res.status);
+      console.log("📥 API Response   :", res.data);
+      console.log("📦 Response Data  :", res.data.results || res.data);
+  
+      const data = res.data.results || res.data || [];
+  
+      console.log("📋 Data List      :", data);
+      console.log("🔢 Jumlah Data    :", Array.isArray(data) ? data.length : "Bukan Array");
+  
+      setDataList(data);
+  
     } catch (err) {
-      setAlert({ type: 'error', msg: `Gagal memuat data: ${err.message}` });
+      console.error("❌ API ERROR");
+      console.error("📌 Model/Resource :", title);
+      console.error("🌐 API Endpoint   :", endpoint);
+      console.error("📤 Method         :", "GET");
+      console.error("📛 Error          :", err);
+      console.error("📛 Response       :", err.response?.data);
+      console.error("📛 Status         :", err.response?.status);
+  
+      setAlert({
+        type: 'error',
+        msg: `Gagal memuat data: ${err.message}`
+      });
+  
     } finally {
       setLoading(false);
+      console.groupEnd();
     }
   };
 
@@ -49,7 +80,7 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
         setAlert({ type: 'success', msg: `Data ${title} berhasil diperbarui!` });
       } else {
         await api.post(endpoint, formData);
-        setAlert({ type: 'success', msg: `Data ${title} baru berhasil ditambahkan!` });
+        setAlert({ type: 'success', msg: `Datca ${title} baru berhasil ditambahkan!` });
       }
       setModalOpen(false);
       fetchData();
