@@ -21,6 +21,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/auth/",include("hris_app.urls.auth"),name="api_auth"),
@@ -29,4 +30,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Mengarah ke api_urls/__init__.py
     path('api/v1/onboarding/', include('hris_app.urls.onboarding', namespace='onboarding')),
+    path('api/v2/', include('hris_app.urls.user_management', namespace='user_management')),
 ]

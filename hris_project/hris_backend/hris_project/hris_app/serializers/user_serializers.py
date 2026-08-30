@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        field = '__all__'
+        fields = '__all__'
         
     def create(self, validated_data):
         print("Creating user with validated data:", validated_data)

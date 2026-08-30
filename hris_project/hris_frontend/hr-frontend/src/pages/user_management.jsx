@@ -36,7 +36,7 @@ export default function UserManagement() {
 
     try {
 
-      const res = await api.get("/api/v1/users/");
+      const res = await api.get("/api/v2/users/");
 
       console.log("USER API RESPONSE:", res.data);
 
@@ -62,7 +62,7 @@ export default function UserManagement() {
 
     try {
 
-      const res = await api.get("/api/v1/groups/");
+      const res = await api.get("/api/v2/groups/");
 
       console.log("GROUP API RESPONSE:", res.data);
 
@@ -165,7 +165,7 @@ export default function UserManagement() {
       if (editUser) {
 
         await api.patch(
-          `/api/v1/users/${editUser.id}/`,
+          `/api/v2/users/${editUser.id}/`,
           formData
         );
 
@@ -174,7 +174,7 @@ export default function UserManagement() {
       } else {
 
         await api.post(
-          "/api/v1/users/",
+          "/api/v2/users/",
           formData
         );
 

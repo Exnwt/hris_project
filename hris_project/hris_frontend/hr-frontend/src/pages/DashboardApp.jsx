@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import GenericCrudManager from "../components/GenericCrudManager";
 import UserManagement from "./user_management";
+import GroupPages from "./groups_pages";
+
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -163,6 +165,10 @@ export default function DashboardApp({
         return (
           <UserManagement />        
         );
+      case "group-pages":
+        return (
+          <GroupPages />        
+        );
 
       default:
         return null;
@@ -221,6 +227,17 @@ export default function DashboardApp({
             }}
           >
             User Management
+          </button>
+          <button
+            onClick={() => setActiveMenu("group-pages")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "group-pages"
+                ? activeMenuStyle
+                : {}),
+            }}
+          >
+            Groups
           </button>
 
         </div>
