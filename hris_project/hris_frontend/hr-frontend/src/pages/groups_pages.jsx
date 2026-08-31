@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
+import GroupAccessManager from "../components/access_management/GroupAccessManager";
 
 const GroupPages = () => {
     const [groups, setGroups] = useState([]);
@@ -7,6 +8,7 @@ const GroupPages = () => {
     const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [selectedGroup, setSelectedGroup] = useState(null);
 
     // =========================
     // GET GROUPS
@@ -279,6 +281,14 @@ const GroupPages = () => {
                                     </td>
 
                                     <td style={styles.td}>
+                                        <button
+                                            onClick={() =>
+                                                setSelectedGroup(group)
+                                            }
+                                            style={styles.accessButton}
+                                        >
+                                            Manage Access
+                                        </button>
 
                                         <button
                                             onClick={() =>
@@ -311,7 +321,16 @@ const GroupPages = () => {
                 )}
 
             </div>
+            {/* ================================= */}
+            {/* GROUP ACCESS MANAGER */}
+            {/* ================================= */}
 
+            {selectedGroup && (
+                <GroupAccessManager
+                    group={selectedGroup}
+                    onClose={() => setSelectedGroup(null)}
+                />
+            )}
         </div>
     );
 };
@@ -459,6 +478,15 @@ const styles = {
         padding: "30px",
         textAlign: "center",
         color: "#777",
+    },
+    accessButton: {
+        marginRight: "8px",
+        padding: "7px 12px",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer",
+        backgroundColor: "#e8d8c3",
+        color: "#333",
     },
 };
 

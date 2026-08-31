@@ -31,4 +31,5 @@ urlpatterns = [
     # Mengarah ke api_urls/__init__.py
     path('api/v1/onboarding/', include('hris_app.urls.onboarding', namespace='onboarding')),
     path('api/v2/', include('hris_app.urls.user_management', namespace='user_management')),
+    path('api/v2/', include('hris_app.urls.api_urls', namespace='api_access_assigment'))
 ]

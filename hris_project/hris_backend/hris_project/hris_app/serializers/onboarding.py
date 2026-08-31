@@ -10,8 +10,6 @@ from hris_app.models import (
     EmployeeStatusHistory,
     EmployeeContactHistory,
     EmployeeSubmissionStaging,
-    APIAccessTemplate,
-    UserAccessAssignment,
 )
 
 class EmployeeSubmissionStagingSerializer(serializers.ModelSerializer):
@@ -69,15 +67,3 @@ class EmployeeContactHistorySerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = EmployeeSubmissionStaging
 #         fields = '__all__'
-
-
-class APIAccessTemplateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = APIAccessTemplate
-        fields = '__all__'
-
-
-class UserAccessAssignmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserAccessAssignment
-        fields = '__all__'

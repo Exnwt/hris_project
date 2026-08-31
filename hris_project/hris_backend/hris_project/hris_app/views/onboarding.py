@@ -30,8 +30,7 @@ from hris_app.models import (
     EmployeeStatusHistory,
     EmployeeContactHistory,
     EmployeeSubmissionStaging,
-    APIAccessTemplate,
-    UserAccessAssignment,
+
 )
 from hris_app.serializers.onboarding import (
     CompanySerializer,
@@ -42,8 +41,6 @@ from hris_app.serializers.onboarding import (
     EmployeeStatusHistorySerializer,
     EmployeeContactHistorySerializer,
     EmployeeSubmissionStagingSerializer,
-    APIAccessTemplateSerializer,
-    UserAccessAssignmentSerializer,
 )
 
 @api_view(['POST'])
@@ -131,15 +128,3 @@ class EmployeeSubmissionStagingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class APIAccessTemplateViewSet(viewsets.ModelViewSet):
-    queryset = APIAccessTemplate.objects.all()
-    serializer_class = APIAccessTemplateSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class UserAccessAssignmentViewSet(viewsets.ModelViewSet):
-    queryset = UserAccessAssignment.objects.all()
-    serializer_class = UserAccessAssignmentSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]

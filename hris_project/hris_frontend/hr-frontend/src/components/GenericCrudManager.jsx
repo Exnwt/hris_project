@@ -21,31 +21,31 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
     console.group(`🔵 CRUD DEBUG: ${title}`);
   
     try {
-      console.log("📌 Model/Resource :", title);
-      console.log("🌐 API Endpoint   :", endpoint);
-      console.log("📤 Method         :", "GET");
+      // console.log("📌 Model/Resource :", title);
+      // console.log("🌐 API Endpoint   :", endpoint);
+      // console.log("📤 Method         :", "GET");
   
-      const res = await api.get(endpoint);
+      // const res = await api.get(endpoint);
   
-      console.log("✅ Status         :", res.status);
-      console.log("📥 API Response   :", res.data);
-      console.log("📦 Response Data  :", res.data.results || res.data);
+      // console.log("✅ Status         :", res.status);
+      // console.log("📥 API Response   :", res.data);
+      // console.log("📦 Response Data  :", res.data.results || res.data);
   
-      const data = res.data.results || res.data || [];
+      // const data = res.data.results || res.data || [];
   
-      console.log("📋 Data List      :", data);
-      console.log("🔢 Jumlah Data    :", Array.isArray(data) ? data.length : "Bukan Array");
+      // console.log("📋 Data List      :", data);
+      // console.log("🔢 Jumlah Data    :", Array.isArray(data) ? data.length : "Bukan Array");
   
       setDataList(data);
   
     } catch (err) {
-      console.error("❌ API ERROR");
-      console.error("📌 Model/Resource :", title);
-      console.error("🌐 API Endpoint   :", endpoint);
-      console.error("📤 Method         :", "GET");
-      console.error("📛 Error          :", err);
-      console.error("📛 Response       :", err.response?.data);
-      console.error("📛 Status         :", err.response?.status);
+      // console.error("❌ API ERROR");
+      // console.error("📌 Model/Resource :", title);
+      // console.error("🌐 API Endpoint   :", endpoint);
+      // console.error("📤 Method         :", "GET");
+      // console.error("📛 Error          :", err);
+      // console.error("📛 Response       :", err.response?.data);
+      // console.error("📛 Status         :", err.response?.status);
   
       setAlert({
         type: 'error',

@@ -18,8 +18,6 @@ from hris_app.views.onboarding import (
     EmployeeStatusHistoryViewSet,
     EmployeeContactHistoryViewSet,
     EmployeeSubmissionStagingViewSet,
-    APIAccessTemplateViewSet,
-    UserAccessAssignmentViewSet,
 )
 from hris_app.views.master_data import QuickCreateMasterAPIView
 
@@ -34,8 +32,6 @@ router.register(r'employees', EmployeeViewSet, basename='employee')
 router.register(r'employee-status-histories', EmployeeStatusHistoryViewSet, basename='employee-status-history')
 router.register(r'employee-contact-histories', EmployeeContactHistoryViewSet, basename='employee-contact-history')
 router.register(r'staging-submissions', EmployeeSubmissionStagingViewSet, basename='staging-submission')
-router.register(r'api-access-templates', APIAccessTemplateViewSet, basename='api-access-template')
-router.register(r'user-access-assignments', UserAccessAssignmentViewSet, basename='user-access-assignment')
 
 urlpatterns = [
     path('submissions/create/',employee_submission_create_view, name='api-employee-submission-create'),

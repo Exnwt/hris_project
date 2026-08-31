@@ -1,9 +1,6 @@
 
 from django.db import models
-from django.contrib.auth.models import User
-
-
-
+from django.contrib.auth.models import User, Group
 
 class APIAccessTemplate(models.Model):
     """Template / Paket Akses API.
@@ -26,6 +23,8 @@ class APIAccessTemplate(models.Model):
     )
     def __str__(self):
         return f"{self.name} ({len(self.allowed_codenames)} API)"
+    
+    
 
 
 class UserAccessAssignment(models.Model):
@@ -44,4 +43,21 @@ class UserAccessAssignment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} -> {self.template.name}"
+    
+    
+class GroupAccessAssignment(models.Model):
+    """
+    Menghubungkan Group Django ke Template Akses API.
+    """
+    
+    group = models.ForeignKey(
+        Group, related_name="api_access_assignments", on_delete=models.CASCADE
+    )
+    template = models.ForeignKey(APIAccessTemplate, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("group", "template")
+
+    def __str__(self):
+        return f"{self.group.name} -> {self.template.name}"
 
