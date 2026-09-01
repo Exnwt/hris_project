@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import GenericCrudManager from "../components/GenericCrudManager";
 import UserManagement from "./user_management";
 import GroupPages from "./groups_pages";
+import APIEndpointManager from "./api_endpoints_pages";
 
 
 export default function DashboardApp({
@@ -169,6 +170,10 @@ export default function DashboardApp({
         return (
           <GroupPages />        
         );
+      case "api-endpoints":
+        return (
+          <APIEndpointManager />        
+        );
 
       default:
         return null;
@@ -238,6 +243,17 @@ export default function DashboardApp({
             }}
           >
             Groups
+          </button>
+          <button
+            onClick={() => setActiveMenu("api-endpoints")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "api-endpoints"
+                ? activeMenuStyle
+                : {}),
+            }}
+          >
+            API List
           </button>
 
         </div>

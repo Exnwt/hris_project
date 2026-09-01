@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from hris_app.models import APIAccessTemplate, UserAccessAssignment, GroupAccessAssignment
+from hris_app.models import APIEndpoint, UserAccessAssignment, GroupAccessAssignment
 
 
-class APIAccessTemplateSerializer(serializers.ModelSerializer):
+class APIEndpointSerializer(serializers.ModelSerializer):
     class Meta:
-        model = APIAccessTemplate
+        model = APIEndpoint
         fields = '__all__'
 
 

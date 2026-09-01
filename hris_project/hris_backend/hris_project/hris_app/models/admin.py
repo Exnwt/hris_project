@@ -5,7 +5,7 @@ from .models import Section
 from .models import Department
 from .models import Company
 from .models import Position
-from .models import APIAccessTemplate
+from .models import APIEndpoint
 from .models import UserAccessAssignment
 from .models import EmployeeSubmissionStaging
 
@@ -17,6 +17,6 @@ admin.site.register(Section)
 admin.site.register(Department)
 admin.site.register(Company)
 admin.site.register(Position)
-admin.site.register(APIAccessTemplate)
+admin.site.register(APIEndpoint)
 admin.site.register(UserAccessAssignment)
 admin.site.register(EmployeeSubmissionStaging)

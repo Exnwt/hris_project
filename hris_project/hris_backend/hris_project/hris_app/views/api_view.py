@@ -1,5 +1,5 @@
-from hris_app.models import APIAccessTemplate, UserAccessAssignment, GroupAccessAssignment
-from hris_app.serializers.api_serializers import APIAccessTemplateSerializer, UserAccessAssignmentSerializer, GroupAccessAssignmentSerializer
+from hris_app.models import APIEndpoint, UserAccessAssignment, GroupAccessAssignment
+from hris_app.serializers.api_serializers import APIEndpointSerializer, UserAccessAssignmentSerializer, GroupAccessAssignmentSerializer
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication  # Django Token 
 from rest_framework_simplejwt.authentication import JWTAuthentication #JWT Token
@@ -8,20 +8,19 @@ from rest_framework.decorators import (
     authentication_classes,
     permission_classes,
 )
-from rest_framework.permissions import (
-    IsAuthenticated,
-)  # Wajib login/bawa token
+from rest_framework.permissions import IsAuthenticated
+from hris_app.permissions import HasAPIAccessPermission
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-class APIAccessTemplateViewSet(viewsets.ModelViewSet):
-    queryset = APIAccessTemplate.objects.all()
-    serializer_class = APIAccessTemplateSerializer
+class APIEndpointViewSet(viewsets.ModelViewSet):
+    queryset = APIEndpoint.objects.all()
+    serializer_class = APIEndpointSerializer
+    api_codename = 'APIEndpoints'
     authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
 class UserAccessAssignmentViewSet(viewsets.ModelViewSet):
     queryset = UserAccessAssignment.objects.all()
@@ -34,7 +33,7 @@ class GroupAccessAssignmentViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     queryset = GroupAccessAssignment.objects.select_related(
         "group",
-        "template"
+        "api_endpoint"
     ).all()
 
     serializer_class = GroupAccessAssignmentSerializer
@@ -47,12 +46,12 @@ class GroupAccessAssignmentViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
 
         group_id = self.request.query_params.get("group")
-        template_id = self.request.query_params.get("template")
+        api_endpoint_id = self.request.query_params.get("api_endpoint")
 
         if group_id:
             queryset = queryset.filter(group_id=group_id)
 
-        if template_id:
-            queryset = queryset.filter(template_id=template_id)
+        if api_endpoint_id:
+            queryset = queryset.filter(api_endpoint_id=api_endpoint_id)
 
         return queryset

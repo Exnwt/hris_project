@@ -2,27 +2,27 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 
-class APIAccessTemplate(models.Model):
+
+# APIAccessTemplate
+class APIEndpoint(models.Model):
     """Template / Paket Akses API.
 
     Berisi kumpulan daftar endpoint yang diizinkan dalam bentuk JSON.
     """
 
     name = models.CharField(
-        max_length=100, unique=True, help_text="Nama Paket Akses (Contoh: HR Admin)"
+        max_length=100, unique=True, help_text="Nama fungsi API (Contoh: Employee list, Employee create, employee tabel view, dll)"
     )
-    allowed_codenames = models.JSONField(
-        default=list,
-        help_text=(
-            "List endpoint yang diizinkan, misal: ['api-hris-submission',"
-            " 'api-general-submission']"
-        ),
+    code_name = models.CharField(
+        max_length=100, 
+        unique=True, 
+        help_text="Identifikasi unik endpoint (Contoh: api-hris-submission)"
     )
     description = models.TextField(
-        null=True, blank=True, help_text="Deskripsi tambahan untuk Paket akses ini"
+        null=True, blank=True, help_text="Deskripsi tambahan untuk fungsi api ini"
     )
     def __str__(self):
-        return f"{self.name} ({len(self.allowed_codenames)} API)"
+        return f"{self.name} ({len(self.code_name)} API)"
     
     
 
@@ -36,13 +36,13 @@ class UserAccessAssignment(models.Model):
     user = models.ForeignKey(
         User, related_name="api_access_assignments", on_delete=models.CASCADE
     )
-    template = models.ForeignKey(APIAccessTemplate, on_delete=models.CASCADE)
+    api_endpoint = models.ForeignKey(APIEndpoint, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ("user", "template")
+        unique_together = ("user", "api_endpoint")
 
     def __str__(self):
-        return f"{self.user.username} -> {self.template.name}"
+        return f"{self.user.username} -> {self.api_endpoint.name}"
     
     
 class GroupAccessAssignment(models.Model):
@@ -53,11 +53,11 @@ class GroupAccessAssignment(models.Model):
     group = models.ForeignKey(
         Group, related_name="api_access_assignments", on_delete=models.CASCADE
     )
-    template = models.ForeignKey(APIAccessTemplate, on_delete=models.CASCADE)
+    api_endpoint = models.ForeignKey(APIEndpoint, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ("group", "template")
+        unique_together = ("group", "api_endpoint")
 
     def __str__(self):
-        return f"{self.group.name} -> {self.template.name}"
+        return f"{self.group.name} -> {self.api_endpoint.name}"
 

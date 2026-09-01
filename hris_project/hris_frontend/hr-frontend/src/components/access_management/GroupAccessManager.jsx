@@ -21,13 +21,13 @@ const GroupAccessManager = ({ group, onClose }) => {
         try {
 
             const response = await api.get(
-                "api/v2/APItemplates/"
+                "api/v2/access/APIEndpoints/"
             );
             setTemplates(response.data);
 
         } catch (error) {
             setError(
-                "Gagal mengambil access template"
+                "Gagal mengambil access API ENDPOINT"
             );
         }
     };
@@ -44,7 +44,7 @@ const GroupAccessManager = ({ group, onClose }) => {
             setLoading(true);
             setError("");
             const response = await api.get(
-                `api/v2/Group-AA/?group=${group.id}`
+                `api/v2/access/Group-AA/?group=${group.id}`
             );
 
             setAssignments(response.data);
@@ -79,11 +79,11 @@ const GroupAccessManager = ({ group, onClose }) => {
     // CEK APAKAH TEMPLATE SUDAH DIMILIKI GROUP
     // ==========================================
 
-    const isAssigned = (templateId) => {
+    const isAssigned = (api_endpoint_id) => {
 
         return assignments.some(
             (assignment) =>
-                assignment.template === templateId
+                assignment.api_endpoint === api_endpoint_id
         );
 
     };
@@ -93,11 +93,11 @@ const GroupAccessManager = ({ group, onClose }) => {
     // GET ASSIGNMENT
     // ==========================================
 
-    const getAssignment = (templateId) => {
+    const getAssignment = (api_endpoint_id) => {
 
         return assignments.find(
             (assignment) =>
-                assignment.template === templateId
+                assignment.api_endpoint === api_endpoint_id
         );
 
     };
@@ -107,14 +107,14 @@ const GroupAccessManager = ({ group, onClose }) => {
     // TOGGLE ACCESS
     // ==========================================
 
-    const handleToggle = async (template) => {
+    const handleToggle = async (api_endpoint) => {
 
         try {
 
             setSaving(true);
 
             const assignment =
-                getAssignment(template.id);
+                getAssignment(api_endpoint.id);
 
 
             // ==================================
@@ -129,7 +129,7 @@ const GroupAccessManager = ({ group, onClose }) => {
                 );
 
                 await api.delete(
-                    `api/v2/Group-AA/${assignment.id}/`
+                    `api/v2/access/Group-AA/${assignment.id}/`
                 );
 
             }
@@ -144,15 +144,15 @@ const GroupAccessManager = ({ group, onClose }) => {
                     "ASSIGN TEMPLATE:",
                     {
                         group: group.id,
-                        template: template.id
+                        api_endpoint: api_endpoint.id
                     }
                 );
 
                 await api.post(
-                    "api/v2/Group-AA/",
+                    "api/v2/access/Group-AA/",
                     {
                         group: group.id,
-                        template: template.id
+                        api_endpoint: api_endpoint.id
                     }
                 );
 
@@ -327,14 +327,10 @@ const GroupAccessManager = ({ group, onClose }) => {
                                                     <br />
 
                                                     <small>
-
+                                                        API endpoint code : {" "}
                                                         {
-                                                            template
-                                                                .allowed_codenames
-                                                                ?.length || 0
-                                                        }{" "}
-                                                        API Access
-
+                                                            template.code_name
+                                                        }   
                                                     </small>
 
                                                 </span>

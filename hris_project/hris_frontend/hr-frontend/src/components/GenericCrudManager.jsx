@@ -25,13 +25,13 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
       // console.log("🌐 API Endpoint   :", endpoint);
       // console.log("📤 Method         :", "GET");
   
-      // const res = await api.get(endpoint);
+      const res = await api.get(endpoint);
   
       // console.log("✅ Status         :", res.status);
       // console.log("📥 API Response   :", res.data);
       // console.log("📦 Response Data  :", res.data.results || res.data);
   
-      // const data = res.data.results || res.data || [];
+      const data = res.data.results || res.data || [];
   
       // console.log("📋 Data List      :", data);
       // console.log("🔢 Jumlah Data    :", Array.isArray(data) ? data.length : "Bukan Array");

@@ -1,44 +1,50 @@
-# from django.db import connection
-# from django.urls import resolve
-# from rest_framework.permissions import BasePermission
-# from hris_app.models import UserAccessAssignment
-
-
-# class HasApiWhitelistPermission(BasePermission):
-#   """Satpam otomatis: Mengecek izin akses berdasarkan Template yang
-
-#   dihubungkan langsung ke User yang sedang melakukan request.
-#   """
-
-#   def has_permission(self, request, view):
-
-# # 1. Autentikasi dasar
-#     if not request.user or not request.user.is_authenticated:
-#       return False
-
-#     # 2. Ambil URL Name
-#     url_name = getattr(request.resolver_match, 'url_name', None)
-#     if not url_name:
-#       return False
-
-#     # 3. Pengecekan Database (0 For-Loop, O(1) Memory Overhead)
-#     if connection.vendor in ['postgresql', 'mysql']:
-#       # MySQL (5.7.8+) & PostgreSQL: Menggunakan Native JSON Lookup
-#       return UserAccessAssignment.objects.filter(
-#           user=request.user,
-#           template__allowed_codenames__contains=[url_name],
-#       ).exists()
-#     else:
-#       # SQLite (Dev): Menggunakan Substring Text Match
-#       return UserAccessAssignment.objects.filter(
-#           user=request.user,
-#           template__allowed_codenames__icontains=f'"{url_name}"',
-#       ).exists()
-
-#     return is_allowed
-
-
+# hris_app/permissions.py
 from rest_framework.permissions import BasePermission
+from .models import GroupAccessAssignment, UserAccessAssignment
+
+
+class HasAPIAccessPermission(BasePermission):
+    """Custom Permission untuk mengecek apakah User / Group milik User
+
+    memiliki akses ke API berdasarkan `api_codename` yang dipasang pada View.
+    """
+
+    def has_permission(self, request, view):
+        # 1. User yang belum terotentikasi (Anonymous) ditolak
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # 2. Bypass otomatis untuk Superuser / Admin Tertinggi
+        if request.user.is_superuser:
+            return True
+
+        # 3. Ambil codename API dari atribut `api_codename` pada view
+        required_codename = getattr(view, "api_codename", None)
+        print('test111', required_codename)
+        # Jika view tidak memasang `api_codename`, izinkan akses (atau ubah ke False jika ingin strict)
+        # if not required_codename:
+        #     return True
+
+        # 4. CEK 1: Akses via Group / Role User
+        user_groups = request.user.groups.all()
+        print('test222',user_groups)
+        has_group_access = GroupAccessAssignment.objects.filter(
+            group__in=user_groups, api_endpoint__code_name=required_codename
+        ).exists()
+        print('test333',has_group_access)
+        if has_group_access:
+            return True
+
+        # # 5. CEK 2: Akses Langsung Per-User (UserAccessAssignment)
+        # has_user_access = UserAccessAssignment.objects.filter(
+        #     user=request.user, api_endpoint__code_name=required_codename
+        # ).exists()
+
+        # if has_user_access:
+        #     return True
+
+        # 6. Jika tidak ada yang cocok di Group maupun User assignment -> Tolak Akses
+        return False
 
 class HasApiWhitelistPermission(BasePermission):
     """
