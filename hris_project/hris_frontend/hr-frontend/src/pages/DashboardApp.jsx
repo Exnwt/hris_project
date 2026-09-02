@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import api from "../api"; // Instance axios Anda
 import GenericCrudManager from "../components/GenericCrudManager";
 import UserManagement from "./user_management";
 import GroupPages from "./groups_pages";
 import APIEndpointManager from "./api_endpoints_pages";
-
+import AttendancePages from "./Attendance_pages";
+import BiometricEnrollmentPages from "./BiometricEnrollmentPages";
+import AttendanceScannerPages from "./AttedanceScannerPages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -11,191 +14,107 @@ export default function DashboardApp({
 }) {
   const [activeMenu, setActiveMenu] = useState("company");
 
+  // State untuk menyimpan daftar hak akses user
+  const [userPermissions, setUserPermissions] = useState({
+    isSuperuser: false,
+    allowedCodenames: [],
+  });
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
+
+  // ==========================================
+  // FETCH USER PERMISSIONS SAAT LOAD
+  // ==========================================
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        const response = await api.get("api/v2/access/my-permissions/");
+        console.log('responsee111', response)
+        setUserPermissions({
+          isSuperuser: response.data.is_superuser,
+          allowedCodenames: response.data.allowed_codenames || [],
+        });
+      } catch (error) {
+        console.error("Gagal mengambil permission user:", error);
+      } finally {
+        setLoadingPermissions(false);
+      }
+    };
+
+    fetchPermissions();
+  }, []);
+
+  // Helper function untuk cek apakah user punya hak akses tertentu
+  const hasAccess = (codename) => {
+    if (userPermissions.isSuperuser) return true;
+    return userPermissions.allowedCodenames.includes(codename);
+  };
+
   // Konfigurasi menu CRUD
-  const menus = [
-    {
-      key: "company",
-      label: "Company",
-    },
-    {
-      key: "department",
-      label: "Department",
-    },
-    {
-      key: "section",
-      label: "Section",
-    },
-    {
-      key: "position",
-      label: "Position",
-    },
-    {
-      key: "employee",
-      label: "Employee",
-    },
-  ];
-
-  // Konfigurasi CRUD Company
   const companyFields = [
-    {
-      key: "name",
-      label: "Nama Company",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "company_code",
-      label: "Company Code",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "address",
-      label: "Alamat",
-      type: "text",
-      required: false,
-    },
-    {
-      key: "phone_number",
-      label: "Nomor Telepon",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "number",
-      label: "Number",
-      type: "text",
-      required: true,
-    },
+    { key: "name", label: "Nama Company", type: "text", required: true },
+    { key: "company_code", label: "Company Code", type: "text", required: true },
+    { key: "address", label: "Alamat", type: "text", required: false },
+    { key: "phone_number", label: "Nomor Telepon", type: "text", required: true },
+    { key: "number", label: "Number", type: "text", required: true },
   ];
 
-  // Konfigurasi CRUD Department
-  const departmentFields = [
-    {
-      key: "name",
-      label: "Nama Department",
-      type: "text",
-      required: true,
-    },
-  ];
-
-  // Konfigurasi CRUD Section
-  const sectionFields = [
-    {
-      key: "name",
-      label: "Nama Section",
-      type: "text",
-      required: true,
-    },
-  ];
-
-  // Konfigurasi CRUD Position
-  const positionFields = [
-    {
-      key: "name",
-      label: "Nama Position",
-      type: "text",
-      required: true,
-    },
-  ];
-
-  // Konfigurasi CRUD Employee
+  const departmentFields = [{ key: "name", label: "Nama Department", type: "text", required: true }];
+  const sectionFields = [{ key: "name", label: "Nama Section", type: "text", required: true }];
+  const positionFields = [{ key: "name", label: "Nama Position", type: "text", required: true }];
   const employeeFields = [
-    {
-      key: "nik_karyawan",
-      label: "NIK Karyawan",
-      type: "text",
-      required: true,
-    },
-    {
-      key: "nama_lengkap",
-      label: "Nama Lengkap",
-      type: "text",
-      required: true,
-    },
+    { key: "nik_karyawan", label: "NIK Karyawan", type: "text", required: true },
+    { key: "nama_lengkap", label: "Nama Lengkap", type: "text", required: true },
   ];
 
-  // Tentukan CRUD yang sedang aktif
   const renderContent = () => {
     switch (activeMenu) {
       case "company":
-        return (
-          <GenericCrudManager
-            title="Company"
-            endpoint="/api/v1/onboarding/companies/"
-            fields={companyFields}
-          />
-        );
-
+        return <GenericCrudManager title="Company" endpoint="/api/v1/onboarding/companies/" fields={companyFields} />;
       case "department":
-        return (
-          <GenericCrudManager
-            title="Department"
-            endpoint="/api/v1/onboarding/departments/"
-            fields={departmentFields}
-          />
-        );
-
+        return <GenericCrudManager title="Department" endpoint="/api/v1/onboarding/departments/" fields={departmentFields} />;
       case "section":
-        return (
-          <GenericCrudManager
-            title="Section"
-            endpoint="/api/v1/onboarding/sections/"
-            fields={sectionFields}
-          />
-        );
-
+        return <GenericCrudManager title="Section" endpoint="/api/v1/onboarding/sections/" fields={sectionFields} />;
       case "position":
-        return (
-          <GenericCrudManager
-            title="Position"
-            endpoint="/api/v1/onboarding/positions/"
-            fields={positionFields}
-          />
-        );
-
+        return <GenericCrudManager title="Position" endpoint="/api/v1/onboarding/positions/" fields={positionFields} />;
       case "employee":
-        return (
-          <GenericCrudManager
-            title="Employee"
-            endpoint="/api/v1/onboarding/employees/"
-            fields={employeeFields}
-          />
-        );
+        return <GenericCrudManager title="Employee" endpoint="/api/v1/onboarding/employees/" fields={employeeFields} />;
+      case "attendance":
+        return <AttendancePages/>;
+      case "attendace-scanner":
+        return <AttendanceScannerPages/>;
+      case "biometric-enrollment":
+        return <BiometricEnrollmentPages />;
       case "user-management":
-        return (
-          <UserManagement />        
-        );
+        return <UserManagement />;
       case "group-pages":
-        return (
-          <GroupPages />        
-        );
+        return <GroupPages />;
       case "api-endpoints":
-        return (
-          <APIEndpointManager />        
-        );
-
+        // Pengecekan keamanan tambahan di level render
+        return hasAccess("APIEndpoints") ? <APIEndpointManager /> : <p>Anda tidak memiliki akses ke halaman ini.</p>;
       default:
         return null;
     }
   };
 
+  const menus = [
+    { key: "company", label: "Company" },
+    { key: "department", label: "Department" },
+    { key: "section", label: "Section" },
+    { key: "position", label: "Position" },
+    { key: "employee", label: "Employee" },
+  ];
+
   return (
     <div style={layoutStyle}>
-
       {/* SIDEBAR */}
       <aside style={sidebarStyle}>
-
         <div style={logoStyle}>
           <h2 style={{ margin: 0 }}>HRIS</h2>
           <small>Human Resources</small>
         </div>
 
         <div style={{ marginTop: "30px" }}>
-
-          <p style={sectionTitleStyle}>
-            MASTER DATA
-          </p>
+          <p style={sectionTitleStyle}>MASTER DATA</p>
 
           {menus.map((menu) => (
             <button
@@ -203,202 +122,117 @@ export default function DashboardApp({
               onClick={() => setActiveMenu(menu.key)}
               style={{
                 ...menuButtonStyle,
-                ...(activeMenu === menu.key
-                  ? activeMenuStyle
-                  : {}),
+                ...(activeMenu === menu.key ? activeMenuStyle : {}),
               }}
             >
               {menu.label}
             </button>
           ))}
-
-          <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>
-            SYSTEM
-          </p>
-
           <button
-            onClick={onNavigateToOnboarding}
-            style={menuButtonStyle}
-          >
+              onClick={() => setActiveMenu("attendance")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "attendance" ? activeMenuStyle : {}),
+              }}
+              
+            >attendance
+          </button>
+          <button
+              onClick={() => setActiveMenu("attendace-scanner")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
+              }}
+              
+            >Attendance Scanner
+          </button>
+          <button
+              onClick={() => setActiveMenu("biometric-enrollment")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
+              }}
+              
+            >Biometric Enrollment
+          </button>
+
+          <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
+
+          <button onClick={onNavigateToOnboarding} style={menuButtonStyle}>
             Onboarding
           </button>
           <button
             onClick={() => setActiveMenu("user-management")}
             style={{
               ...menuButtonStyle,
-              ...(activeMenu === "user-management"
-                ? activeMenuStyle
-                : {}),
+              ...(activeMenu === "user-management" ? activeMenuStyle : {}),
             }}
           >
             User Management
           </button>
-          <button
-            onClick={() => setActiveMenu("group-pages")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "group-pages"
-                ? activeMenuStyle
-                : {}),
-            }}
-          >
-            Groups
-          </button>
-          <button
-            onClick={() => setActiveMenu("api-endpoints")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "api-endpoints"
-                ? activeMenuStyle
-                : {}),
-            }}
-          >
-            API List
-          </button>
-
+          {!loadingPermissions && hasAccess("Groups") && (
+            <button
+              onClick={() => setActiveMenu("group-pages")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "group-pages" ? activeMenuStyle : {}),
+              }}
+            >
+              Groups
+            </button>
+          )}
+          {/* TOMBOL API LIST HANYA MUNCIKL JIKA MEMILIKI HAK AKSES 'APIEndpoints' ATAU SUPERUSER */}
+          {!loadingPermissions && hasAccess("APIEndpoints") && (
+            <button
+              onClick={() => setActiveMenu("api-endpoints")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "api-endpoints" ? activeMenuStyle : {}),
+              }}
+            >
+              API List
+            </button>
+          )}
         </div>
 
         {/* LOGOUT */}
         <div style={logoutContainerStyle}>
-          <button
-            onClick={pemicuKeluar}
-            style={logoutButtonStyle}
-          >
+          <button onClick={pemicuKeluar} style={logoutButtonStyle}>
             Logout
           </button>
         </div>
-
       </aside>
 
       {/* MAIN CONTENT */}
       <main style={mainStyle}>
-
         {/* HEADER */}
         <header style={headerStyle}>
-
           <div>
-            <h1 style={{ margin: 0 }}>
-              HRIS Dashboard
-            </h1>
-
-            <p style={subtitleStyle}>
-              Human Resource Information System
-            </p>
+            <h1 style={{ margin: 0 }}>HRIS Dashboard</h1>
+            <p style={subtitleStyle}>Human Resource Information System</p>
           </div>
-
           <div style={userBadgeStyle}>
-            Admin
+            {userPermissions.isSuperuser ? "Super Admin" : "User"}
           </div>
-
         </header>
 
         {/* CONTENT */}
-        <section>
-          {renderContent()}
-        </section>
-
+        <section>{renderContent()}</section>
       </main>
-
     </div>
   );
 }
 
-
-// ==============================
-// STYLES
-// ==============================
-
-const layoutStyle = {
-  display: "flex",
-  minHeight: "100vh",
-  background: "#f8fafc",
-  fontFamily: "Arial, sans-serif",
-};
-
-
-// SIDEBAR
-
-const sidebarStyle = {
-  width: "230px",
-  background: "#0f172a",
-  color: "#fff",
-  padding: "25px 15px",
-  display: "flex",
-  flexDirection: "column",
-  boxSizing: "border-box",
-};
-
-const logoStyle = {
-  padding: "0 10px",
-};
-
-const sectionTitleStyle = {
-  fontSize: "11px",
-  color: "#94a3b8",
-  fontWeight: "bold",
-  padding: "0 10px",
-  letterSpacing: "1px",
-};
-
-const menuButtonStyle = {
-  display: "block",
-  width: "100%",
-  padding: "11px 12px",
-  marginBottom: "5px",
-  border: "none",
-  borderRadius: "5px",
-  background: "transparent",
-  color: "#cbd5e1",
-  textAlign: "left",
-  cursor: "pointer",
-  fontSize: "14px",
-};
-
-const activeMenuStyle = {
-  background: "#2563eb",
-  color: "#fff",
-};
-
-const logoutContainerStyle = {
-  marginTop: "auto",
-};
-
-const logoutButtonStyle = {
-  width: "100%",
-  padding: "10px",
-  border: "1px solid #475569",
-  borderRadius: "5px",
-  background: "transparent",
-  color: "#fff",
-  cursor: "pointer",
-};
-
-
-// MAIN
-
-const mainStyle = {
-  flex: 1,
-  padding: "30px",
-  boxSizing: "border-box",
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "30px",
-};
-
-const subtitleStyle = {
-  marginTop: "5px",
-  color: "#64748b",
-  fontSize: "14px",
-};
-
-const userBadgeStyle = {
-  background: "#e2e8f0",
-  padding: "8px 15px",
-  borderRadius: "20px",
-  fontSize: "13px",
-  fontWeight: "bold",
-};
+// ... Styles Anda tetap sama di bawahnya ...
+const layoutStyle = { display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "Arial, sans-serif" };
+const sidebarStyle = { width: "230px", background: "#0f172a", color: "#fff", padding: "25px 15px", display: "flex", flexDirection: "column", boxSizing: "border-box" };
+const logoStyle = { padding: "0 10px" };
+const sectionTitleStyle = { fontSize: "11px", color: "#94a3b8", fontWeight: "bold", padding: "0 10px", letterSpacing: "1px" };
+const menuButtonStyle = { display: "block", width: "100%", padding: "11px 12px", marginBottom: "5px", border: "none", borderRadius: "5px", background: "transparent", color: "#cbd5e1", textAlign: "left", cursor: "pointer", fontSize: "14px" };
+const activeMenuStyle = { background: "#2563eb", color: "#fff" };
+const logoutContainerStyle = { marginTop: "auto" };
+const logoutButtonStyle = { width: "100%", padding: "10px", border: "1px solid #475569", borderRadius: "5px", background: "transparent", color: "#fff", cursor: "pointer" };
+const mainStyle = { flex: 1, padding: "30px", boxSizing: "border-box" };
+const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" };
+const subtitleStyle = { marginTop: "5px", color: "#64748b", fontSize: "14px" };
+const userBadgeStyle = { background: "#e2e8f0", padding: "8px 15px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" };

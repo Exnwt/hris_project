@@ -13,8 +13,15 @@ export const clearTokenMemory = () => {
 };
 
 // Instance utama untuk mengambil data internal
+// const api = axios.create({
+//   baseURL: 'http://127.0.0.1:8000',
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
+  baseURL: 'http://localhost:8000',
   headers: {
     "Content-Type": "application/json",
   },
@@ -38,26 +45,38 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // 1. Pengecekan Pengecualian: Abaikan endpoint verifikasi biometrik dari alur refresh token
+    const isBiometricVerifyEndpoint = originalRequest?.url?.includes("/biometric/verify-clock/");
+
+    if (isBiometricVerifyEndpoint) {
+      // Jika error berasal dari verifikasi biometrik (wajah/fingerprint tidak cocok),
+      // kembalikan error langsung ke komponen React TANPA mencoba refresh token / reload halaman.
+      return Promise.reject(error);
+    }
+
+    // 2. Alur Refresh Token Normal untuk Request Lainnya
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // PERBAIKAN: URL diperbaiki ke endpoint refresh Django & kirim cookie HttpOnly
         const res = await axios.post(
-          'http://127.0.0.1:8000/api/token/refresh/',
+          'http://localhost:8000/api/token/refresh/',
           {},
           { withCredentials: true }
         );
+
         if (res.status === 200) {
           setTokenKeMemory(res.data.access);
           originalRequest.headers.Authorization = `Bearer ${res.data.access}`;
-          return api(originalRequest); // Ulangi request data yang gagal tadi
+          return api(originalRequest); // Ulangi request data yang gagal
         }
       } catch (refreshError) {
         setTokenKeMemory(null);
-        window.location.reload(); // Paksa login ulang jika refresh gagal
+        window.location.reload(); // Hanya reload jika memang token expired saat mengakses API biasa
         return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );

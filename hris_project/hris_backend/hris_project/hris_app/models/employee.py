@@ -131,3 +131,21 @@ class EmployeeSubmissionStaging(models.Model):
         f'Submission ID: {self.id} - Processed: {self.is_processed}'
     )
   
+
+class EmployeeBiometric(models.Model):
+    employee = models.OneToOneField(Employee, on_delete=models.CASCADE, related_name='EmployeeBiometric')
+    # Data Wajah & Sidik Jari yang telah di-ENKRIPSI (AES-256)
+    encrypted_face_descriptor = models.TextField(null=True, blank=True)
+    encrypted_fingerprint_template = models.TextField(null=True, blank=True)
+    device_employee_id = models.CharField(max_length=100, null=True, blank=True, help_text="ID karyawan di perangkat biometrik")
+    
+    webauthn_credential_id = models.CharField(max_length=550, null=True, blank=True)
+    webauthn_public_key = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Biometric Data: {self.employee.nama_lengkap}"
+    
+    
+    

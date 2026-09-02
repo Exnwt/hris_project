@@ -27,7 +27,11 @@ SECRET_KEY = 'django-insecure-**c5_*%mr0*hw*18xk-aicpqvc+w3i5-8kbnxprgpq0cw5jkw@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "10.106.108.205",
+]
 
 
 # Application definition
@@ -68,6 +72,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://10.106.108.205:5173",
 ]
 
 # Izinkan browser mengirimkan cookie/credentials jika nanti pakai httponly
@@ -166,6 +171,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Internationalization
@@ -173,7 +179,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Makassar'
 
 USE_I18N = True
 

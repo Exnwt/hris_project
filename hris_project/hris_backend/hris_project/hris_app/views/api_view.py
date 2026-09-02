@@ -12,8 +12,37 @@ from rest_framework.permissions import IsAuthenticated
 from hris_app.permissions import HasAPIAccessPermission
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.views import APIView
 
+class UserPermissionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        print('starttt', request.user)
+        user = request.user
+        
+        # 1. Jika Superuser, beri flag is_superuser
+        if user.is_superuser:
+            return Response({
+                "username": user.username,
+                "is_superuser": True,
+                "allowed_codenames": ["*"] # Wildcard akses penuh
+            })
+
+        # 2. Ambil semua Group milik user
+        user_groups = user.groups.all()
+
+        # 3. Ambil daftar code_name dari GroupAccessAssignment
+        allowed_codenames = GroupAccessAssignment.objects.filter(
+            group__in=user_groups
+        ).values_list('api_endpoint__code_name', flat=True).distinct()
+        print('allowed_codenames', allowed_codenames)
+        
+        return Response({
+            "username": user.username,
+            "is_superuser": False,
+            "allowed_codenames": list(allowed_codenames)
+        })
 
 class APIEndpointViewSet(viewsets.ModelViewSet):
     queryset = APIEndpoint.objects.all()
