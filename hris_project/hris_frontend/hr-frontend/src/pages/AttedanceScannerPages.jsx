@@ -56,6 +56,16 @@ const AttendanceScannerPages = () => {
   const startCamera = () => {
     setIsCameraActive(true);
     setMessage({ type: "", text: "" });
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMessage({
+        type: "error",
+        text: "Kamera tidak dapat diakses. Pastikan Anda mengakses via HTTPS atau localhost.",
+      });
+      setIsCameraActive(false);
+      return;
+    }
+
     navigator.mediaDevices
       .getUserMedia({ video: { width: 640, height: 480 } })
       .then((stream) => {
@@ -95,18 +105,16 @@ const AttendanceScannerPages = () => {
         .withFaceDescriptor();
   
       // 2. JIKA WAJAH TIDAK TERDETEKSI:
-      // Tampilkan pop-up peringatan lokal & STOP alur (tidak kirim request ke API)
       if (!detection) {
         alert("⚠️ Gagal Mengidentifikasi Wajah!\n\nPastikan pencahayaan cukup dan wajah menghadap tepat ke kamera, lalu coba lagi.");
         setMessage({
           type: "error",
           text: "Wajah tidak terdeteksi. Silakan posisikan wajah dengan jelas dan tekan tombol Scan kembali.",
         });
-        return; // Berhenti di sini, tidak ada request ke backend
+        return;
       }
   
       // 3. JIKA WAJAH TERDETEKSI:
-      // Ubah vektor 128-float dan kirim ke backend
       const faceVector = Array.from(detection.descriptor);
   
       const response = await api.post("/api/v2/access/biometric/verify-clock/", {
@@ -129,11 +137,10 @@ const AttendanceScannerPages = () => {
       console.error("Biometric Verification Error:", err);
       const errorMsg = err.response?.data?.detail || "Gagal melakukan verifikasi wajah ke server.";
       
-      // Tampilkan pop-up jika server menolak/wajah tidak cocok
       alert(`❌ Verifikasi Gagal:\n${errorMsg}`);
       setMessage({ type: "error", text: errorMsg });
     } finally {
-      setLoading(false); // Memastikan status loading selalu dimatikan
+      setLoading(false);
     }
   };    
 
@@ -407,7 +414,16 @@ const tabButtonStyle = { flex: 1, padding: "10px", border: "none", background: "
 const activeTabStyle = { background: "#0f172a", color: "#ffffff" };
 
 const cameraBoxStyle = { position: "relative", width: "100%", height: "320px", background: "#000", borderRadius: "8px", overflow: "hidden", marginBottom: "15px" };
-const videoStyle = { width: "100%", height: "100%", objectFit: "cover" };
+
+// TAMPILAN KAMERA NORMAL (TANPA MIRROR)
+const videoStyle = { 
+  width: "100%", 
+  height: "100%", 
+  objectFit: "cover",
+  transform: "scaleX(-1)",
+  WebkitTransform: "scaleX(-1)",
+};
+
 const overlayStyle = { position: "absolute", inset: 0, display: "flex", justifyContent: "center", alignItems: "center", color: "#fff", background: "rgba(0,0,0,0.6)", fontSize: "14px" };
 
 const inputStyle = { width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" };

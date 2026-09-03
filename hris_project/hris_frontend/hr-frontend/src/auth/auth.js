@@ -6,7 +6,7 @@ import api, {
 } from "../api";
 
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "http://10.106.108.194:8000";
 
 
 // =====================================================

@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // PERBAIKAN: URL diperbaiki ke backend Django
       const response = await axios.post(
-        'http://localhost:8000/api/token/refresh/',
+        'http://10.106.108.194:8000/api/token/refresh/',
         {},
         { withCredentials: true }
       );

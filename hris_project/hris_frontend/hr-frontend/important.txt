@@ -1,0 +1,15 @@
+npm install face-api.js (frontend)
+npm install -D @vitejs/plugin-basic-ssl (frontend)
+vite.config.js : export default defineConfig({
+                    plugins: [
+                        react(), 
+                        basicSsl()
+                    ],
+                    server : {
+                        host: true,
+                    }
+                    })
+
+
+
+pip install django-cors-headers (backend)
