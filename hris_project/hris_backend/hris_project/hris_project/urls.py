@@ -28,6 +28,8 @@ urlpatterns = [
     #JWT AUTH
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # api master data disini
+    path('api/v1/master-data/', include('hris_app.urls.master_data_urls', namespace='master_data')),
     # Mengarah ke api_urls/__init__.py
     path('api/v1/onboarding/', include('hris_app.urls.onboarding', namespace='onboarding')),
     path('api/v2/', include('hris_app.urls.user_management', namespace='user_management')),
