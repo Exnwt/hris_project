@@ -97,21 +97,23 @@ const ContractPage = () => {
   };
 
   // Helper Ambil Nama Karyawan
-  const getEmployeeName = (item) => {
-    if (item.employee_name) return item.employee_name;
-    if (item.employee_detail && typeof item.employee_detail === "object") {
-      return item.employee_detail.nama_lengkap || item.employee_detail.name;
-    }
-    if (item.employee && typeof item.employee === "object") {
-      return item.employee.nama_lengkap || item.employee.name;
-    }
-    const empId = typeof item.employee === "object" ? item.employee?.id : item.employee;
-    if (empId) {
-      const found = employees.find((e) => String(e.id) === String(empId));
-      if (found) return found.nama_lengkap || found.name;
-    }
-    return "-";
-  };
+  // const getEmployeeName = (item) => {
+  //   // console.log("getEmployeeName called with item:", item);
+  //   if (item.employee_name) return item.employee_name;
+  //   if (item.employee_detail && typeof item.employee_detail === "object") {
+  //     // console.log("employeename:", item.employee_detail.nama_lengkap);
+  //     return item.employee_detail.nama_lengkap || item.employee_detail.name;
+  //   }
+  //   if (item.employee && typeof item.employee === "object") {
+  //     return item.employee.nama_lengkap || item.employee.name;
+  //   }
+  //   const empId = typeof item.employee === "object" ? item.employee?.id : item.employee;
+  //   if (empId) {
+  //     const found = employees.find((e) => String(e.id) === String(empId));
+  //     if (found) return found.nama_lengkap || found.name;
+  //   }
+  //   return "-";
+  // };
 
   const getEmployeeNik = (item) => {
     if (item.employee_detail && typeof item.employee_detail === "object") {
@@ -166,10 +168,10 @@ const ContractPage = () => {
   // FILTERING & STATISTIK
   // ----------------------------------------------------
   const filteredData = contracts.filter((item) => {
-    const empName = getEmployeeName(item);
-    const empNik = getEmployeeNik(item);
+    const empName = item.employee_detail?.nama_lengkap || item.employee_name || "";
+    const empNik = item.employee_detail?.nik_karyawan || "";
     const contractName = item.name || "";
-
+    console.log("empname:", empName, "empNik:", empNik, "contractName:", contractName);
     const matchesSearch =
       empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       empNik.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -556,6 +558,7 @@ const ContractPage = () => {
                 </td>
               </tr>
             ) : (
+              console.log("Rendering filteredData:", filteredData) ||
               filteredData.map((row, index) => (
                 <tr key={row.id || index} style={tableBodyRowStyle}>
                   <td style={tdStyle}>
@@ -563,10 +566,10 @@ const ContractPage = () => {
                   </td>
                   <td style={tdStyle}>{getTypeBadge(row.contract_type)}</td>
                   <td style={tdStyle}>
-                    <strong>{getEmployeeName(row)}</strong>
+                    <strong>{row.employee_detail.nama_lengkap || "-"}</strong>
                     <br />
                     <small style={{ color: "#64748b" }}>
-                      NIK: {getEmployeeNik(row)}
+                      NIK: {row.employee_detail.nik_karyawan || "-"}
                     </small>
                   </td>
                   <td style={tdStyle}>{row.start_date || "-"}</td>

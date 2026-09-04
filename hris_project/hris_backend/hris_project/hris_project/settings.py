@@ -30,7 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "10.106.109.115",
+    "10.106.186.88",
 ]
 
 
@@ -72,8 +72,8 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://10.106.109.115:5173",
-    "https://10.106.109.115:5173",
+    "http://10.106.186.88:5173",
+    "https://10.106.186.88:5173",
 ]
 
 # Izinkan browser mengirimkan cookie/credentials jika nanti pakai httponly
