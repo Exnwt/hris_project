@@ -7,7 +7,7 @@ class AttedanceSerializers(serializers.ModelSerializer):
         model = Attendance
         fields = '__all__'   
              
-# zktco attendace
+# zkteco attendace
 class AttendanceLogSerializer(serializers.ModelSerializer):
     employee_nik = serializers.CharField(source='employee.nik_karyawan', read_only=True)
     employee_name = serializers.CharField(source='employee.nama_lengkap', read_only=True)

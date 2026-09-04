@@ -8,7 +8,8 @@ import AttendancePages from "./Attendance_pages";
 import BiometricEnrollmentPages from "./BiometricEnrollmentPages";
 import AttendanceScannerPages from "./AttedanceScannerPages";
 import ContractPage from "./Contract_pages";
-import AttendancePage from "./ZktcoAttendance_pagess";
+import AttendancePage from "./ZktecoAttendance_pagess";
+import CronjobPage from "./cronjob_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -186,7 +187,7 @@ export default function DashboardApp({
         return <AttendanceScannerPages />;
       case "biometric-enrollment":
         return <BiometricEnrollmentPages />;
-      case "zktco-attendance":
+      case "zkteco-attendance":
         return <AttendancePage/>;
       case "user-management":
         return <UserManagement />;
@@ -194,6 +195,8 @@ export default function DashboardApp({
         return <GroupPages />;
       case "api-endpoints":
         return hasAccess("APIEndpoints") ? <APIEndpointManager /> : <p>Anda tidak memiliki akses ke halaman ini.</p>;
+      case "cronjob-page":
+        return <CronjobPage/>;
       default:
         return null;
     }
@@ -268,13 +271,13 @@ export default function DashboardApp({
             Biometric Enrollment
           </button>
           <button
-            onClick={() => setActiveMenu("zktco-attendance")}
+            onClick={() => setActiveMenu("zkteco-attendance")}
             style={{
               ...menuButtonStyle,
-              ...(activeMenu === "zktco-attendance" ? activeMenuStyle : {}),
+              ...(activeMenu === "zkteco-attendance" ? activeMenuStyle : {}),
             }}
           >
-            Zktco Attendance
+            Zkteco Attendance
           </button>
 
           <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
@@ -313,6 +316,15 @@ export default function DashboardApp({
               API List
             </button>
           )}
+          <button
+                onClick={() => setActiveMenu("cronjob-page")}
+                style={{
+                  ...menuButtonStyle,
+                  ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
+                }}
+              >
+                Auto Scheuduler / Cronjob
+          </button>
         </div>
 
         {/* LOGOUT */}
