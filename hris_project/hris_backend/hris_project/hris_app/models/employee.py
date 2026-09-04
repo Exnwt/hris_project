@@ -4,6 +4,7 @@ from .company import Company
 from .division import Department, Section, Position
 
 class Employee(models.Model):
+    
 
     class NationalityChoices(models.TextChoices):
         WNI = 'WNI', 'Warga Negara Indonesia'
@@ -30,6 +31,13 @@ class Employee(models.Model):
         S3 = 'S3', 'Strata 3'
         LAINNYA = 'LAINNYA', 'Lainnya'
 
+    biometric_user_id = models.CharField(
+        max_length=50, 
+        unique=True, 
+        null=True, 
+        blank=True, 
+        help_text="User ID / Enrollment ID yang didaftarkan di mesin ZKTeco"
+    )
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True,blank=True, related_name='employee_profile')
     nik_karyawan = models.CharField(max_length=50, unique=True)
     nama_lengkap = models.CharField(max_length=255)

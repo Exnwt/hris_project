@@ -8,6 +8,7 @@ import AttendancePages from "./Attendance_pages";
 import BiometricEnrollmentPages from "./BiometricEnrollmentPages";
 import AttendanceScannerPages from "./AttedanceScannerPages";
 import ContractPage from "./Contract_pages";
+import AttendancePage from "./ZktcoAttendance_pagess";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -185,6 +186,8 @@ export default function DashboardApp({
         return <AttendanceScannerPages />;
       case "biometric-enrollment":
         return <BiometricEnrollmentPages />;
+      case "zktco-attendance":
+        return <AttendancePage/>;
       case "user-management":
         return <UserManagement />;
       case "group-pages":
@@ -263,6 +266,15 @@ export default function DashboardApp({
             }}
           >
             Biometric Enrollment
+          </button>
+          <button
+            onClick={() => setActiveMenu("zktco-attendance")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "zktco-attendance" ? activeMenuStyle : {}),
+            }}
+          >
+            Zktco Attendance
           </button>
 
           <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
