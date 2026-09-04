@@ -17,44 +17,18 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
   const fetchData = async () => {
     setLoading(true);
     setAlert({ type: '', msg: '' });
-  
-    console.group(`🔵 CRUD DEBUG: ${title}`);
-  
+
     try {
-      // console.log("📌 Model/Resource :", title);
-      // console.log("🌐 API Endpoint   :", endpoint);
-      // console.log("📤 Method         :", "GET");
-  
       const res = await api.get(endpoint);
-  
-      // console.log("✅ Status         :", res.status);
-      // console.log("📥 API Response   :", res.data);
-      // console.log("📦 Response Data  :", res.data.results || res.data);
-  
       const data = res.data.results || res.data || [];
-  
-      // console.log("📋 Data List      :", data);
-      // console.log("🔢 Jumlah Data    :", Array.isArray(data) ? data.length : "Bukan Array");
-  
       setDataList(data);
-  
     } catch (err) {
-      // console.error("❌ API ERROR");
-      // console.error("📌 Model/Resource :", title);
-      // console.error("🌐 API Endpoint   :", endpoint);
-      // console.error("📤 Method         :", "GET");
-      // console.error("📛 Error          :", err);
-      // console.error("📛 Response       :", err.response?.data);
-      // console.error("📛 Status         :", err.response?.status);
-  
       setAlert({
         type: 'error',
         msg: `Gagal memuat data: ${err.message}`
       });
-  
     } finally {
       setLoading(false);
-      console.groupEnd();
     }
   };
 
@@ -80,7 +54,7 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
         setAlert({ type: 'success', msg: `Data ${title} berhasil diperbarui!` });
       } else {
         await api.post(endpoint, formData);
-        setAlert({ type: 'success', msg: `Datca ${title} baru berhasil ditambahkan!` });
+        setAlert({ type: 'success', msg: `Data ${title} baru berhasil ditambahkan!` });
       }
       setModalOpen(false);
       fetchData();
@@ -143,7 +117,8 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
       {loading ? (
         <p style={{ color: '#64748b' }}>Memuat data...</p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
+        /* AREA SCROLL TABEL */
+        <div style={tableWrapperStyle}>
           <table style={tableStyle}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
@@ -151,63 +126,75 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
                 {fields.map((f) => (
                   <th key={f.key} style={thStyle}>{f.label}</th>
                 ))}
-                <th style={{ ...thStyle, textAlign: 'center' }}>Aksi</th>
+                <th style={{ ...thStyle, textAlign: 'center', position: 'sticky', right: 0, background: '#f8fafc' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item) => (
-                <tr key={item[primaryKey]} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ ...tdStyle, fontWeight: 'bold' }}>#{item[primaryKey]}</td>
-                  {fields.map((f) => (
-                    <td style={tdStyle} key={f.key}>
-                      {String(item[f.key] ?? '-')}
-                    </td>
-                  ))}
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <button onClick={() => handleOpenModal(item)} style={btnEdit}>Edit</button>
-                    {' '}
-                    <button onClick={() => handleDelete(item[primaryKey])} style={btnDelete}>Hapus</button>
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={fields.length + 2} style={{ ...tdStyle, textAlign: 'center', color: '#94a3b8' }}>
+                    Tidak ada data ditemukan.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredData.map((item) => (
+                  <tr key={item[primaryKey]} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ ...tdStyle, fontWeight: 'bold' }}>#{item[primaryKey]}</td>
+                    {fields.map((f) => (
+                      <td style={tdStyle} key={f.key}>
+                        {String(item[f.key] ?? '-')}
+                      </td>
+                    ))}
+                    <td style={{ ...tdStyle, textAlign: 'center', position: 'sticky', right: 0, background: '#fff' }}>
+                      <button onClick={() => handleOpenModal(item)} style={btnEdit}>Edit</button>
+                      {' '}
+                      <button onClick={() => handleDelete(item[primaryKey])} style={btnDelete}>Hapus</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* MODAL FORM CREATE / EDIT */}
+      {/* MODAL FORM CREATE / EDIT (BISA DI-SCROLL) */}
       {modalOpen && (
         <div style={modalOverlay}>
           <div style={modalBox}>
-            <h4>{editItem ? `Edit ${title} #${editItem[primaryKey]}` : `Tambah ${title} Baru`}</h4>
+            <h4 style={{ marginTop: 0, marginBottom: '15px' }}>
+              {editItem ? `Edit ${title} #${editItem[primaryKey]}` : `Tambah ${title} Baru`}
+            </h4>
             <form onSubmit={handleSave}>
-              {fields.map((f) => (
-                <div key={f.key} style={{ marginBottom: '12px' }}>
-                  <label style={labelStyle}>{f.label} {f.required && '*'}</label>
-                  {f.type === 'select' ? (
-                    <select
-                      value={formData[f.key] || ''}
-                      onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
-                      style={inputStyle}
-                      required={f.required}
-                    >
-                      <option value="">-- Pilih {f.label} --</option>
-                      {f.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={f.type || 'text'}
-                      value={formData[f.key] || ''}
-                      onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
-                      style={inputStyle}
-                      required={f.required}
-                    />
-                  )}
-                </div>
-              ))}
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '15px' }}>
+              <div style={modalFormBody}>
+                {fields.map((f) => (
+                  <div key={f.key} style={{ marginBottom: '12px' }}>
+                    <label style={labelStyle}>{f.label} {f.required && '*'}</label>
+                    {f.type === 'select' ? (
+                      <select
+                        value={formData[f.key] || ''}
+                        onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                        style={inputStyle}
+                        required={f.required}
+                      >
+                        <option value="">-- Pilih {f.label} --</option>
+                        {f.options?.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={f.type || 'text'}
+                        value={formData[f.key] || ''}
+                        onChange={(e) => setFormData({ ...formData, [f.key]: e.target.value })}
+                        style={inputStyle}
+                        required={f.required}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
                 <button type="button" onClick={() => setModalOpen(false)} style={btnCancel}>Batal</button>
                 <button type="submit" style={btnPrimary}>Simpan</button>
               </div>
@@ -219,12 +206,16 @@ export default function GenericCrudManager({ title, endpoint, fields, primaryKey
   );
 }
 
-// STYLES
-const cardStyle = { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff' };
+// PERBAIKAN STYLES
+const cardStyle = { padding: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff', width: '100%', boxSizing: 'border-box', overflow: 'hidden' };
 const headerStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' };
-const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: '13px' };
-const thStyle = { padding: '10px', textAlign: 'left', color: '#475569' };
-const tdStyle = { padding: '10px' };
+
+// WRAPPER SCROLL HARUS DIPAKAI
+const tableWrapperStyle = { width: '100%', overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' };
+const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '900px' }; // minWidth memaksa scroll jika layar kurang lebar
+
+const thStyle = { padding: '10px 12px', textAlign: 'left', color: '#475569', whiteSpace: 'nowrap' };
+const tdStyle = { padding: '10px 12px', whiteSpace: 'nowrap' };
 const inputStyle = { width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' };
 const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '4px' };
 const btnPrimary = { padding: '8px 14px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' };
@@ -233,5 +224,8 @@ const btnDelete = { padding: '4px 8px', background: '#ef4444', color: '#fff', bo
 const btnCancel = { padding: '8px 14px', background: '#64748b', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' };
 const alertSuccess = { padding: '10px', background: '#dcfce7', color: '#15803d', borderRadius: '4px', marginBottom: '15px', fontSize: '13px' };
 const alertError = { padding: '10px', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', marginBottom: '15px', fontSize: '13px' };
-const modalOverlay = { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 50 };
-const modalBox = { background: '#fff', padding: '20px', borderRadius: '8px', width: '400px' };
+
+// STYLE MODAL SCROLLING
+const modalOverlay = { position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 50, padding: '20px' };
+const modalBox = { background: '#fff', padding: '20px', borderRadius: '8px', width: '450px', maxWidth: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column' };
+const modalFormBody = { overflowY: 'auto', maxHeight: '60vh', paddingRight: '5px' };

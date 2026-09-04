@@ -87,10 +87,10 @@ const AttendanceScannerPages = () => {
 
   // 3. Proses Absensi via WAJAH (Scan & Verify)
   const handleScanAndVerifyFace = async () => {
-    if (!isModelsLoaded) {
-      alert("Model AI Wajah belum siap. Mohon tunggu beberapa detik.");
-      return;
-    }
+    // if (!isModelsLoaded) {
+    //   alert("Model AI Wajah belum siap. Mohon tunggu beberapa detik.");
+    //   return;
+    // }
   
     try {
       setLoading(true);

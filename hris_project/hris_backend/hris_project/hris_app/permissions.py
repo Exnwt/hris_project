@@ -1,6 +1,5 @@
 # hris_app/permissions.py
 from rest_framework.permissions import BasePermission
-from .models import GroupAccessAssignment, UserAccessAssignment
 
 
 class HasAPIAccessPermission(BasePermission):
@@ -34,14 +33,6 @@ class HasAPIAccessPermission(BasePermission):
         print('test333',has_group_access)
         if has_group_access:
             return True
-
-        # # 5. CEK 2: Akses Langsung Per-User (UserAccessAssignment)
-        # has_user_access = UserAccessAssignment.objects.filter(
-        #     user=request.user, api_endpoint__code_name=required_codename
-        # ).exists()
-
-        # if has_user_access:
-        #     return True
 
         # 6. Jika tidak ada yang cocok di Group maupun User assignment -> Tolak Akses
         return False

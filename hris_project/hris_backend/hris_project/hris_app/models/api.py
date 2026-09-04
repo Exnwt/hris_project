@@ -25,26 +25,6 @@ class APIEndpoint(models.Model):
         return f"{self.name} ({len(self.code_name)} API)"
     
     
-
-
-class UserAccessAssignment(models.Model):
-    """Menghubungkan langsung User Django ke Template Akses API.
-
-    Berlaku untuk Employee, Superuser, maupun System Account.
-    """
-
-    user = models.ForeignKey(
-        User, related_name="api_access_assignments", on_delete=models.CASCADE
-    )
-    api_endpoint = models.ForeignKey(APIEndpoint, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ("user", "api_endpoint")
-
-    def __str__(self):
-        return f"{self.user.username} -> {self.api_endpoint.name}"
-    
-    
 class GroupAccessAssignment(models.Model):
     """
     Menghubungkan Group Django ke Template Akses API.

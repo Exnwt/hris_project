@@ -21,7 +21,7 @@ export const clearTokenMemory = () => {
 // });
 
 const api = axios.create({
-  baseURL: 'http://10.106.108.194:8000/',
+  baseURL: 'http://10.106.109.115:8000/',
   headers: {
     "Content-Type": "application/json",
   },
@@ -60,7 +60,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const res = await axios.post(
-          'http://10.106.108.194:8000/api/token/refresh/',
+          'http://10.106.109.115:8000/api/token/refresh/',
           {},
           { withCredentials: true }
         );

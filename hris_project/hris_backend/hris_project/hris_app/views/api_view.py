@@ -1,5 +1,5 @@
-from hris_app.models import APIEndpoint, UserAccessAssignment, GroupAccessAssignment
-from hris_app.serializers.api_serializers import APIEndpointSerializer, UserAccessAssignmentSerializer, GroupAccessAssignmentSerializer
+from hris_app.models import APIEndpoint, GroupAccessAssignment
+from hris_app.serializers.api_serializers import APIEndpointSerializer, GroupAccessAssignmentSerializer
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication  # Django Token 
 from rest_framework_simplejwt.authentication import JWTAuthentication #JWT Token
@@ -50,13 +50,6 @@ class APIEndpointViewSet(viewsets.ModelViewSet):
     api_codename = 'APIEndpoints'
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-
-class UserAccessAssignmentViewSet(viewsets.ModelViewSet):
-    queryset = UserAccessAssignment.objects.all()
-    serializer_class = UserAccessAssignmentSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-    
 
 class GroupAccessAssignmentViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]

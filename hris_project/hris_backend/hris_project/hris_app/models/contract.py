@@ -11,11 +11,11 @@ class ContractList(models.Model):
 
     name=models.CharField(max_length=200,unique=True)
     contract_type=models.CharField(max_length=10, choices=CONTRACT_TYPE_CHOICES)
-    employee=models.ForeignKey(Employee,on_delete=models.DO_NOTHING,null=True,blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     description=models.TextField(null=True,blank=True)
     start_date=models.DateField(null=True,blank=True)
     end_date=models.DateField(null=True,blank=True)
-    requested_by=models.ForeignKey(User,on_delete=models.DO_NOTHING,null=True,blank=True,related_name='requested_contracts')
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     approved_by=models.ForeignKey(User,on_delete=models.DO_NOTHING,null=True,blank=True,related_name='approved_contracts')
 
     @property

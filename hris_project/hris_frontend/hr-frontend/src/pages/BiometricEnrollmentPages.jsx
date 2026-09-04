@@ -421,7 +421,13 @@ const tabButtonStyle = { flex: 1, padding: "10px", border: "none", background: "
 const activeTabStyle = { background: "#2563eb", color: "#ffffff" };
 
 const cameraBoxStyle = { position: "relative", width: "100%", height: "300px", background: "#000", borderRadius: "8px", overflow: "hidden", marginBottom: "15px" };
-const videoStyle = { width: "100%", height: "100%", objectFit: "cover" };
+const videoStyle = { 
+  width: "100%", 
+  height: "100%", 
+  objectFit: "cover",
+  transform: "scaleX(-1)",
+  WebkitTransform: "scaleX(-1)",
+};
 const overlayStyle = { position: "absolute", inset: 0, display: "flex", justifyContent: "center", alignItems: "center", color: "#fff", background: "rgba(0,0,0,0.6)", fontSize: "14px" };
 
 const labelStyle = { display: "block", fontSize: "13px", fontWeight: "bold", color: "#475569", marginBottom: "5px" };

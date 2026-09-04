@@ -7,6 +7,7 @@ import APIEndpointManager from "./api_endpoints_pages";
 import AttendancePages from "./Attendance_pages";
 import BiometricEnrollmentPages from "./BiometricEnrollmentPages";
 import AttendanceScannerPages from "./AttedanceScannerPages";
+import ContractPage from "./Contract_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -21,6 +22,14 @@ export default function DashboardApp({
   });
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
+  // State untuk menyimpan opsi Dropdown (Company, Department, Section, Position)
+  const [masterOptions, setMasterOptions] = useState({
+    companies: [],
+    departments: [],
+    sections: [],
+    positions: [],
+  });
+
   // ==========================================
   // FETCH USER PERMISSIONS SAAT LOAD
   // ==========================================
@@ -28,7 +37,6 @@ export default function DashboardApp({
     const fetchPermissions = async () => {
       try {
         const response = await api.get("api/v2/access/my-permissions/");
-        console.log('responsee111', response)
         setUserPermissions({
           isSuperuser: response.data.is_superuser,
           allowedCodenames: response.data.allowed_codenames || [],
@@ -43,13 +51,45 @@ export default function DashboardApp({
     fetchPermissions();
   }, []);
 
+  // ==========================================
+  // FETCH MASTER DATA UNTUK DROPDOWN EMPLOYEE
+  // ==========================================
+  useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        const [compRes, deptRes, secRes, posRes] = await Promise.all([
+          api.get("/api/v1/onboarding/companies/"),
+          api.get("/api/v1/onboarding/departments/"),
+          api.get("/api/v1/onboarding/sections/"),
+          api.get("/api/v1/onboarding/positions/"),
+        ]);
+
+        const compList = compRes.data.results || compRes.data || [];
+        const deptList = deptRes.data.results || deptRes.data || [];
+        const secList = secRes.data.results || secRes.data || [];
+        const posList = posRes.data.results || posRes.data || [];
+
+        setMasterOptions({
+          companies: compList.map((item) => ({ value: item.id, label: item.name })),
+          departments: deptList.map((item) => ({ value: item.id, label: item.name })),
+          sections: secList.map((item) => ({ value: item.id, label: item.name })),
+          positions: posList.map((item) => ({ value: item.id, label: item.name })),
+        });
+      } catch (error) {
+        console.error("Gagal memuat master data dropdown:", error);
+      }
+    };
+
+    fetchMasterData();
+  }, []);
+
   // Helper function untuk cek apakah user punya hak akses tertentu
   const hasAccess = (codename) => {
     if (userPermissions.isSuperuser) return true;
     return userPermissions.allowedCodenames.includes(codename);
   };
 
-  // Konfigurasi menu CRUD
+  // Konfigurasi menu CRUD Master Data
   const companyFields = [
     { key: "name", label: "Nama Company", type: "text", required: true },
     { key: "company_code", label: "Company Code", type: "text", required: true },
@@ -61,9 +101,68 @@ export default function DashboardApp({
   const departmentFields = [{ key: "name", label: "Nama Department", type: "text", required: true }];
   const sectionFields = [{ key: "name", label: "Nama Section", type: "text", required: true }];
   const positionFields = [{ key: "name", label: "Nama Position", type: "text", required: true }];
+
+  // KONFIGURASI EMPLOYEE FIELDS DENGAN SELECT DROPDOWN DINAMIS & PERSYARATAN BACKEND
   const employeeFields = [
     { key: "nik_karyawan", label: "NIK Karyawan", type: "text", required: true },
     { key: "nama_lengkap", label: "Nama Lengkap", type: "text", required: true },
+    { key: "join_date", label: "Tanggal Bergabung", type: "date", required: true },
+    {
+      key: "jenis_kelamin",
+      label: "Jenis Kelamin",
+      type: "select",
+      required: true,
+      options: [
+        { value: "L", label: "Laki-laki" },
+        { value: "P", label: "Perempuan" },
+      ],
+    },
+    { key: "tempat_lahir", label: "Tempat Lahir", type: "text", required: true },
+    { key: "tanggal_lahir", label: "Tanggal Lahir", type: "date", required: true },
+    {
+      key: "pendidikan",
+      label: "Pendidikan Terakhir",
+      type: "select",
+      required: true,
+      options: [
+        { value: "SMA", label: "SMA/Sederajat" },
+        { value: "D3", label: "Diploma 3" },
+        { value: "S1", label: "S1" },
+        { value: "S2", label: "S2" },
+        { value: "S3", label: "S3" },
+        { value: "LAINNYA", label: "Lainnya" },
+      ],
+    },
+
+    // Dropdown Select yang diambil langsung dari API Master Data
+    {
+      key: "company",
+      label: "Company",
+      type: "select",
+      required: true,
+      options: masterOptions.companies,
+    },
+    {
+      key: "department",
+      label: "Department",
+      type: "select",
+      required: true,
+      options: masterOptions.departments,
+    },
+    {
+      key: "section",
+      label: "Section",
+      type: "select",
+      required: false,
+      options: masterOptions.sections,
+    },
+    {
+      key: "position",
+      label: "Position",
+      type: "select",
+      required: true,
+      options: masterOptions.positions,
+    },
   ];
 
   const renderContent = () => {
@@ -78,10 +177,12 @@ export default function DashboardApp({
         return <GenericCrudManager title="Position" endpoint="/api/v1/onboarding/positions/" fields={positionFields} />;
       case "employee":
         return <GenericCrudManager title="Employee" endpoint="/api/v1/onboarding/employees/" fields={employeeFields} />;
+      case "contractlist":
+        return <ContractPage />;
       case "attendance":
-        return <AttendancePages/>;
+        return <AttendancePages />;
       case "attendace-scanner":
-        return <AttendanceScannerPages/>;
+        return <AttendanceScannerPages />;
       case "biometric-enrollment":
         return <BiometricEnrollmentPages />;
       case "user-management":
@@ -89,7 +190,6 @@ export default function DashboardApp({
       case "group-pages":
         return <GroupPages />;
       case "api-endpoints":
-        // Pengecekan keamanan tambahan di level render
         return hasAccess("APIEndpoints") ? <APIEndpointManager /> : <p>Anda tidak memiliki akses ke halaman ini.</p>;
       default:
         return null;
@@ -129,31 +229,40 @@ export default function DashboardApp({
             </button>
           ))}
           <button
-              onClick={() => setActiveMenu("attendance")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "attendance" ? activeMenuStyle : {}),
-              }}
-              
-            >attendance
+            onClick={() => setActiveMenu("contractlist")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "contractlist" ? activeMenuStyle : {}),
+            }}
+          >
+            Contract
           </button>
           <button
-              onClick={() => setActiveMenu("attendace-scanner")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
-              }}
-              
-            >Attendance Scanner
+            onClick={() => setActiveMenu("attendance")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "attendance" ? activeMenuStyle : {}),
+            }}
+          >
+            Attendance
           </button>
           <button
-              onClick={() => setActiveMenu("biometric-enrollment")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
-              }}
-              
-            >Biometric Enrollment
+            onClick={() => setActiveMenu("attendace-scanner")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
+            }}
+          >
+            Attendance Scanner
+          </button>
+          <button
+            onClick={() => setActiveMenu("biometric-enrollment")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
+            }}
+          >
+            Biometric Enrollment
           </button>
 
           <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
@@ -181,7 +290,6 @@ export default function DashboardApp({
               Groups
             </button>
           )}
-          {/* TOMBOL API LIST HANYA MUNCIKL JIKA MEMILIKI HAK AKSES 'APIEndpoints' ATAU SUPERUSER */}
           {!loadingPermissions && hasAccess("APIEndpoints") && (
             <button
               onClick={() => setActiveMenu("api-endpoints")}
@@ -223,7 +331,7 @@ export default function DashboardApp({
   );
 }
 
-// ... Styles Anda tetap sama di bawahnya ...
+// STYLES
 const layoutStyle = { display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "Arial, sans-serif" };
 const sidebarStyle = { width: "230px", background: "#0f172a", color: "#fff", padding: "25px 15px", display: "flex", flexDirection: "column", boxSizing: "border-box" };
 const logoStyle = { padding: "0 10px" };
@@ -232,7 +340,13 @@ const menuButtonStyle = { display: "block", width: "100%", padding: "11px 12px",
 const activeMenuStyle = { background: "#2563eb", color: "#fff" };
 const logoutContainerStyle = { marginTop: "auto" };
 const logoutButtonStyle = { width: "100%", padding: "10px", border: "1px solid #475569", borderRadius: "5px", background: "transparent", color: "#fff", cursor: "pointer" };
-const mainStyle = { flex: 1, padding: "30px", boxSizing: "border-box" };
+const mainStyle = {
+  flex: 1,
+  padding: "30px",
+  boxSizing: "border-box",
+  minWidth: 0,          // Mencegah flexbox meluap ke kanan
+  overflowX: "hidden"   // Memastikan tidak ada horizontal scrollbar luar
+};
 const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" };
 const subtitleStyle = { marginTop: "5px", color: "#64748b", fontSize: "14px" };
 const userBadgeStyle = { background: "#e2e8f0", padding: "8px 15px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" };

@@ -31,7 +31,7 @@ class Employee(models.Model):
         LAINNYA = 'LAINNYA', 'Lainnya'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True,blank=True, related_name='employee_profile')
-    nik_karyawan = models.CharField(max_length=50, primary_key=True)
+    nik_karyawan = models.CharField(max_length=50, unique=True)
     nama_lengkap = models.CharField(max_length=255)
     nationality = models.CharField(
         max_length=3,
