@@ -119,6 +119,13 @@ export default function DashboardApp({
         { value: "P", label: "Perempuan" },
       ],
     },
+    { 
+      key: "biometric_user_id", 
+      label: "ID Biometrik ZKTeco", 
+      type: "text", 
+      required: false,
+      placeholder: "misal: 1001 atau PIN Mesin ZK" 
+    },
     { key: "tempat_lahir", label: "Tempat Lahir", type: "text", required: true },
     { key: "tanggal_lahir", label: "Tanggal Lahir", type: "date", required: true },
     {
