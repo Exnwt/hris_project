@@ -37,11 +37,12 @@ from hris_app.serializers.onboarding import (
     DepartmentSerializer,
     SectionSerializer,
     PositionSerializer,
-    EmployeeSerializer,
     EmployeeStatusHistorySerializer,
     EmployeeContactHistorySerializer,
     EmployeeSubmissionStagingSerializer,
 )
+
+from hris_app.serializers.employee_serializer import EmployeeSerializer
 
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])

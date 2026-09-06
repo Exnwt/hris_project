@@ -24,4 +24,5 @@ urlpatterns = [
     path('api/v2/', include('hris_app.urls.user_management', namespace='user_management')),
     path('api/v2/access/', include('hris_app.urls.api_urls', namespace='api_access_assigment')),
     path('api/v2/system/', include('hris_app.urls.system_urls', namespace='system')), # <-- TAMBAHKAN INI
+
 ]

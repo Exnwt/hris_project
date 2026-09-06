@@ -44,21 +44,6 @@ class AttendanceLogViewSet(viewsets.ReadOnlyModelViewSet):
         print("iniqueryset", queryset)
         return queryset
 
-
-class ZKTecoPushSyncView(APIView):
-    """API Endpoint untuk menerima Push Sync Log dari Script Python PyZK / Service Mesin ZK"""
-    permission_classes = [IsAuthenticated] # Gunakan API Key atau Token Auth
-
-    def post(self, request):
-        is_many = isinstance(request.data, list)
-        serializer = ZKTecoSyncSerializer(data=request.data, many=is_many)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "message": "Log absensi berhasil disinkronisasi"}, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 # @method_decorator(csrf_exempt, name='dispatch')
 # class ZKDeviceCDataView(View):
 #     """

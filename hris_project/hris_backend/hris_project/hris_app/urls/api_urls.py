@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 # Import Views
 from hris_app.views.api_view import APIEndpointViewSet, GroupAccessAssignmentViewSet, UserPermissionView
 from hris_app.views.biometric_view import BiometricEnrollmentView, BiometricVerificationView
-from hris_app.views.attendance_view import AttendanceViewSet, ZKTecoPushSyncView, AttendanceLogViewSet
+from hris_app.views.attendance_view import AttendanceViewSet, AttendanceLogViewSet
 
 app_name = 'api_access_assigment'
 
@@ -21,7 +21,6 @@ urlpatterns = [
     # Biometric Machine / ZKTeco Sync Endpoints
     path('biometric/enroll/', BiometricEnrollmentView.as_view(), name='biometric-enroll'),
     path('biometric/verify-clock/', BiometricVerificationView.as_view(), name='biometric-verify-clock'),
-    path('zkteco/sync/', ZKTecoPushSyncView.as_view(), name='zkteco-sync'),
     
     # Router Default URLs
     path('', include(router.urls)), 

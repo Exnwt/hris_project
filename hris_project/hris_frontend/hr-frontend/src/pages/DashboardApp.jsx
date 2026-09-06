@@ -10,6 +10,7 @@ import AttendanceScannerPages from "./AttedanceScannerPages";
 import ContractPage from "./Contract_pages";
 import AttendancePage from "./ZktecoAttendance_pagess";
 import CronjobPage from "./cronjob_pages";
+import EmployeePage from "./Employee_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -185,7 +186,7 @@ export default function DashboardApp({
       case "position":
         return <GenericCrudManager title="Position" endpoint="/api/v1/onboarding/positions/" fields={positionFields} />;
       case "employee":
-        return <GenericCrudManager title="Employee" endpoint="/api/v1/onboarding/employees/" fields={employeeFields} />;
+        return <EmployeePage/>;
       case "contractlist":
         return <ContractPage />;
       case "attendance":
