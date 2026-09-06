@@ -56,10 +56,6 @@ class SyncEmployeeToZkBiotimeView(APIView):
             "area": [1],  # ID Area Mesin di ZK
             "position" : employee.position.id if employee.position else 1,
         }
-        data_check = {
-            "emp_code" : employee.nik_karyawan,
-            "first_name" : employee.nama_lengkap,
-        }
 
         # 4. Header dengan Token JWT ZK
         headers = {
@@ -70,17 +66,8 @@ class SyncEmployeeToZkBiotimeView(APIView):
         # 5. Kirim Request Sync Server-to-Server
         try:
             sync_url = f"{self.ZK_BASE_URL}/personnel/api/employees/"
-            zk_dataCheck = requests.get(
-                sync_url,
-                params =data_check,
-                headers=headers,
-                timeout=10
-            )
-            if zk_dataCheck.status_code in [200, 201]:
-                res_data = zk_dataCheck.json()
-                data_list = res_data.get('data', [])
-                res_id = data_list[0].get('id')
-                update_url = f"{sync_url}{res_id}/"
+            if employee.biometric_user_id :
+                update_url = f"{sync_url}{employee.biometric_user_id}/"
                 zk_response = requests.put(
                     update_url,
                     json =zk_payload,
@@ -92,13 +79,6 @@ class SyncEmployeeToZkBiotimeView(APIView):
                         "message": f"Berhasil sinkronisasi karyawan1 {employee.nama_lengkap} ke ZKTeco BioTime!",
                         "zk_data": zk_response.json()
                     }, status=status.HTTP_200_OK)
-                else:
-                    return Response({
-                    "detail": "ZKTeco Menolak Request",
-                    "error": zk_response.json()
-                }, status=zk_response.status_code)
-
-
             zk_response = requests.post(
                 sync_url,
                 json=zk_payload,
