@@ -10,10 +10,6 @@ from hris_app.views.onboarding import (
  )
 
 from hris_app.views.onboarding import (
-    CompanyViewSet,
-    DepartmentViewSet,
-    SectionViewSet,
-    PositionViewSet,
     EmployeeViewSet,
     EmployeeStatusHistoryViewSet,
     EmployeeContactHistoryViewSet,
@@ -24,10 +20,6 @@ from hris_app.views.master_data import QuickCreateMasterAPIView
 app_name = 'onboarding'
 
 router = DefaultRouter()
-router.register(r'companies', CompanyViewSet, basename='company')
-router.register(r'departments', DepartmentViewSet, basename='department')
-router.register(r'sections', SectionViewSet, basename='section')
-router.register(r'positions', PositionViewSet, basename='position')
 router.register(r'employees', EmployeeViewSet, basename='employee')
 router.register(r'employee-status-histories', EmployeeStatusHistoryViewSet, basename='employee-status-history')
 router.register(r'employee-contact-histories', EmployeeContactHistoryViewSet, basename='employee-contact-history')

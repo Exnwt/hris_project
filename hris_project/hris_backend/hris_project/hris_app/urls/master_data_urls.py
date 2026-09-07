@@ -1,6 +1,7 @@
 from django.urls import include, path
 from hris_app.views.contract_view import ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
-from hris_app.views.onboarding import CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet, EmployeeViewSet
+from hris_app.views.masterData_view import CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet
+from hris_app.views.onboarding import EmployeeViewSet
 from rest_framework.routers import DefaultRouter
 
 

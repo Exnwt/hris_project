@@ -11,6 +11,10 @@ import ContractPage from "./Contract_pages";
 import AttendancePage from "./ZktecoAttendance_pagess";
 import CronjobPage from "./cronjob_pages";
 import EmployeePage from "./Employee_pages";
+import CompanyPage from "./company_pages";
+import DepartmentPage from "./department_pages";
+import SectionPage from "./section_pages";
+import PositionPage from "./position_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -61,8 +65,6 @@ export default function DashboardApp({
     const fetchMasterData = async () => {
       try {
         const [compRes, deptRes, secRes, posRes] = await Promise.all([
-          api.get("/api/v1/onboarding/companies/"),
-          api.get("/api/v1/onboarding/departments/"),
           api.get("/api/v1/onboarding/sections/"),
           api.get("/api/v1/onboarding/positions/"),
         ]);
@@ -178,13 +180,13 @@ export default function DashboardApp({
   const renderContent = () => {
     switch (activeMenu) {
       case "company":
-        return <GenericCrudManager title="Company" endpoint="/api/v1/onboarding/companies/" fields={companyFields} />;
+        return <CompanyPage/>;
       case "department":
-        return <GenericCrudManager title="Department" endpoint="/api/v1/onboarding/departments/" fields={departmentFields} />;
+        return <DepartmentPage/>;
       case "section":
-        return <GenericCrudManager title="Section" endpoint="/api/v1/onboarding/sections/" fields={sectionFields} />;
+        return <SectionPage/>;
       case "position":
-        return <GenericCrudManager title="Position" endpoint="/api/v1/onboarding/positions/" fields={positionFields} />;
+        return <PositionPage/>;
       case "employee":
         return <EmployeePage/>;
       case "contractlist":
@@ -211,10 +213,6 @@ export default function DashboardApp({
   };
 
   const menus = [
-    { key: "company", label: "Company" },
-    { key: "department", label: "Department" },
-    { key: "section", label: "Section" },
-    { key: "position", label: "Position" },
     { key: "employee", label: "Employee" },
   ];
 
@@ -229,19 +227,61 @@ export default function DashboardApp({
 
         <div style={{ marginTop: "30px" }}>
           <p style={sectionTitleStyle}>MASTER DATA</p>
-
-          {menus.map((menu) => (
+          {!loadingPermissions && hasAccess("company-list") && (
             <button
-              key={menu.key}
-              onClick={() => setActiveMenu(menu.key)}
+              onClick={() => setActiveMenu("company")}
               style={{
                 ...menuButtonStyle,
-                ...(activeMenu === menu.key ? activeMenuStyle : {}),
+                ...(activeMenu === "company" ? activeMenuStyle : {}),
               }}
             >
-              {menu.label}
+              Company
             </button>
-          ))}
+          )}
+          {!loadingPermissions && hasAccess("department-list") && (
+            <button
+              onClick={() => setActiveMenu("department")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "department" ? activeMenuStyle : {}),
+              }}
+            >
+              Department
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("section-list") && (
+            <button
+              onClick={() => setActiveMenu("section")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "section" ? activeMenuStyle : {}),
+              }}
+            >
+              Section
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("position-list") && (
+            <button
+              onClick={() => setActiveMenu("position")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "position" ? activeMenuStyle : {}),
+              }}
+            >
+              Position
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("employee-list") && (
+            <button
+              onClick={() => setActiveMenu("employee")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "employee" ? activeMenuStyle : {}),
+              }}
+            >
+              Employee
+            </button>
+          )}
           <button
             onClick={() => setActiveMenu("contractlist")}
             style={{

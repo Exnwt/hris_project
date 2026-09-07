@@ -1,12 +1,12 @@
 import axios from "axios";
-
 import api, {
   setTokenKeMemory,
   clearTokenMemory,
 } from "../api";
+import { useState, useEffect } from "react";
 
 
-const API_BASE_URL = "http://10.106.108.13:8000";
+const API_BASE_URL = "http://10.106.108.171:8000";
 
 
 // =====================================================
@@ -68,4 +68,47 @@ export const logout = () => {
 
   clearTokenMemory();
 
+};
+
+// src/hooks/usePermissions.js
+
+export const usePermissions = () => {
+  const [userPermissions, setUserPermissions] = useState({
+    isSuperuser: false,
+    allowedCodenames: [],
+  });
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
+
+  const fetchPermissions = async () => {
+    setLoadingPermissions(true);
+    try {
+      const response = await api.get("api/v2/access/my-permissions/");
+      setUserPermissions({
+        isSuperuser: response.data.is_superuser,
+        allowedCodenames: response.data.allowed_codenames || [],
+      });
+    } catch (error) {
+      console.error("Gagal mengambil permission user:", error);
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPermissions();
+  }, []);
+
+  // Helper Hak Akses (Mendukung Superuser & Wildcard "*")
+  const hasAccess = (codename) => {
+    if (userPermissions.isSuperuser) return true;
+    if (userPermissions.allowedCodenames.includes("*")) return true;
+    return userPermissions.allowedCodenames.includes(codename);
+  };
+
+  return {
+    userPermissions,
+    loadingPermissions,
+    hasAccess,
+    refreshPermissions: fetchPermissions, // Opsional jika butuh refresh manual
+  };
 };
