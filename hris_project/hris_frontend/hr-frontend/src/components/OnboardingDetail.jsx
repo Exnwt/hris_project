@@ -10,7 +10,7 @@ function OnboardingDetail() {
     if (!id) return;
 
     // PERBAIKAN: Ditambahkan '/' di awal endpoint
-    api.get(`/api/v1/onboarding/submission/${id}/`)
+    api.get(`/api/v1/onboarding/submissions/${id}/`)
       .then((response) => {
         setHasilData(response.data.data);
         setPesanServer(response.data.message);

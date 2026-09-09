@@ -7,8 +7,10 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from hris_app.views.webhook.onboarding_webhook import IncomingWebhookView
 
 urlpatterns = [
+    path('api/webhooks/incoming-employee/', IncomingWebhookView.as_view(), name='webhook-incoming-employee'),
     path('admin/', admin.site.urls),
     path("api/auth/", include("hris_app.urls.auth")),
     

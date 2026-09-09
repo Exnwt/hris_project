@@ -8,7 +8,6 @@ from hris_app.models import (
 )
 
 class EmployeeSubmissionStagingSerializer(serializers.ModelSerializer):
-
   class Meta:
     model = EmployeeSubmissionStaging
     fields = ['id', 'raw_payload', 'is_processed', 'created_at']

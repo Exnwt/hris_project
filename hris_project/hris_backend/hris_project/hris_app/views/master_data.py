@@ -1,4 +1,4 @@
-from hris_app.permissions import HasApiWhitelistPermission
+from hris_app.permissions import HasAPIAccessPermission
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication #JWT Token
 from rest_framework import permissions, status
@@ -11,7 +11,7 @@ class QuickCreateMasterAPIView(APIView):
   """API Universal untuk Quick Create Master Data via Pop-up Modal."""
   
   authentication_classes = [JWTAuthentication]
-  permission_classes = [ HasApiWhitelistPermission]
+  permission_classes = [ HasAPIAccessPermission]
 
 
   def post(self, request, master_type):

@@ -168,10 +168,10 @@ export default function SubmissionVerifyView({ submissionId, onBack }) {
   const fetchAllMasterData = async () => {
     try {
       const [resComp, resDept, resSec, resPos] = await Promise.all([
-        api.get('/api/v1/onboarding/companies/'),
-        api.get('/api/v1/onboarding/departments/'),
-        api.get('/api/v1/onboarding/sections/'),
-        api.get('/api/v1/onboarding/positions/'),
+        api.get('/api/v1/master-data/Company/'),
+        api.get('/api/v1/master-data/Department/'),
+        api.get('/api/v1/master-data/Section/'),
+        api.get('/api/v1/master-data/Position/'),
       ]);
 
       const compList = resComp.data.results || resComp.data || [];
@@ -320,7 +320,7 @@ export default function SubmissionVerifyView({ submissionId, onBack }) {
       return;
     }
     try {
-      const res = await api.post('/api/v1/onboarding/positions/', { name: positionName });
+      const res = await api.post('/api/v1/master-data/Position/', { name: positionName });
       await fetchAllMasterData();
       setHrAssigned((prev) => ({ ...prev, position_id: res.data.id }));
       setPositionModal({ open: false, name: '' });
@@ -423,7 +423,7 @@ export default function SubmissionVerifyView({ submissionId, onBack }) {
 
     try {
       // 1. Commit Employee
-      await api.post('/api/v1/onboarding/employees/', employeePayload);
+      await api.post('/api/v1/master-data/Employees/', employeePayload);
 
       // 2. Commit Status History
       await api.post('/api/v1/onboarding/employee-status-histories/', {

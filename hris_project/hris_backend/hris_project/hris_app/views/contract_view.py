@@ -24,6 +24,7 @@ class ContractDetailReadView(generics.RetrieveAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated, HasAPIAccessPermission]
 
+
 # 3. Khusus CREATE
 class ContractCreateView(generics.CreateAPIView):
     api_codename = 'ContractCreate'

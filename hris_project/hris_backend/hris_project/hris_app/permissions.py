@@ -1,6 +1,6 @@
 # hris_app/permissions.py
 from rest_framework.permissions import BasePermission
-
+from hris_app.models import GroupAccessAssignment
 
 class HasAPIAccessPermission(BasePermission):
     """Custom Permission untuk mengecek apakah User / Group milik User
@@ -63,6 +63,8 @@ class HasApiWhitelistPermission(BasePermission):
 
         # 3. Administrator boleh mengakses semua API
         if request.user.groups.filter(name='ADMINISTRATOR').exists():
+            return True
+        if request.user.is_superuser:
             return True
 
         # 4. Cek permission berdasarkan action ViewSet

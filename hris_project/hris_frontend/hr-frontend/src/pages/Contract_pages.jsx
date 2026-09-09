@@ -35,7 +35,7 @@ const ContractPage = () => {
   });
 
   const BASE_URL = "/api/v1/master-data/ContractList";
-  const EMPLOYEE_URL = "/api/v1/onboarding/employees";
+  const EMPLOYEE_URL = "/api/v1/master-data/Employees";
 
   // ----------------------------------------------------
   // FETCH USER PERMISSIONS

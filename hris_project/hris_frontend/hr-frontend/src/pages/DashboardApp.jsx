@@ -15,6 +15,7 @@ import CompanyPage from "./company_pages";
 import DepartmentPage from "./department_pages";
 import SectionPage from "./section_pages";
 import PositionPage from "./position_pages";
+import OnboardingPage1 from "./onboarding_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -65,8 +66,8 @@ export default function DashboardApp({
     const fetchMasterData = async () => {
       try {
         const [compRes, deptRes, secRes, posRes] = await Promise.all([
-          api.get("/api/v1/onboarding/sections/"),
-          api.get("/api/v1/onboarding/positions/"),
+          api.get("/api/v1/master-data/Section/"),
+          api.get("/api/v1/master-data/Position/"),
         ]);
 
         const compList = compRes.data.results || compRes.data || [];
@@ -189,6 +190,8 @@ export default function DashboardApp({
         return <PositionPage/>;
       case "employee":
         return <EmployeePage/>;
+      case "onboarding":
+        return <OnboardingPage1/>;
       case "contractlist":
         return <ContractPage />;
       case "attendance":
@@ -280,6 +283,17 @@ export default function DashboardApp({
               }}
             >
               Employee
+            </button>
+          )}
+           {!loadingPermissions && hasAccess("OnboardingList") && (
+            <button
+              onClick={() => setActiveMenu("onboarding")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "onboarding" ? activeMenuStyle : {}),
+              }}
+            >
+              onBoarding List
             </button>
           )}
           <button

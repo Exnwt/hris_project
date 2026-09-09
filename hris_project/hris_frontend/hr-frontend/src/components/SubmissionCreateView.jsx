@@ -40,7 +40,7 @@ export default function SubmissionCreateView({ onSuccess }) {
     setMessage({ type: '', text: '' });
 
     try {
-      await api.post('/api/v1/onboarding/submission/create/', {
+      await api.post('/api/v1/onboarding/submissions/create/', {
         raw_payload: formData,
       });
 

@@ -9,7 +9,7 @@ function OnboardingForm() {
     e.preventDefault();
 
     // PERBAIKAN: Ditambahkan '/' di awal endpoint
-    api.post('/api/v1/onboarding/submission/create/', { raw_payload: payload })
+    api.post('/api/v1/onboarding/submissions/create/', { raw_payload: payload })
       .then((response) => {
         setPesan('Berhasil disimpan!');
         setPayload('');
