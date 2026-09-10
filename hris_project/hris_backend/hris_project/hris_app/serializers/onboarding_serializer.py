@@ -1,11 +1,19 @@
 from rest_framework import serializers
 
 # ─── IMPORT MODEL DARI APLIKASI EMPLOYEES ──────────────────────────
-from hris_app.models import (
-    EmployeeStatusHistory,
-    EmployeeContactHistory,
-    EmployeeSubmissionStaging,
-)
+from hris_app.models import EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging, Employee
+
+class OnboardingApproveSerializer(serializers.ModelSerializer) :
+   class Meta:
+        model = Employee
+        fields = '__all__'
+        read_only_fiels = ['nik_karyawan','nama_lengkap' ]
+        extra_kwargs = {
+            'nama_lengkap':{
+                'required':True,
+                'allow_blank':False
+            }
+        }
 
 class EmployeeSubmissionStagingSerializer(serializers.ModelSerializer):
   class Meta:

@@ -1,22 +1,20 @@
-# hris_app/views.py
 import hmac
 import hashlib
 import json
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from hris_app.models import Employee, Company
 
-# Secret Key Rahasia yang disepakati antara hris_app dan Project Kedua
 WEBHOOK_SECRET = "SecretTokenRahasiaHRIS2026"
 
 class IncomingWebhookView(APIView):
-    # Bebaskan dari autentikasi standar (karena dipanggil oleh server external)
     authentication_classes = []
     permission_classes = []
 
     def post(self, request):
-        # 1. Ambil Header Keamanan (Signature / Token)
+        # 1. Ambil Header Keamanan
         signature = request.headers.get("X-Webhook-Signature")
 
         if not signature:
@@ -41,7 +39,7 @@ class IncomingWebhookView(APIView):
 
         # 3. Proses Payload Data
         data = request.data
-        event_type = data.get("event")  # Contoh: "employee.created" atau "employee.updated"
+        event_type = data.get("event")
         payload = data.get("data", {})
 
         print(f"[WEBHOOK RECEIVED] Event: {event_type}, Payload: {payload}")
@@ -53,67 +51,105 @@ class IncomingWebhookView(APIView):
                     if isinstance(val, str) and not val.strip():
                         return None
                     return val
-                nik = payload.get("nik_karyawan")
-                nama = payload.get("nama_lengkap")
-                passport = clean_val(payload.get("passport_number"))
+
+                # Ambil Identifier Kunci
+                onboarding_id = clean_val(payload.get("onboarding_id"))
                 nik_ktp = clean_val(payload.get("nik_ktp"))
-                # Update atau Create Karyawan berdasarkan NIK
-                employee, created = Employee.objects.update_or_create(
-                    nik_karyawan=nik,
-                    defaults={
-                        # Data Utama
-                        "nama_lengkap": nama,
-                        "passport_number": passport,
-                        "nik_ktp": nik_ktp,
-                        "phone_number": clean_val(payload.get("phone_number")),
-                        "email": clean_val(payload.get("email")),
-                        "jenis_kelamin": payload.get("gender"),
-                        "tempat_lahir": payload.get("place_birth"),
-                        "tanggal_lahir": payload.get("date_birth"),
-                        "agama": payload.get("religion"),
-                        "blood_type": payload.get("blood_type"),
-                        # "employee_status": payload.get("employee_status"),
-                        
-                        # Data Alamat
-                        "address": payload.get("address"),
-                        "kelurahan": payload.get("kelurahan"),
-                        "kecamatan": payload.get("kecamatan"),
-                        "city": payload.get("city"),
-                        "province": payload.get("province"),
-                        "pos_code": payload.get("pos_code"),
+                nik = clean_val(payload.get("nik_karyawan"))
+                nama = clean_val(payload.get("nama_lengkap"))
 
-                        # Ukuran Seragam
-                        "shirt_size": payload.get("shirt_size"),
-                        "pants_size": payload.get("pants_size", 0),
-                        "shoes_size": payload.get("shoes_size", 0),
+                # 🟢 4. LOGIKA PENCEKAN KEBERADAAN DATA (LOOKUP)
+                # Cari record berdasarkan onboarding_id OR nik_ktp OR nik_karyawan
+                lookup_query = Q()
+                if onboarding_id:
+                    lookup_query |= Q(onboarding_id=onboarding_id)
+                if nik_ktp:
+                    lookup_query |= Q(nik_ktp=nik_ktp)
+                if nik:
+                    lookup_query |= Q(nik_karyawan=nik)
 
-                        # Data Keluarga
-                        # "mom_name": payload.get("mom_name"),
-                        "couple_name": payload.get("couple_name"),
-                        "couple_date_birth": payload.get("couple_date_birth"),
-                        "first_child_name": payload.get("first_child_name"),
-                        "first_child_date_birth": payload.get("first_child_date_birth"),
-                        "second_child_name": payload.get("second_child_name"),
-                        "second_child_date_birth": payload.get("second_child_date_birth"),
-                        "third_child_name": payload.get("third_child_name"),
-                        "third_child_date_birth": payload.get("third_child_date_birth"),
+                employee = None
+                if lookup_query:
+                    employee = Employee.objects.filter(lookup_query).first()
 
-                        # Flag Status Onboarding
-                        "is_onboarding": True,
-                    }
-                )
+                # 🟢 5. PERSIAPAN DATA DEFAULT UPDATE / CREATE
+                defaults_data = {
+                    "nama_lengkap": nama,
+                    "nik_karyawan": nik,
+                    "nik_ktp": nik_ktp,
+                    "passport_number": clean_val(payload.get("passport_number")),
+                    "nationality": payload.get("nationality", "WNI"),
+                    "pendidikan": payload.get("pendidikan", "LAINNYA"),
+                    "phone_number": clean_val(payload.get("phone_number")),
+                    "email": clean_val(payload.get("email")),
+                    "jenis_kelamin": payload.get("jenis_kelamin", "L"),
+                    "tempat_lahir": clean_val(payload.get("tempat_lahir")),
+                    "tanggal_lahir": clean_val(payload.get("tanggal_lahir")),
+                    "agama": payload.get("agama", "ISLAM"),
+                    "blood_type": clean_val(payload.get("blood_type")),
 
-                action_str = "dibuat" if created else "diperbarui"
+                    # Data Alamat
+                    "address": clean_val(payload.get("address")),
+                    "kelurahan": clean_val(payload.get("kelurahan")),
+                    "kecamatan": clean_val(payload.get("kecamatan")),
+                    "city": clean_val(payload.get("city")),
+                    "province": clean_val(payload.get("province")),
+                    "pos_code": clean_val(payload.get("pos_code")),
+
+                    # Ukuran Seragam & Perlengkapan
+                    "shirt_size": payload.get("shirt_size", "S"),
+                    "pants_size": int(payload.get("pants_size") or 30),
+                    "shoes_size": int(payload.get("shoes_size") or 35),
+
+                    # Data Keluarga & Status
+                    "Employee_status": payload.get("Employee_status", "TK/0"),
+                    "couple_name": clean_val(payload.get("couple_name")),
+                    "couple_date_birth": clean_val(payload.get("couple_date_birth")),
+                    "first_child_name": clean_val(payload.get("first_child_name")),
+                    "first_child_date_birth": clean_val(payload.get("first_child_date_birth")),
+                    "second_child_name": clean_val(payload.get("second_child_name")),
+                    "second_child_date_birth": clean_val(payload.get("second_child_date_birth")),
+                    "third_child_name": clean_val(payload.get("third_child_name")),
+                    "third_child_date_birth": clean_val(payload.get("third_child_date_birth")),
+
+                    # Kontak Darurat
+                    "emergency_contact_name": clean_val(payload.get("emergency_contact_name")),
+                    "emergency_contact_phone": clean_val(payload.get("emergency_contact_phone")),
+                    "emergency_contact_relation": payload.get("emergency_contact_relation", "ayah"),
+
+                    # ID Onboarding dan Flag Status
+                    "is_onboarding": True,
+                    "form_status": "progress",
+                    "status": "progress"
+                }
+
+                if onboarding_id:
+                    defaults_data["onboarding_id"] = onboarding_id
+
+                # 🟢 6. EKSEKUSI UPDATE ATAU CREATE
+                if employee:
+                    # Update data yang sudah ditemukan
+                    for key, value in defaults_data.items():
+                        setattr(employee, key, value)
+                    employee.save()
+                    created = False
+                else:
+                    # Buat data baru jika tidak ditemukan
+                    employee = Employee.objects.create(**defaults_data)
+                    created = True
+
+                action_str = "dibuat" if created else "diperbarui (Update)"
+                identifier_display = onboarding_id or nik_ktp or nik or nama
+                
                 return Response({
                     "status": "success",
-                    "message": f"Data karyawan {nik} berhasil {action_str} via Webhook."
+                    "message": f"Data karyawan ({identifier_display}) berhasil {action_str} via Webhook."
                 }, status=status.HTTP_200_OK)
-            
 
             return Response({"message": "Event tidak dikenali, diabaikan."}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            print ('aaaaaaaaaaa', e)
+            print('[WEBHOOK PROCESS ERROR]', e)
             return Response({
                 "status": "error",
                 "detail": f"Gagal memproses data: {str(e)}"

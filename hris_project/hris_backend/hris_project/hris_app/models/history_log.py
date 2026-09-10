@@ -11,3 +11,4 @@ class HistoryLog(models.Model):
     model_name = models.CharField(max_length=100, null=True, blank=True)
     model_id = models.IntegerField(null=True, blank=True)
     
+    

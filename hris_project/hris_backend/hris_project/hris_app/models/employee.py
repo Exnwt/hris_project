@@ -55,13 +55,13 @@ class Employee(models.Model):
         ('draft', 'Draft'),
         ('progress', 'In Progress'),
         ('active', 'Active'),
-        ('inactive' 'Inactive')
+        ('inactive', 'Inactive')
     ]
     FORM_STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('progress', 'In Progress'),
         ('approved', 'Approved'),
-        ('rejected' 'Rejected')
+        ('rejected', 'Rejected')
     ]
 
     RELATION_CHOICE = [
@@ -91,7 +91,7 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True,blank=True, related_name='employee_profile')
     # A. Data diri
     nama_lengkap = models.CharField(max_length=255)
-    nik_karyawan = models.CharField(max_length=50, unique=True)
+    nik_karyawan = models.CharField(max_length=50, null=True, blank=True)
     nik_ktp = models.CharField(max_length=16, unique=True, null=True, blank=True)
     nationality = models.CharField(
         max_length=3,
@@ -101,13 +101,16 @@ class Employee(models.Model):
     phone_number = models.CharField(_("No Whatsapp"), max_length=18, null=True, blank=True) 
     email = models.EmailField(_("Email"), max_length=254, null=True, blank=True)
     jenis_kelamin = models.CharField(max_length=1, choices=GenderChoices.choices)
-    tempat_lahir = models.CharField(max_length=100)
-    tanggal_lahir = models.DateField()
+    tempat_lahir = models.CharField(max_length=100, null=True, blank=True)
+    tanggal_lahir = models.DateField(null=True, blank=True)
     agama = models.CharField(max_length=20, choices=ReligionChoices.choices, default=ReligionChoices.ISLAM)
     blood_type = models.CharField(_("Blood Type"), max_length=2, choices=BLOOD_CHOICE, null=True, blank=True) 
-    pendidikan = models.CharField(max_length=20, choices=EducationChoices.choices)
+    pendidikan = models.CharField(max_length=20, choices=EducationChoices.choices, default='LAINNYA')
     passport_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     join_date = models.DateField(null=True, blank=True)
+    Employee_status = models.CharField(_("Employee Relation Status"), max_length=10, choices=EMPLOYEE_STATUS_CHOICES, default='TK/0')
+    status = models.CharField(_("Status"), max_length=15, choices=STATUS_CHOICES, default='draft')
+    form_status = models.CharField(_("Form Status"), max_length=15, choices=FORM_STATUS_CHOICES, default='draft')
 
     # Relasi Organisasi (Menggunakan PROTECT agar aman dari hapus tidak sengaja)
     company = models.ForeignKey(Company, on_delete=models.PROTECT, null=True, blank=True)
@@ -153,6 +156,7 @@ class Employee(models.Model):
     is_staff = models.BooleanField(_("Grade"), default=False)
     raw_payload = models.JSONField(null=True, blank=True)
     is_onboarding = models.BooleanField(_("Is Onboarding"),  default=False)
+    onboarding_id = models.CharField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f'{self.nik_karyawan} - {self.nama_lengkap}'

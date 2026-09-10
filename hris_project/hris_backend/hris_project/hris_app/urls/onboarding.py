@@ -9,7 +9,8 @@ from hris_app.views.onboarding import (
           employee_submission_detail,
  )
 
-from hris_app.views.onboarding import EmployeeViewSet, EmployeeStatusHistoryViewSet, EmployeeContactHistoryViewSet, EmployeeSubmissionStagingViewSet, OnboardingListView
+from hris_app.views.onboarding import EmployeeStatusHistoryViewSet, EmployeeContactHistoryViewSet, EmployeeSubmissionStagingViewSet, OnboardingListView, OnboardingApproveView, OnboardingCreateView, OnboardingDetailView
+from hris_app.views.employee_view import EmployeeViewSet
 
 from hris_app.views.master_data import QuickCreateMasterAPIView
 
@@ -23,7 +24,16 @@ router.register(r'employee-contact-histories', EmployeeContactHistoryViewSet, ba
 router.register(r'staging-submissions', EmployeeSubmissionStagingViewSet, basename='staging-submission')
 
 urlpatterns = [
-    path("onBoarding-List/", OnboardingListView.as_view(), name="OnboardingList"),
+    # onboarding
+    path("onboarding/", OnboardingListView.as_view(), name="OnboardingList"),
+    path('onboarding/<int:pk>/', OnboardingDetailView.as_view(), name='OnboardingDetail'),
+    path('onboarding/<int:pk>/approve/', OnboardingApproveView.as_view(), name='OnboardingUpdate'),
+    path('onboarding/<int:pk>/update/', OnboardingApproveView.as_view(), name='OnboardingUpdate'),
+    path('onboarding/create/', OnboardingCreateView.as_view(), name='OnboardingCreate'),
+
+
+
+
     path('submissions/create/',employee_submission_create_view, name='api-employee-submission-create'),
     path('submissions/<int:pk>/', employee_submission_detail, name='api-employee-submission-detail'),
     path('master-quick-create/<str:master_type>/',QuickCreateMasterAPIView.as_view(),name='api_master_quick_create'),

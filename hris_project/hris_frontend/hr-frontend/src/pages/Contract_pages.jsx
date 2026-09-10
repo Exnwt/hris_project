@@ -171,7 +171,6 @@ const ContractPage = () => {
     const empName = item.employee_detail?.nama_lengkap || item.employee_name || "";
     const empNik = item.employee_detail?.nik_karyawan || "";
     const contractName = item.name || "";
-    console.log("empname:", empName, "empNik:", empNik, "contractName:", contractName);
     const matchesSearch =
       empName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       empNik.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -211,6 +210,7 @@ const ContractPage = () => {
     setSelectedId(id);
     try {
       const response = await api.get(`${BASE_URL}/${id}/`);
+      console.log('responseee', response)
       const data = response.data;
 
       let employeeId = "";
@@ -336,7 +336,7 @@ const ContractPage = () => {
                 disabled={formMode === "detail"}
                 value={formData.contract_type}
                 onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
-                style={selectStyle}
+                style={inputSearchStyle}
                 required
               >
                 <option value="PKWT">PKWT (Waktu Tentu)</option>
@@ -350,12 +350,12 @@ const ContractPage = () => {
                 disabled={formMode === "detail"}
                 value={formData.employee}
                 onChange={(e) => setFormData({ ...formData, employee: e.target.value })}
-                style={selectStyle}
+                style={inputSearchStyle}
               >
                 <option value="">-- Pilih Karyawan --</option>
                 {employees.map((emp, index) => (
                   <option key={emp.id || index} value={emp.id}>
-                    {emp.nama_lengkap || emp.name} ({emp.nik_karyawan || emp.nik || "Tanpa NIK"})
+                    {emp.nama_lengkap || emp.name} ({emp.nik_ktp || emp.nik_karyawan || "Tanpa NIK"})
                   </option>
                 ))}
               </select>

@@ -10,12 +10,62 @@ from rest_framework.response import Response
 from hris_app.permissions import HasAPIAccessPermission
 from rest_framework import viewsets, permissions, status, generics
 from hris_app.models import Employee, EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging
-from hris_app.serializers.onboarding import EmployeeStatusHistorySerializer, EmployeeContactHistorySerializer, EmployeeSubmissionStagingSerializer
+from hris_app.serializers.onboarding_serializer import EmployeeStatusHistorySerializer, EmployeeContactHistorySerializer, EmployeeSubmissionStagingSerializer, OnboardingApproveSerializer
 from hris_app.serializers.employee_serializer import EmployeeSerializer
+
 import hmac
 import hashlib
 import json
 from rest_framework.views import APIView
+
+
+class OnboardingListView(generics.ListAPIView):
+    api_codename = 'OnboardingList'
+    queryset = Employee.objects.filter(is_onboarding=True)
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+class OnboardingDetailView(generics.RetrieveAPIView):
+    api_codename = 'OnboardingList'
+    queryset = Employee.objects.filter(is_onboarding=True)
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+class OnboardingUpdateView(generics.UpdateAPIView):
+    api_codename = 'OnboardingUpdate'
+    queryset = Employee.objects.filter(is_onboarding=True)
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+
+class OnboardingApproveView(generics.UpdateAPIView):
+    api_codename = 'OnboardingUpdate'
+    queryset = Employee.objects.filter(is_onboarding=True)
+    serializer_class = OnboardingApproveSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+    def perform_update(self, serializer):
+       serializer.save(
+          form_status='approved',
+          status='active',
+       )
+
+
+class OnboardingCreateView(generics.CreateAPIView):
+    api_codename = 'OnboardingCreate'
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+    def perform_create(self, serializer):
+       serializer.save(
+          is_onboarding=True
+       )
 
 
 @api_view(['POST'])
@@ -48,28 +98,7 @@ def employee_submission_detail(request, pk):
       "data": serializer.data[0]['raw_payload'] if serializer.data else None,
       "message": f"Detail submission dengan ID {pk} akan ditampilkan di sini."}, status=status.HTTP_200_OK)
 
-class EmployeeViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print("\n❌ VALIDATION ERROR ON EMPLOYEE CREATE:")
-            print(serializer.errors)  # <-- Ini akan menampilkan field mana yang error di terminal
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-class OnboardingListView(generics.ListAPIView):
-    api_codename = 'OnboardingList'
-    queryset = Employee.objects.filter(is_onboarding=True)
-    serializer_class = EmployeeSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
 
 
 class EmployeeStatusHistoryViewSet(viewsets.ModelViewSet):
