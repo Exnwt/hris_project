@@ -68,7 +68,7 @@
         }
         setLoading(true);
         try {
-          const syncResponse = await api.post("/api/v2/system/zkteco/push-employee/", {
+          const syncResponse = await api.post("/api/v2/system/zkteco/employeeSync/", {
             employee_id: selectedId,
           });
 
