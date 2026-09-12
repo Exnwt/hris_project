@@ -16,6 +16,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = '__all__'
+        
+    def to_internal_value(self, data):
+        # Buat copy dari data request agar mutable
+        data = data.copy()
+        
+        # Ubah semua string kosong "" menjadi None
+        for key, value in data.items():
+            if isinstance(value, str) and value.strip() == "":
+                data[key] = None
+
+        return super().to_internal_value(data)
 
     def get_latest_contract(self, obj):
         """Helper method untuk mengambil kontrak terbaru berdasarkan end_date/start_date"""

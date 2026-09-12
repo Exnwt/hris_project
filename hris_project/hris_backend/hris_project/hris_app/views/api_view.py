@@ -45,9 +45,9 @@ class UserPermissionView(APIView):
         })
 
 class APIEndpointViewSet(viewsets.ModelViewSet):
+    api_codename = 'APIEndpoints'
     queryset = APIEndpoint.objects.all()
     serializer_class = APIEndpointSerializer
-    api_codename = 'APIEndpoints'
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 

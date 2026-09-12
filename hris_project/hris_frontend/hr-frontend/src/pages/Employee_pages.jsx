@@ -42,21 +42,21 @@ const EmployeePage = () => {
     email: "",
     jenis_kelamin: "L",
     tempat_lahir: "",
-    tanggal_lahir: "",
+    tanggal_lahir: null,
     agama: "ISLAM",
     blood_type: "A",
     pendidikan: "S1",
     passport_number: "",
-    join_date: "",
+    join_date: null,
     Employee_status: "TK/0",
     status: "draft",
     form_status: "draft",
 
     // Relasi
-    company: "",
-    department: "",
-    section: "",
-    position: "",
+    company: null,
+    department: null,
+    section: null,
+    position: null,
 
     // Alamat
     address: "",
@@ -85,7 +85,7 @@ const EmployeePage = () => {
     shoes_size: 40,
 
     // Informasi Tambahan
-    tangal_induksi: "",
+    tangal_induksi: null,
     poin_of_hire: "",
     is_local: false,
     is_staff: false,

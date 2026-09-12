@@ -2,124 +2,151 @@ import React, { useState, useEffect } from "react";
 import api from "../api"; // Instance axios Anda
 
 const EmployeeEditStagingPage = () => {
-  const [stagings, setStagings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
-  const [selectedStaging, setSelectedStaging] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const BASE_URL = "/api/v1/master-data/employee-stagging";
+    const [userPermissions, setUserPermissions] = useState({
+        isSuperuser: false,
+        allowedCodenames: [],
+    });
+    const [stagings, setStagings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadingPermissions, setLoadingPermissions] = useState(true);
+    const [activeTab, setActiveTab] = useState("all");
+    const [selectedStaging, setSelectedStaging] = useState(null);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState("");
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const BASE_URL = "/api/v1/master-data/employee-stagging";
 
 
 
-  useEffect(() => {
-    fetchStagings();
-  }, []);
+    useEffect(() => {
+        fetchPermissions();
+        fetchStagings();
+    }, []);
 
-  const fetchStagings = async () => {
-    setLoading(true);
-    try {
-        console.log('start111')
-        const response = await api.get(`${BASE_URL}/`);
-        console.log('11111', response)
-        // Menangani response berupa array atau objek terpaginasi DRF
-        const data = Array.isArray(response.data)
-            ? response.data
-            : response.data.results || [];
-        setStagings(data);
-    } catch (err) {
-      console.error("Gagal mengambil data staging:", err);
-      alert("Gagal memuat data staging edit karyawan.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // --- Perhitungan Stat Cards ---
-  const stats = {
-    total: stagings.length,
-    progress: stagings.filter((s) => ["draft", "pending", "progress"].includes(s.status)).length,
-    approved: stagings.filter((s) => s.status === "approved").length,
-    rejected: stagings.filter((s) => s.status === "rejected").length,
-  };
+    const fetchPermissions = async () => {
+        try {
+            const response = await api.get("api/v2/access/my-permissions/");
+            setUserPermissions({
+            isSuperuser: response.data.is_superuser,
+            allowedCodenames: response.data.allowed_codenames || [],
+            });
+        } catch (error) {
+            console.error("Gagal mengambil permission user:", error);
+        } finally {
+            setLoadingPermissions(false);
+        }
+        };
+    
+    const hasAccess = (codename) => {
+        if (userPermissions.isSuperuser) return true;
+        if (userPermissions.allowedCodenames.includes("*")) return true;
+        return userPermissions.allowedCodenames.includes(codename);
+        };
 
-  // --- Filtering Data Berdasarkan Tab ---
-  const filteredStagings = stagings.filter((item) => {
-    if (activeTab === "progress") return ["draft", "pending", "progress"].includes(item.status);
-    if (activeTab === "approved") return item.status === "approved";
-    if (activeTab === "rejected") return item.status === "rejected";
-    return true;
-  });
-
-  // --- Handler Action 3-Layer ---
-  const handleProcess = async (id) => {
-    if (!window.confirm("Tandai pengajuan ini dalam proses peninjauan (Progress)?")) return;
-    setActionLoading(true);
-    try {
-      await api.post(`${BASE_URL}/${id}/approve/`, {
-        action: "PROGRESS",
-      });
-      alert("Status berhasil diperbarui ke Progress!");
-      fetchStagings();
-      if (selectedStaging) setSelectedStaging(null);
-    } catch (err) {
-      alert(err.response?.data?.detail || "Gagal memperbarui status.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleApprove = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menyetujui perubahan data ini? Data utama karyawan akan langsung diperbarui.")) return;
-    setActionLoading(true);
-    try {
-      await api.post(`${BASE_URL}/${id}/approve/`, {
-        action: "APPROVE",
-      });
-      alert("Pengajuan berhasil disetujui (Approved)!");
-      fetchStagings();
-      setSelectedStaging(null);
-    } catch (err) {
-      alert(err.response?.data?.detail || "Gagal menyetujui pengajuan.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRejectSubmit = async () => {
-    if (!rejectionReason.trim()) {
-      alert("Harap masukkan alasan penolakan!");
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await api.post(`${BASE_URL}/${selectedStaging.id}/approve/`, {
-        action: "REJECT",
-        reason: rejectionReason,
-      });
-      alert("Pengajuan berhasil ditolak.");
-      setShowRejectModal(false);
-      setRejectionReason("");
-      setSelectedStaging(null);
-      fetchStagings();
-    } catch (err) {
-      alert(err.response?.data?.detail || "Gagal menolak pengajuan.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Badge Status Styling
-  const renderStatusBadge = (status) => {
-    const styles = {
-      draft: { bg: "#FFFBEB", text: "#B45309", border: "#FCD34D" },
-      pending: { bg: "#FEF3C7", text: "#92400E", border: "#FBBF24" },
-      progress: { bg: "#EFF6FF", text: "#1D4ED8", border: "#93C5FD" },
-      approved: { bg: "#ECFDF5", text: "#047857", border: "#6EE7B7" },
-      rejected: { bg: "#FEF2F2", text: "#B91C1C", border: "#FCA5A5" },
+    const fetchStagings = async () => {
+        setLoading(true);
+        try {
+            console.log('start111')
+            const response = await api.get(`${BASE_URL}/`);
+            console.log('11111', response)
+            // Menangani response berupa array atau objek terpaginasi DRF
+            const data = Array.isArray(response.data)
+                ? response.data
+                : response.data.results || [];
+            setStagings(data);
+        } catch (err) {
+        console.error("Gagal mengambil data staging:", err);
+        alert("Gagal memuat data staging edit karyawan.");
+        } finally {
+        setLoading(false);
+        }
     };
-    const current = styles[status] || styles.draft;
+
+    // --- Perhitungan Stat Cards ---
+    const stats = {
+        total: stagings.length,
+        progress: stagings.filter((s) => ["draft", "pending", "progress"].includes(s.status)).length,
+        approved: stagings.filter((s) => s.status === "approved").length,
+        rejected: stagings.filter((s) => s.status === "rejected").length,
+    };
+
+    // --- Filtering Data Berdasarkan Tab ---
+    const filteredStagings = stagings.filter((item) => {
+        if (activeTab === "progress") return ["draft", "pending", "progress"].includes(item.status);
+        if (activeTab === "approved") return item.status === "approved";
+        if (activeTab === "rejected") return item.status === "rejected";
+        return true;
+    });
+
+    // --- Handler Action 3-Layer ---
+    const handleProcess = async (id) => {
+        if (!window.confirm("Tandai pengajuan ini dalam proses peninjauan (Progress)?")) return;
+        setActionLoading(true);
+        try {
+        await api.post(`${BASE_URL}/${id}/approve/`, {
+            action: "CHECK",
+        });
+        alert("Status berhasil diperbarui ke Progress!");
+        fetchStagings();
+        if (selectedStaging) setSelectedStaging(null);
+        } catch (err) {
+        alert(err.response?.data?.detail || "Gagal memperbarui status.");
+        } finally {
+        setActionLoading(false);
+        }
+    };
+
+    const handleApprove = async (id) => {
+        if (!window.confirm("Apakah Anda yakin ingin menyetujui perubahan data ini? Data utama karyawan akan langsung diperbarui.")) return;
+        setActionLoading(true);
+        try {
+        await api.post(`${BASE_URL}/${id}/approve/`, {
+            action: "APPROVE",
+        });
+        alert("Pengajuan berhasil disetujui (Approved)!");
+        fetchStagings();
+        setSelectedStaging(null);
+        } catch (err) {
+        alert(err.response?.data?.detail || "Gagal menyetujui pengajuan.");
+        } finally {
+        setActionLoading(false);
+        }
+    };
+
+    const handleRejectSubmit = async () => {
+        if (!rejectionReason.trim()) {
+        alert("Harap masukkan alasan penolakan!");
+        return;
+        }
+        setActionLoading(true);
+        try {
+        await api.post(`${BASE_URL}/${selectedStaging.id}/approve/`, {
+            action: "REJECT",
+            reason: rejectionReason,
+        });
+        alert("Pengajuan berhasil ditolak.");
+        setShowRejectModal(false);
+        setRejectionReason("");
+        setSelectedStaging(null);
+        fetchStagings();
+        } catch (err) {
+        alert(err.response?.data?.detail || "Gagal menolak pengajuan.");
+        } finally {
+        setActionLoading(false);
+        }
+    };
+
+    // Badge Status Styling
+    const renderStatusBadge = (status) => {
+        const styles = {
+        draft: { bg: "#FFFBEB", text: "#B45309", border: "#FCD34D" },
+        pending: { bg: "#FEF3C7", text: "#92400E", border: "#FBBF24" },
+        progress: { bg: "#EFF6FF", text: "#1D4ED8", border: "#93C5FD" },
+        approved: { bg: "#ECFDF5", text: "#047857", border: "#6EE7B7" },
+        rejected: { bg: "#FEF2F2", text: "#B91C1C", border: "#FCA5A5" },
+        };
+        const current = styles[status] || styles.draft;
     return (
       <span
         style={{
@@ -287,13 +314,13 @@ const EmployeeEditStagingPage = () => {
               </button>
 
               {/* Layer 1: Check/Progress Button */}
-              {["draft", "pending"].includes(selectedStaging.status) && (
+              {["draft", "pending"].includes(selectedStaging.status) && !loadingPermissions && hasAccess("employeeStaggingCheck") && (
                 <button
                   disabled={actionLoading}
                   onClick={() => handleProcess(selectedStaging.id)}
                   style={btnCheckStyle}
                 >
-                  {actionLoading ? "Memproses..." : "Periksa (Mark as Progress)"}
+                  {actionLoading ? "Memproses..." : "Check (Mark as Progress)"}
                 </button>
               )}
 

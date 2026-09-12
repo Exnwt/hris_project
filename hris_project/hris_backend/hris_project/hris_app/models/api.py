@@ -1,6 +1,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User, Group
+from django.utils.translation import gettext_lazy as _
 
 
 # APIAccessTemplate
@@ -21,6 +22,7 @@ class APIEndpoint(models.Model):
     description = models.TextField(
         null=True, blank=True, help_text="Deskripsi tambahan untuk fungsi api ini"
     )
+    is_crud = models.BooleanField(_("CRUD API"), default=True)
     def __str__(self):
         return f"{self.name} ({len(self.code_name)} API)"
     

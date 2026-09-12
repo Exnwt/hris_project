@@ -3,40 +3,50 @@ from rest_framework.permissions import BasePermission
 from hris_app.models import GroupAccessAssignment
 
 class HasAPIAccessPermission(BasePermission):
-    """Custom Permission untuk mengecek apakah User / Group milik User
-
-    memiliki akses ke API berdasarkan `api_codename` yang dipasang pada View.
+    """
+    Custom Permission untuk mengecek akses API.
+    Jika view memiliki `action_codenames` (dict), permission akan mengecek 
+    codename berdasarkan `action` yang ada di request.data.
     """
 
     def has_permission(self, request, view):
-        # 1. User yang belum terotentikasi (Anonymous) ditolak
+        # 1. User Anonymous / Belum Login -> Tolak
         if not request.user or not request.user.is_authenticated:
             return False
 
-        # 2. Bypass otomatis untuk Superuser / Admin Tertinggi
+        # 2. Superuser -> Izinkan Otomatis
         if request.user.is_superuser:
             return True
 
-        # 3. Ambil codename API dari atribut `api_codename` pada view
+        # 3. Ambil codename API dari view
         required_codename = getattr(view, "api_codename", None)
-        print('test111', required_codename)
-        # Jika view tidak memasang `api_codename`, izinkan akses (atau ubah ke False jika ingin strict)
-        # if not required_codename:
-        #     return True
 
-        # 4. CEK 1: Akses via Group / Role User
+        # FITUR TAMBAHAN: Cek jika view memiliki pemetaan action khusus (dict)
+        action_codenames = getattr(view, "action_codenames", None)
+        if action_codenames and isinstance(action_codenames, dict):
+            # Ambil action dari request body (POST/PUT data)
+            current_action = request.data.get("action")
+            if current_action in action_codenames:
+                required_codename = action_codenames[current_action]
+
+        # Jika tidak ada codename yang ditentukan, izinkan (atau return False jika strict)
+        if not required_codename:
+            return True
+
+        # 4. CEK Akses via Group / Role User
         user_groups = request.user.groups.all()
-        print('test222',user_groups)
         has_group_access = GroupAccessAssignment.objects.filter(
-            group__in=user_groups, api_endpoint__code_name=required_codename
+            group__in=user_groups, 
+            api_endpoint__code_name=required_codename
         ).exists()
-        print('test333',has_group_access)
+
         if has_group_access:
             return True
 
-        # 6. Jika tidak ada yang cocok di Group maupun User assignment -> Tolak Akses
+        # 5. Tidak cocok -> Tolak Akses (403 Forbidden)
         return False
 
+    
 class HasApiWhitelistPermission(BasePermission):
     """
     Mengecek akses API berdasarkan Django Group + Permission.

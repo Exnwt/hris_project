@@ -92,7 +92,7 @@ class Employee(models.Model):
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING, null=True,blank=True, related_name='employee_profile')
     # A. Data diri
     nama_lengkap = models.CharField(max_length=255)
-    nik_karyawan = models.CharField(max_length=50, null=True, blank=True)
+    nik_karyawan = models.CharField(max_length=50, unique=True, null=True, blank=True)
     nik_ktp = models.CharField(max_length=16, unique=True, null=True, blank=True)
     nationality = models.CharField(
         max_length=3,
@@ -159,10 +159,22 @@ class Employee(models.Model):
     is_onboarding = models.BooleanField(_("Is Onboarding"),  default=False)
     onboarding_id = models.CharField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
     is_edited = models.BooleanField(_("Edited"), default=False)
-    
+
 
     def __str__(self):
         return f'{self.nik_karyawan} - {self.nama_lengkap}'
+
+    def save(self, *args, **kwargs):
+        # Iterasi seluruh field pada model Employee
+        for field in self._meta.fields:
+            field_name = field.name
+            value = getattr(self, field_name)
+            
+            # Jika nilai berjenis string dan bernilai kosong / hanya spasi
+            if isinstance(value, str) and value.strip() == "":
+                setattr(self, field_name, None)
+
+        super().save(*args, **kwargs)
 
 
 class EmployeeEditStagging(models.Model):
@@ -177,7 +189,7 @@ class EmployeeEditStagging(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING, related_name='edit_stagging')
     nama_lengkap = models.CharField(max_length=255)
     nik_karyawan = models.CharField(max_length=50, null=True, blank=True)
-    nik_ktp = models.CharField(max_length=16, unique=True, null=True, blank=True)
+    nik_ktp = models.CharField(max_length=16, null=True, blank=True)
     changes_payload = models.JSONField(help_text="Menyimpan komparasi data sebelum (old) dan sesudah (new)") 
     requested_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='requested_employee_changes')
     created_at = models.DateTimeField(auto_now_add=True)
