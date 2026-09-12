@@ -88,6 +88,7 @@ class Employee(models.Model):
         blank=True, 
         help_text="User ID / Enrollment ID yang didaftarkan di mesin ZKTeco"
     )
+    zk_code = models.CharField(_("ZK Employee Code"), max_length=50, null=True,blank=True,)
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True,blank=True, related_name='employee_profile')
     # A. Data diri
     nama_lengkap = models.CharField(max_length=255)

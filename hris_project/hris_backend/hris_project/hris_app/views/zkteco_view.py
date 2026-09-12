@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from hris_app.models import Employee, Department, Position
 from hris_app.models.division import Area
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 class BiotimeLogin:
     ZK_BASE_URL = "http://10.106.13.48:8081"
@@ -399,9 +401,223 @@ class SyncAreaToZKBiotimeView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-         
 
-    
+class GetEmployeeFromZKBiotime(APIView):
+    zk_auth = BiotimeLogin()
+    def get(self, request):
+        print(2222)
 
+        # 1. Autentikasi Token
+        zk_token = self.zk_auth.get_token()
+        if not zk_token:
+            return Response(
+                {"detail": "Gagal Melakukan Autentikasi ke Server ZKTeco BioTime."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        headers = {
+            "Authorization": f"Token {zk_token}",  # Ubah ke "JWT {zk_token}" jika BioTime menggunakan JWT
+            "Content-Type": "application/json",
+        }
+        employee_id = requests.query_params.get("employee_id")
+        if employee_id:
+            try:
+                employee_obj = Employee.objects.get(id=employee_id)
+            except :
+                employee_obj = None
+        emp_code = ""
+        first_name = ""
+        zk_id = 0
+        if employee_obj:
+            emp_code = employee_obj.nik_karyawan
+            first_name = employee_obj.nama_lengkap
+            zk_id = employee_obj.biometric_user_id
+        else:
+            return Response({"detail": "Karyawan tidak ditemukan, Silakan di cek kembali lagi"}, status=status.HTTP_404_NOT_FOUND)
+        # 2. Tangkap Query Parameters dari Client
+        # emp_code = request.query_params.get("emp_code")
+        # first_name = request.query_params.get("nama_lengkap")
+        # last_name = request.query_params.get("last_name")
+        search = request.query_params.get("search")  # Filter pencarian umum (opsional)
+        page = request.query_params.get("page", 1)
+        page_size = request.query_params.get("page_size", 100)
+
+        if zk_id :
+            employee_target_url = f"{BiotimeLogin.ZK_BASE_URL}/personnel/api/employees/{zk_id}"
+            try:
+                print(3333)
+                zk_response = requests.get(
+                    employee_target_url,
+                    headers=headers,
+                    params=params,
+                    timeout=15
+                )
+                if zk_response.status_code == 200 :
+                    data = zk_response.json()
+                    return Response({
+                    "message": "Berhasil mengambil data karyawan dari ZKTeco BioTime.",
+                    "count": data.get("count", 0),
+                    "next": data.get("next"),
+                    "previous": data.get("previous"),
+                    "results": data.get("results", [])
+                }, status=status.HTTP_200_OK)
+            except requests.exceptions.RequestException as e:
+                return Response({
+                    "detail": f"Gagal terhubung ke Server ZKTeco: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 3. Menyusun Parameters untuk API ZK BioTime
+        params = {
+            "page": page,
+            "page_size": page_size
+        }
+
+        # Filter berdasarkan emp_code
+        if emp_code:
+            params["emp_code"] = emp_code
+
+        # Filter berdasarkan Nama
+        if first_name:
+            params["first_name"] = first_name
+
+        # Jika ingin pencarian fleksibel di nama/kode sekaligus
+        if search:
+            params["search"] = search
+
+        # Endpoint API Employee ZK BioTime
+        employee_url = f"{BiotimeLogin.ZK_BASE_URL}/personnel/api/employees/"
+
+        try:
+            zk_response = requests.get(
+                employee_url,
+                headers=headers,
+                params=params,
+                timeout=15
+            )
+
+            if zk_response.status_code == 200:
+                data = zk_response.json()
+                return Response({
+                    "message": "Berhasil mengambil data karyawan dari ZKTeco BioTime.",
+                    "count": data.get("count", 0),
+                    "next": data.get("next"),
+                    "previous": data.get("previous"),
+                    "results": data.get("results", [])
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "detail": "Gagal mengambil data karyawan dari ZKTeco BioTime.",
+                    "error": zk_response.json() if zk_response.content else zk_response.text
+                }, status=zk_response.status_code)
+
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {"detail": f"Gagal terhubung ke Server ZKTeco: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )       
+
+class GetTransactionsZKBiottimeView(APIView):
+    zk_auth = BiotimeLogin()
+
+    def get(self, request):
+        # 1. Autentikasi Token
+        zk_token = self.zk_auth.get_token()
+        if not zk_token:
+            return Response(
+                {"detail": "Gagal Melakukan Autentikasi ke Server ZKTeco BioTime."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        headers = {
+            "Authorization": f"Token {zk_token}",  # atau "JWT {zk_token}"
+            "Content-Type": "application/json",
+        }
+
+        employee_id = requests.query_params.get("employee_id")
+        if employee_id:
+            try:
+                employee_obj = Employee.objects.get(id=employee_id)
+                emp_code = employee_obj.nik_karyawan
+                zk_id = employee_obj.biometric_user_id
+                zk_code = employee_obj.zk_code
+            except Employee.DoesNotExist:
+                return Response(
+                    {"detail": "Karyawan tidak ditemukan di HRIS, Silakan cek kembali."}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # 2. Tangkap Parameter Filter dari Request
+        # employee_code = request.query_params.get("employee_code")
+        start_date_str = request.query_params.get("start_date")  # Format: YYYY-MM-DD
+        end_date_str = request.query_params.get("end_date")      # Format: YYYY-MM-DD
+        period_months = request.query_params.get("period_months") # Pilihan: 1, 3, 6, 12
+        page = request.query_params.get("page", 1)
+        page_size = request.query_params.get("page_size", 100)
+
+        # 3. Logika Penentuan Rentang Tanggal
+        now = datetime.now()
+        start_time = None
+        end_time = None
+
+        if period_months:
+            try:
+                months = int(period_months)
+                # Hitung tanggal mulai dari X bulan yang lalu
+                calc_start = now - relativedelta(months=months)
+                start_time = calc_start.strftime("%Y-%m-%d 00:00:00")
+                end_time = now.strftime("%Y-%m-%d 23:59:59")
+            except ValueError:
+                return Response(
+                    {"detail": "Parameter period_months harus berupa angka (contoh: 1, 3, 6, 12)."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        elif start_date_str and end_date_str:
+            start_time = f"{start_date_str} 00:00:00"
+            end_time = f"{end_date_str} 23:59:59"
+        elif start_date_str:
+            start_time = f"{start_date_str} 00:00:00"
+
+        # 4. Menyusun Query Parameters untuk API ZK BioTime
+        params = {
+            "page": page,
+            "page_size": page_size
+        }
+
+        if start_time:
+            params["start_time"] = start_time
+        if end_time:
+            params["end_time"] = end_time
+        params["emp_code"] = zk_code or emp_code or ""
+
+        # 5. Eksekusi HTTP GET Request ke ZK BioTime
+        sync_url = f"{BiotimeLogin.ZK_BASE_URL}/iclock/api/transactions/"
+
+        try:
+            zk_response = requests.get(
+                sync_url,
+                headers=headers,
+                params=params,
+                timeout=15
+            )
+
+            if zk_response.status_code == 200:
+                data = zk_response.json()
+                return Response({
+                    "message": "Berhasil mengambil data transaksi dari ZKTeco BioTime.",
+                    "count": data.get("count", 0),
+                    "next": data.get("next"),
+                    "previous": data.get("previous"),
+                    "results": data.get("results", [])
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "detail": "Gagal mengambil data dari ZKTeco BioTime.",
+                    "error": zk_response.json() if zk_response.content else zk_response.text
+                }, status=zk_response.status_code)
+
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {"detail": f"Gagal terhubung ke Server ZKTeco: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 

@@ -6,7 +6,7 @@ import api, {
 import { useState, useEffect } from "react";
 
 
-const API_BASE_URL = "http://10.106.108.42:8000";
+const API_BASE_URL = "http://10.106.108.206:8000";
 
 
 // =====================================================
