@@ -1,7 +1,5 @@
 from django.urls import include, path
-from hris_app.views.contract_view import ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
-from hris_app.views.masterData_view import CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet
-from hris_app.views.employee_view import EmployeeViewSet
+from hris_app.views import EmployeeViewSet, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView, CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet, ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
 from rest_framework.routers import DefaultRouter
 
 
@@ -57,6 +55,17 @@ urlpatterns = [
     path('Employees/<int:pk>/', EmployeeViewSet.as_view({'get': 'retrieve'}), name='employee-detail'),
     path('Employees/<int:pk>/update/', EmployeeViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='employee-update'),
     path('Employees/<int:pk>/delete/', EmployeeViewSet.as_view({'delete': 'destroy'}), name='employee-delete'),
+
+    # ==========================================
+    # EMPLOYEE EDIT STAGGING ENDPOINTS
+    # ==========================================
+    path('employee-edit-staging/', EmployeeEditStaggingListView.as_view(), name='employee-edit-staging-list'),
+
+    # Endpoint untuk submit pengajuan edit data karyawan
+    path('employee-edit-staging/submit/', SubmitEmployeeEditView.as_view(), name='employee-edit-staging-submit'),
+
+    # Endpoint untuk melakukan approve/reject permohonan (menggunakan request_id di URL)
+    path('employee-edit-staging/<int:request_id>/approve/', ApproveEmployeeUpdateView.as_view(), name='employee-edit-staging-approve'),
 
     # ==========================================
     # CONTRACT ENDPOINTS

@@ -1,7 +1,7 @@
 from hris_app.models import ContractList, ContractHistory
 from rest_framework import generics
 from rest_framework import viewsets, permissions
-from hris_app.serializers.contract_serializers import ContractListSerializers, ContractHistorySerializers
+from hris_app.serializers import ContractListSerializers, ContractHistorySerializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication  # Django Token 
 from rest_framework_simplejwt.authentication import JWTAuthentication

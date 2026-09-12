@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from hris_app.models import Employee, ContractList
+from hris_app.models import Employee, ContractList, EmployeeEditStagging
 from django.utils import timezone
 
 
@@ -42,3 +42,14 @@ class EmployeeSerializer(serializers.ModelSerializer):
         if latest_contract:
             return latest_contract.start_date
         return None
+
+
+class EmployeeEditStaggingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeEditStagging
+        fields = '__all__'
+
+
+
+
+

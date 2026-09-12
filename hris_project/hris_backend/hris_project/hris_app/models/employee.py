@@ -89,7 +89,7 @@ class Employee(models.Model):
         help_text="User ID / Enrollment ID yang didaftarkan di mesin ZKTeco"
     )
     zk_code = models.CharField(_("ZK Employee Code"), max_length=50, null=True,blank=True,)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True,blank=True, related_name='employee_profile')
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING, null=True,blank=True, related_name='employee_profile')
     # A. Data diri
     nama_lengkap = models.CharField(max_length=255)
     nik_karyawan = models.CharField(max_length=50, null=True, blank=True)
@@ -158,12 +158,41 @@ class Employee(models.Model):
     raw_payload = models.JSONField(null=True, blank=True)
     is_onboarding = models.BooleanField(_("Is Onboarding"),  default=False)
     onboarding_id = models.CharField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
+    is_edited = models.BooleanField(_("Edited"), default=False)
+    
 
     def __str__(self):
         return f'{self.nik_karyawan} - {self.nama_lengkap}'
 
 
-# TABEL 2: Status Kepegawaian (Mendukung History / Perpanjangan Kontrak)
+class EmployeeEditStagging(models.Model):
+    STATUS_CHOICES = (
+        ('draft', 'draft'),
+        ('pending', 'pending'),
+        ('progress', 'progress'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected')
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING, related_name='edit_stagging')
+    nama_lengkap = models.CharField(max_length=255)
+    nik_karyawan = models.CharField(max_length=50, null=True, blank=True)
+    nik_ktp = models.CharField(max_length=16, unique=True, null=True, blank=True)
+    changes_payload = models.JSONField(help_text="Menyimpan komparasi data sebelum (old) dan sesudah (new)") 
+    requested_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='requested_employee_changes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    edit_reason = models.TextField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='reviewed_employee_changes')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Request Update {self.employee.nama_lengkap} ({self.status})"
+
+
+
+
+
 class EmployeeStatusHistory(models.Model):
 
     class EmploymentStatusChoices(models.TextChoices):
