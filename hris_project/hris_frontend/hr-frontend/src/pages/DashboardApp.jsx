@@ -16,6 +16,7 @@ import DepartmentPage from "./department_pages";
 import SectionPage from "./section_pages";
 import PositionPage from "./position_pages";
 import OnboardingPage1 from "./onboarding_pages";
+import EmployeeEditStagingPage from "./EmployeeStagging_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -95,89 +96,6 @@ export default function DashboardApp({
     return userPermissions.allowedCodenames.includes(codename);
   };
 
-  // Konfigurasi menu CRUD Master Data
-  const companyFields = [
-    { key: "name", label: "Nama Company", type: "text", required: true },
-    { key: "company_code", label: "Company Code", type: "text", required: true },
-    { key: "address", label: "Alamat", type: "text", required: false },
-    { key: "phone_number", label: "Nomor Telepon", type: "text", required: true },
-    { key: "number", label: "Number", type: "text", required: true },
-  ];
-
-  const departmentFields = [{ key: "name", label: "Nama Department", type: "text", required: true }];
-  const sectionFields = [{ key: "name", label: "Nama Section", type: "text", required: true }];
-  const positionFields = [{ key: "name", label: "Nama Position", type: "text", required: true }];
-
-  // KONFIGURASI EMPLOYEE FIELDS DENGAN SELECT DROPDOWN DINAMIS & PERSYARATAN BACKEND
-  const employeeFields = [
-    { key: "nik_karyawan", label: "NIK Karyawan", type: "text", required: true },
-    { key: "nama_lengkap", label: "Nama Lengkap", type: "text", required: true },
-    { key: "join_date", label: "Tanggal Bergabung", type: "date", required: true },
-    {
-      key: "jenis_kelamin",
-      label: "Jenis Kelamin",
-      type: "select",
-      required: true,
-      options: [
-        { value: "L", label: "Laki-laki" },
-        { value: "P", label: "Perempuan" },
-      ],
-    },
-    { 
-      key: "biometric_user_id", 
-      label: "ID Biometrik ZKTeco", 
-      type: "text", 
-      required: false,
-      placeholder: "misal: 1001 atau PIN Mesin ZK" 
-    },
-    { key: "tempat_lahir", label: "Tempat Lahir", type: "text", required: true },
-    { key: "tanggal_lahir", label: "Tanggal Lahir", type: "date", required: true },
-    {
-      key: "pendidikan",
-      label: "Pendidikan Terakhir",
-      type: "select",
-      required: true,
-      options: [
-        { value: "SMA", label: "SMA/Sederajat" },
-        { value: "D3", label: "Diploma 3" },
-        { value: "S1", label: "S1" },
-        { value: "S2", label: "S2" },
-        { value: "S3", label: "S3" },
-        { value: "LAINNYA", label: "Lainnya" },
-      ],
-    },
-
-    // Dropdown Select yang diambil langsung dari API Master Data
-    {
-      key: "company",
-      label: "Company",
-      type: "select",
-      required: true,
-      options: masterOptions.companies,
-    },
-    {
-      key: "department",
-      label: "Department",
-      type: "select",
-      required: true,
-      options: masterOptions.departments,
-    },
-    {
-      key: "section",
-      label: "Section",
-      type: "select",
-      required: false,
-      options: masterOptions.sections,
-    },
-    {
-      key: "position",
-      label: "Position",
-      type: "select",
-      required: true,
-      options: masterOptions.positions,
-    },
-  ];
-
   const renderContent = () => {
     switch (activeMenu) {
       case "company":
@@ -190,6 +108,8 @@ export default function DashboardApp({
         return <PositionPage/>;
       case "employee":
         return <EmployeePage/>;
+      case "employeestagging":
+        return <EmployeeEditStagingPage/>;
       case "onboarding":
         return <OnboardingPage1/>;
       case "contractlist":
@@ -214,10 +134,6 @@ export default function DashboardApp({
         return null;
     }
   };
-
-  const menus = [
-    { key: "employee", label: "Employee" },
-  ];
 
   return (
     <div style={layoutStyle}>
@@ -283,6 +199,17 @@ export default function DashboardApp({
               }}
             >
               Employee
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("employeeStaggingRead") && (
+            <button
+              onClick={() => setActiveMenu("employeestagging")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "employeestagging" ? activeMenuStyle : {}),
+              }}
+            >
+              Employee Edit Request List
             </button>
           )}
            {!loadingPermissions && hasAccess("OnboardingList") && (

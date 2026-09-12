@@ -59,13 +59,13 @@ urlpatterns = [
     # ==========================================
     # EMPLOYEE EDIT STAGGING ENDPOINTS
     # ==========================================
-    path('employee-edit-staging/', EmployeeEditStaggingListView.as_view(), name='employee-edit-staging-list'),
+    path('employee-stagging/', EmployeeEditStaggingListView.as_view(), name='employee-stagging-list'),
 
     # Endpoint untuk submit pengajuan edit data karyawan
-    path('employee-edit-staging/submit/', SubmitEmployeeEditView.as_view(), name='employee-edit-staging-submit'),
+    path('employee-stagging/submit/', SubmitEmployeeEditView.as_view(), name='employee-stagging-submit'),
 
     # Endpoint untuk melakukan approve/reject permohonan (menggunakan request_id di URL)
-    path('employee-edit-staging/<int:request_id>/approve/', ApproveEmployeeUpdateView.as_view(), name='employee-edit-staging-approve'),
+    path('employee-stagging/<int:request_id>/approve/', ApproveEmployeeUpdateView.as_view(), name='employee-stagging-approve'),
 
     # ==========================================
     # CONTRACT ENDPOINTS

@@ -1,2 +1,2 @@
-from .employee_serializer import EmployeeSerializer
+from .employee_serializer import EmployeeSerializer, EmployeeEditStaggingSerializer
 from .contract_serializers import ContractListSerializers, ContractHistorySerializers

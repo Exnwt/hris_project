@@ -45,6 +45,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class EmployeeEditStaggingSerializer(serializers.ModelSerializer):
+    requested_by_name = serializers.CharField(source='requested_by.username', read_only=True)
+
     class Meta:
         model = EmployeeEditStagging
         fields = '__all__'

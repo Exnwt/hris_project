@@ -50,7 +50,7 @@
         pendidikan: "S1",
       });
 
-      const BASE_URL = "/api/v1/master-data/Employees";
+      const BASE_URL = "/api/v1/master-data";
 
       // ==========================================
       // 3. FETCH PERMISSIONS & MASTER DATA
@@ -152,7 +152,7 @@
         setLoading(true);
         setError("");
         try {
-          const response = await api.get(`${BASE_URL}/`);
+          const response = await api.get(`${BASE_URL}/Employees/`);
           const data = response.data.results || response.data || [];
           setEmployees(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -235,7 +235,7 @@
         setLoading(true);
         setSelectedId(id);
         try {
-          const response = await api.get(`${BASE_URL}/${id}/`);
+          const response = await api.get(`${BASE_URL}/Employees/${id}/`);
           const data = response.data;
 
           setFormData({
@@ -280,18 +280,29 @@
 
         try {
           if (formMode === "create") {
-            await api.post(`${BASE_URL}/create/`, payload);
+            await api.post(`${BASE_URL}/Employees/create/`, payload);
             alert("Karyawan berhasil ditambahkan!");
           } else if (formMode === "edit") {
+            console.log('start111')
+            const {id, ...changes} = payload;
+            console.log('ubah111', id)
+            console.log('ubah222', changes)
+            const staggingpayload ={
+              "employee_id": id || selectedId,
+              "changes": changes 
+            }
             // PERBAIKAN: Menambahkan /update/ sesuai URL pattern Django backend
-            await api.put(`${BASE_URL}/${selectedId}/update/`, payload);
-            alert("Data karyawan berhasil diperbarui!");
+            await api.post(`${BASE_URL}/employee-stagging/submit/`, staggingpayload);
+            alert("Data Perubahan karyawan berhasil Direquest!");
           }
           setCurrentView("list");
           fetchEmployees();
         } catch (err) {
+          // const backendMessage = err.response?.data?.detail || err.response?.data?.message || "Gagal menyimpan data karyawan. Periksa kembali inputan Anda.";
+          // alert(backendMessage);
+
           console.error("SAVE ERROR:", err.response?.data || err);
-          alert("Gagal menyimpan data karyawan. Periksa kembali inputan Anda.");
+          alert("Gagal menyimpan data karyawan. Periksa kembali inputan Anda.", err);
         } finally {
           setLoading(false);
         }
@@ -302,7 +313,7 @@
         setLoading(true);
         try {
           // PERBAIKAN: Menambahkan /delete/ sesuai URL pattern Django backend
-          await api.delete(`${BASE_URL}/${id}/delete/`);
+          await api.delete(`${BASE_URL}/Employees/${id}/delete/`);
           alert("Karyawan berhasil dihapus!");
           setCurrentView("list");
           fetchEmployees();
@@ -391,7 +402,7 @@
                     disabled={formMode === "detail"}
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    style={selectStyle}
+                    style={inputSearchStyle}
                     required
                   >
                     <option value="">-- Pilih Company --</option>
@@ -407,7 +418,7 @@
                     disabled={formMode === "detail"}
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    style={selectStyle}
+                    style={inputSearchStyle}
                     required
                   >
                     <option value="">-- Pilih Department --</option>
@@ -423,7 +434,7 @@
                     disabled={formMode === "detail"}
                     value={formData.position}
                     onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    style={selectStyle}
+                    style={inputSearchStyle}
                     required
                   >
                     <option value="">-- Pilih Position --</option>
@@ -451,7 +462,7 @@
                     disabled={formMode === "detail"}
                     value={formData.jenis_kelamin}
                     onChange={(e) => setFormData({ ...formData, jenis_kelamin: e.target.value })}
-                    style={selectStyle}
+                    style={inputSearchStyle}
                   >
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
@@ -464,7 +475,7 @@
                     disabled={formMode === "detail"}
                     value={formData.agama}
                     onChange={(e) => setFormData({ ...formData, agama: e.target.value })}
-                    style={selectStyle}
+                    style={inputSearchStyle}
                   >
                     <option value="ISLAM">Islam</option>
                     <option value="KRISTEN">Kristen</option>
@@ -501,7 +512,7 @@
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
                 {formMode === "detail" ? (
                   <>
-                    {!loadingPermissions && hasAccess("EmployeeEdit") && (
+                    {!loadingPermissions && hasAccess("EmployeeEdit") && formData.is_edited === false && (
                       <button
                         type="button"
                         onClick={() => setFormMode("edit")}
@@ -511,7 +522,7 @@
                       </button>
                     )}
 
-                    {!loadingPermissions && hasAccess("EmployeeDelete") && (
+                    {!loadingPermissions && hasAccess("EmployeeDelete") && formData.is_edited === false && (
                       <button
                         type="button"
                         onClick={() => handleDelete(selectedId)}
@@ -541,7 +552,7 @@
                       {loading
                         ? "Menyimpan..."
                         : formMode === "edit"
-                        ? "Perbarui Data Karyawan"
+                        ? "Request Perubahan Data Karyawan"
                         : "Simpan Karyawan Baru"}
                     </button>
                   </>
