@@ -3,13 +3,16 @@ from rest_framework import viewsets, permissions
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from hris_app.permissions import HasAPIAccessPermission
+
 
 from hris_app.serializers.user_serializers import UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    api_codename = "UserAccess"
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAPIAccessPermission]

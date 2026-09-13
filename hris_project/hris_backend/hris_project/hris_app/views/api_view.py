@@ -15,6 +15,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 
 class UserPermissionView(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -45,13 +46,14 @@ class UserPermissionView(APIView):
         })
 
 class APIEndpointViewSet(viewsets.ModelViewSet):
-    api_codename = 'APIEndpoints'
+    api_codename = 'APIEndpointsAccess'
     queryset = APIEndpoint.objects.all()
     serializer_class = APIEndpointSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
 class GroupAccessAssignmentViewSet(viewsets.ModelViewSet):
+    api_codename = 'GroupAccess'
     authentication_classes = [JWTAuthentication]
     queryset = GroupAccessAssignment.objects.select_related(
         "group",

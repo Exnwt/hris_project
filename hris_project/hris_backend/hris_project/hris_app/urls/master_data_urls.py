@@ -1,5 +1,5 @@
 from django.urls import include, path
-from hris_app.views import EmployeeViewSet, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView, CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet, ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
+from hris_app.views import EmployeeListView, EmployeeDetailView, EmployeeCreateView, EmployeeUpdateView, EmployeeDeleteView, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView, CompanyViewSet, DepartmentListView, DepartmentDetailView, DepartmentCreateView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView, SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView, PositionListView, PositionDetailView, PositionCreateView, PositionUpdateView, PositionDeleteView, ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
 from rest_framework.routers import DefaultRouter
 
 
@@ -23,38 +23,38 @@ urlpatterns = [
     # ==========================================
     # DEPARTMENT ENDPOINTS
     # ==========================================
-    path('Department/', DepartmentViewSet.as_view({'get': 'list'}), name='department-list'),
-    path('Department/create/', DepartmentViewSet.as_view({'post': 'create'}), name='department-create'),
-    path('Department/<int:pk>/', DepartmentViewSet.as_view({'get': 'retrieve'}), name='department-detail'),
-    path('Department/<int:pk>/update/', DepartmentViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='department-update'),
-    path('Department/<int:pk>/delete/', DepartmentViewSet.as_view({'delete': 'destroy'}), name='department-delete'),
+    path('Department/', DepartmentListView.as_view(), name='department-list'),
+    path('Department/create/', DepartmentCreateView.as_view(), name='department-create'),
+    path('Department/<int:pk>/', DepartmentDetailView.as_view(), name='department-detail'),
+    path('Department/<int:pk>/update/', DepartmentUpdateView.as_view(), name='department-update'),
+    path('Department/<int:pk>/delete/', DepartmentDeleteView.as_view(), name='department-delete'),
 
     # ==========================================
     # SECTION ENDPOINTS
     # ==========================================
-    path('Section/', SectionViewSet.as_view({'get': 'list'}), name='section-list'),
-    path('Section/create/', SectionViewSet.as_view({'post': 'create'}), name='section-create'),
-    path('Section/<int:pk>/', SectionViewSet.as_view({'get': 'retrieve'}), name='section-detail'),
-    path('Section/<int:pk>/update/', SectionViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='section-update'),
-    path('Section/<int:pk>/delete/', SectionViewSet.as_view({'delete': 'destroy'}), name='section-delete'),
+    path('Section/', SectionListView.as_view(), name='section-list'),
+    path('Section/create/', SectionCreateView.as_view(), name='section-create'),
+    path('Section/<int:pk>/', SectionDetailView.as_view(), name='section-detail'),
+    path('Section/<int:pk>/update/', SectionUpdateView.as_view(), name='section-update'),
+    path('Section/<int:pk>/delete/', SectionDeleteView.as_view(), name='section-delete'),
 
     # ==========================================
     # POSITION ENDPOINTS
     # ==========================================
-    path('Position/', PositionViewSet.as_view({'get': 'list'}), name='position-list'),
-    path('Position/create/', PositionViewSet.as_view({'post': 'create'}), name='position-create'),
-    path('Position/<int:pk>/', PositionViewSet.as_view({'get': 'retrieve'}), name='position-detail'),
-    path('Position/<int:pk>/update/', PositionViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='position-update'),
-    path('Position/<int:pk>/delete/', PositionViewSet.as_view({'delete': 'destroy'}), name='position-delete'),
+    path('Position/', PositionListView.as_view(), name='position-list'),
+    path('Position/create/', PositionCreateView.as_view(), name='position-create'),
+    path('Position/<int:pk>/', PositionDetailView.as_view(), name='position-detail'),
+    path('Position/<int:pk>/update/', PositionUpdateView.as_view(), name='position-update'),
+    path('Position/<int:pk>/delete/', PositionDeleteView.as_view(), name='position-delete'),
 
     # ==========================================
     # EMPLOYEE ENDPOINTS
     # ==========================================
-    path('Employees/', EmployeeViewSet.as_view({'get': 'list'}), name='employee-list'),
-    path('Employees/create/', EmployeeViewSet.as_view({'post': 'create'}), name='employee-create'),
-    path('Employees/<int:pk>/', EmployeeViewSet.as_view({'get': 'retrieve'}), name='employee-detail'),
-    path('Employees/<int:pk>/update/', EmployeeViewSet.as_view({'put': 'update', 'patch': 'partial_update'}), name='employee-update'),
-    path('Employees/<int:pk>/delete/', EmployeeViewSet.as_view({'delete': 'destroy'}), name='employee-delete'),
+    path('Employees/', EmployeeListView.as_view(), name='employee-list'),
+    path('Employees/create/', EmployeeCreateView.as_view(), name='employee-create'),
+    path('Employees/<int:pk>/', EmployeeDetailView.as_view(), name='employee-detail'),
+    path('Employees/<int:pk>/update/', EmployeeUpdateView.as_view(), name='employee-update'),
+    path('Employees/<int:pk>/delete/', EmployeeDeleteView.as_view(), name='employee-delete'),
 
     # ==========================================
     # EMPLOYEE EDIT STAGGING ENDPOINTS

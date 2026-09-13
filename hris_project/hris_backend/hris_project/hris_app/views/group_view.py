@@ -8,7 +8,7 @@ from hris_app.permissions import HasAPIAccessPermission
 
 
 class GroupViewSet(viewsets.ModelViewSet):
-    api_codename = 'Groups'
+    api_codename = 'GroupsAcess'
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     authentication_classes = [JWTAuthentication]

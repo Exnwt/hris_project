@@ -1,6 +1,5 @@
 from hris_app.models import ContractList, ContractHistory
-from rest_framework import generics
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, generics
 from hris_app.serializers import ContractListSerializers, ContractHistorySerializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication  # Django Token 
@@ -10,7 +9,7 @@ from hris_app.permissions import HasAPIAccessPermission
 
 # 1. Khusus READ ALL (List)
 class ContractListReadView(generics.ListAPIView):
-    api_codename = 'ContractList'
+    api_codename = 'ContractRead'
     queryset = ContractList.objects.all()
     serializer_class = ContractListSerializers
     authentication_classes = [JWTAuthentication]
@@ -18,7 +17,7 @@ class ContractListReadView(generics.ListAPIView):
 
 # 2. Khusus READ DETAIL
 class ContractDetailReadView(generics.RetrieveAPIView):
-    api_codename = 'ContractDetail'
+    api_codename = 'ContractRead'
     queryset = ContractList.objects.all()
     serializer_class = ContractListSerializers
     authentication_classes = [JWTAuthentication]

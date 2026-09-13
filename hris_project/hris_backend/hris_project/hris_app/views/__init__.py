@@ -1,3 +1,3 @@
-from .employee_view import EmployeeViewSet, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView
-from .masterData_view import CompanyViewSet, DepartmentViewSet, SectionViewSet, PositionViewSet
+from .employee_view import EmployeeListView, EmployeeDetailView, EmployeeCreateView, EmployeeUpdateView, EmployeeDeleteView, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView
+from .masterData_view import CompanyViewSet, DepartmentListView, DepartmentDetailView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView, SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView, PositionListView, PositionDetailView, PositionCreateView, PositionUpdateView, PositionDeleteView
 from .contract_view import ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet

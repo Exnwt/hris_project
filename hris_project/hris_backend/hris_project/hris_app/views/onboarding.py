@@ -20,25 +20,25 @@ from rest_framework.views import APIView
 
 
 class OnboardingListView(generics.ListAPIView):
-    api_codename = 'OnboardingList'
+    api_codename = 'OnboardingRead'
     queryset = Employee.objects.filter(is_onboarding=True)
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
 class OnboardingDetailView(generics.RetrieveAPIView):
-    api_codename = 'OnboardingList'
+    api_codename = 'OnboardingRead'
     queryset = Employee.objects.filter(is_onboarding=True)
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
 class OnboardingUpdateView(generics.UpdateAPIView):
     api_codename = 'OnboardingUpdate'
     queryset = Employee.objects.filter(is_onboarding=True)
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
 
 class OnboardingApproveView(generics.UpdateAPIView):
@@ -46,7 +46,7 @@ class OnboardingApproveView(generics.UpdateAPIView):
     queryset = Employee.objects.filter(is_onboarding=True)
     serializer_class = OnboardingApproveSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
     def perform_update(self, serializer):
        serializer.save(
@@ -60,7 +60,7 @@ class OnboardingCreateView(generics.CreateAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [HasAPIAccessPermission]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
     def perform_create(self, serializer):
        serializer.save(

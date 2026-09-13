@@ -6,12 +6,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import TokenAuthentication  # Django Token 
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from hris_app.permissions import HasAPIAccessPermission
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt    
-from django.http import HttpResponse
 logger = logging.getLogger(__name__)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
@@ -22,8 +20,9 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
     
     
-class AttendanceLogViewSet(viewsets.ReadOnlyModelViewSet):
+class AttendanceLogViewSet(generics.ListAPIView):
     """ViewSet untuk Frontend melihat riwayat absensi"""
+    api_codename = "ZKTecoAttendanceRead"
     queryset = AttendanceLog.objects.select_related('employee', 'employee__department').all()
     serializer_class = AttendanceLogSerializer
     permission_classes = [IsAuthenticated]

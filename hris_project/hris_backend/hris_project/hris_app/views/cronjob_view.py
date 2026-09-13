@@ -9,6 +9,7 @@ from hris_app.models import CronJob
 from hris_app.serializers.cronjob_serializer import CronJobSerializer
 
 class CronJobViewSet(viewsets.ModelViewSet):
+    api_codename = "CronJobAccess"
     queryset = CronJob.objects.all().order_by('-id')
     serializer_class = CronJobSerializer
     permission_classes = [IsAuthenticated]

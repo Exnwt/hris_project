@@ -12,12 +12,11 @@ router = DefaultRouter()
 router.register(r'APIEndpoints', APIEndpointViewSet, basename='APIEndpoint')
 router.register(r'Group-AA', GroupAccessAssignmentViewSet, basename='groupAA')
 router.register(r'Attedances', AttendanceViewSet, basename='Attendace')
-router.register(r'Attendance-Logs', AttendanceLogViewSet, basename='attendance-log')
 
 urlpatterns = [
     # Check personal permissions
     path('my-permissions/', UserPermissionView.as_view(), name='my-permissions'),
-    
+    path('Attendance-Logs', AttendanceLogViewSet.as_view(), name='attendance-log'),
     # Biometric Machine / ZKTeco Sync Endpoints
     path('biometric/enroll/', BiometricEnrollmentView.as_view(), name='biometric-enroll'),
     path('biometric/verify-clock/', BiometricVerificationView.as_view(), name='biometric-verify-clock'),

@@ -146,7 +146,7 @@ export default function DashboardApp({
 
         <div style={{ marginTop: "30px" }}>
           <p style={sectionTitleStyle}>MASTER DATA</p>
-          {!loadingPermissions && hasAccess("company-list") && (
+          {!loadingPermissions && hasAccess("CompanyAccess") && (
             <button
               onClick={() => setActiveMenu("company")}
               style={{
@@ -157,7 +157,7 @@ export default function DashboardApp({
               Company
             </button>
           )}
-          {!loadingPermissions && hasAccess("department-list") && (
+          {!loadingPermissions && hasAccess("DepartmentRead") && (
             <button
               onClick={() => setActiveMenu("department")}
               style={{
@@ -168,7 +168,7 @@ export default function DashboardApp({
               Department
             </button>
           )}
-          {!loadingPermissions && hasAccess("section-list") && (
+          {!loadingPermissions && hasAccess("SectionRead") && (
             <button
               onClick={() => setActiveMenu("section")}
               style={{
@@ -179,7 +179,7 @@ export default function DashboardApp({
               Section
             </button>
           )}
-          {!loadingPermissions && hasAccess("position-list") && (
+          {!loadingPermissions && hasAccess("PositionRead") && (
             <button
               onClick={() => setActiveMenu("position")}
               style={{
@@ -190,7 +190,7 @@ export default function DashboardApp({
               Position
             </button>
           )}
-          {!loadingPermissions && hasAccess("employee-list") && (
+          {!loadingPermissions && hasAccess("EmployeeRead") && (
             <button
               onClick={() => setActiveMenu("employee")}
               style={{
@@ -212,7 +212,7 @@ export default function DashboardApp({
               Employee Edit Request List
             </button>
           )}
-           {!loadingPermissions && hasAccess("OnboardingList") && (
+           {!loadingPermissions && hasAccess("OnboardingRead") && (
             <button
               onClick={() => setActiveMenu("onboarding")}
               style={{
@@ -223,67 +223,79 @@ export default function DashboardApp({
               onBoarding List
             </button>
           )}
-          <button
-            onClick={() => setActiveMenu("contractlist")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "contractlist" ? activeMenuStyle : {}),
-            }}
-          >
-            Contract
-          </button>
-          <button
-            onClick={() => setActiveMenu("attendance")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "attendance" ? activeMenuStyle : {}),
-            }}
-          >
-            Attendance
-          </button>
-          <button
-            onClick={() => setActiveMenu("attendace-scanner")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
-            }}
-          >
-            Attendance Scanner
-          </button>
-          <button
-            onClick={() => setActiveMenu("biometric-enrollment")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
-            }}
-          >
-            Biometric Enrollment
-          </button>
-          <button
-            onClick={() => setActiveMenu("zkteco-attendance")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "zkteco-attendance" ? activeMenuStyle : {}),
-            }}
-          >
-            Zkteco Attendance
-          </button>
+          {!loadingPermissions && hasAccess("ContractRead") && (
+            <button
+              onClick={() => setActiveMenu("contractlist")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "contractlist" ? activeMenuStyle : {}),
+              }}
+            >
+              Contract
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("AttendaceRead") && (
+            <button
+              onClick={() => setActiveMenu("attendance")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "attendance" ? activeMenuStyle : {}),
+              }}
+            >
+              Attendance
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("AttendanceScannerAccess") && (
+            <button
+              onClick={() => setActiveMenu("attendace-scanner")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
+              }}
+            >
+              Attendance Scanner
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("BiometricEnrollmentAccess") && (
+            <button
+              onClick={() => setActiveMenu("biometric-enrollment")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
+              }}
+            >
+              Biometric Enrollment
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("ZKTecoAttendanceRead") && (
+            <button
+              onClick={() => setActiveMenu("zkteco-attendance")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "zkteco-attendance" ? activeMenuStyle : {}),
+              }}
+            >
+              Zkteco Attendance
+            </button>
+          )}
 
           <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
 
           <button onClick={onNavigateToOnboarding} style={menuButtonStyle}>
             Onboarding
           </button>
-          <button
-            onClick={() => setActiveMenu("user-management")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "user-management" ? activeMenuStyle : {}),
-            }}
-          >
-            User Management
-          </button>
-          {!loadingPermissions && hasAccess("Groups") && (
+          {!loadingPermissions && hasAccess("UserAccess") && (
+            <button
+              onClick={() => setActiveMenu("user-management")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "user-management" ? activeMenuStyle : {}),
+              }}
+            >
+              User Management
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("GroupsAccess") && (
             <button
               onClick={() => setActiveMenu("group-pages")}
               style={{
@@ -294,7 +306,7 @@ export default function DashboardApp({
               Groups
             </button>
           )}
-          {!loadingPermissions && hasAccess("APIEndpoints") && (
+          {!loadingPermissions && hasAccess("APIEndpointsAccess") && (
             <button
               onClick={() => setActiveMenu("api-endpoints")}
               style={{
@@ -305,15 +317,17 @@ export default function DashboardApp({
               API List
             </button>
           )}
-          <button
-                onClick={() => setActiveMenu("cronjob-page")}
-                style={{
-                  ...menuButtonStyle,
-                  ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
-                }}
-              >
-                Auto Scheuduler / Cronjob
-          </button>
+          {!loadingPermissions && hasAccess("CronJobAccess") && (
+            <button
+                  onClick={() => setActiveMenu("cronjob-page")}
+                  style={{
+                    ...menuButtonStyle,
+                    ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
+                  }}
+                >
+                  Auto Scheuduler / Cronjob
+            </button>
+          )}
         </div>
 
         {/* LOGOUT */}

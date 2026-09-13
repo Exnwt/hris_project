@@ -18,11 +18,28 @@ from hris_app.models import Employee, EmployeeEditStagging
 from django.utils import timezone
 import datetime
 
-class EmployeeViewSet(viewsets.ModelViewSet):
+class EmployeeListView(generics.ListAPIView):
+    api_codename = 'EmployeeRead'
+    queryset = Employee.objects.all().order_by('-id')
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
+class EmployeeDetailView(generics.RetrieveAPIView):
+    api_codename = 'EmployeeRead'
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
+    lookup_field = 'id'
+
+class EmployeeCreateView(generics.CreateAPIView):
+    api_codename = 'EmployeeCreate'
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+
     def create(self, request, *args, **kwargs):
         print('create1111')
         serializer = self.get_serializer(data=request.data)
@@ -34,6 +51,31 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+class EmployeeUpdateView(generics.UpdateAPIView):
+    api_codename = 'EmployeeUpdate'
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+    lookup_field = 'id'
+
+class EmployeeDeleteView(generics.DestroyAPIView):
+    api_codename = 'EmployeeDelete'
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [HasAPIAccessPermission]
+    lookup_field = 'id'
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        emp_name = instance.nama_lengkap
+        self.perform_destroy(instance)
+        return Response(
+            {"message": f"Data karyawan {emp_name} berhasil dihapus."},
+            status=status.HTTP_200_OK
+        )
 
 
 class EmployeeEditStaggingListView(generics.ListAPIView):

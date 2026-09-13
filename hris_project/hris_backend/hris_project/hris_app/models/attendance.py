@@ -1,7 +1,8 @@
 # hris_app/models.py
 from django.db import models
 from django.contrib.auth.models import User
-from hris_app.models import Employee  # Model Employee utama Anda
+from hris_app.models import Employee
+from django.utils.translation import gettext_lazy as _
 
 
 class Attendance(models.Model):
@@ -50,11 +51,12 @@ class AttendanceLog(models.Model):
         OVERTIME_IN = '1', 'Overtime In'
         OVERTIME_OUT = '2', 'Overtime Out'
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_logs')
+    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING, related_name='attendance_logs')
     timestamp = models.DateTimeField()
     check_type = models.CharField(max_length=2, choices=CheckTypeChoices.choices, default=CheckTypeChoices.CHECK_IN)
     sn_device = models.CharField(max_length=100, null=True, blank=True, help_text="Serial Number Mesin ZKTeco")
     raw_uid = models.CharField(max_length=50, help_text="UID Mentah dari Mesin ZK")
+    zk_id = models.BigIntegerField(_("ZkTeco Attendace ID"))
 
     class Meta:
         ordering = ['-timestamp']
