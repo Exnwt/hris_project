@@ -387,7 +387,7 @@ const OnboardingPage1 = () => {
             <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
               ← Kembali ke List
             </button>
-            {formMode !== "create" && (
+            {formMode !== "create" && !loadingPermissions && hasAccess('employeeApproveStagging') && (
               <button onClick={ApproveButton} style={approveButtonStyle}>
                 Approve
               </button>
@@ -1130,13 +1130,13 @@ const OnboardingPage1 = () => {
                   <td style={{ ...tdStyle, textAlign: "center" }}>
                     {!loadingPermissions && (
                       <>
-                        {hasAccess("EmployeeDetail") && (
+                        {hasAccess("OnboardingRead") && (
                           <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
                             Buka
                           </button>
                         )}
                         {" "}
-                        {hasAccess("EmployeeDelete") && (
+                        {hasAccess("OnboardingDelete") && (
                           <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
                             Hapus
                           </button>

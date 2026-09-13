@@ -31,7 +31,6 @@ class EmployeeDetailView(generics.RetrieveAPIView):
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
-    lookup_field = 'id'
 
 class EmployeeCreateView(generics.CreateAPIView):
     api_codename = 'EmployeeCreate'
@@ -58,7 +57,6 @@ class EmployeeUpdateView(generics.UpdateAPIView):
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
-    lookup_field = 'id'
 
 class EmployeeDeleteView(generics.DestroyAPIView):
     api_codename = 'EmployeeDelete'
@@ -66,7 +64,6 @@ class EmployeeDeleteView(generics.DestroyAPIView):
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -86,7 +83,7 @@ class EmployeeEditStaggingListView(generics.ListAPIView):
     permission_classes = [HasAPIAccessPermission]
 
 class SubmitEmployeeEditView(APIView):
-    api_codename = 'employeeRequestEdit'
+    api_codename = 'EmployeeRequestEdit'
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
 
@@ -182,7 +179,7 @@ class ApproveEmployeeUpdateView(APIView):
     }
     
     # Optional: fallback codename jika action tidak terdaftar
-    api_codename = 'employeeRequestEdit'
+    api_codename = 'employeeApproveStagging'
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]

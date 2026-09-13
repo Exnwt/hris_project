@@ -578,7 +578,7 @@ const ContractPage = () => {
                   <td style={{ ...tdStyle, textAlign: "center" }}>
                     {!loadingPermissions && (
                       <>
-                        {hasAccess("ContractDetail") && (
+                        {hasAccess("ContractRead") && (
                           <button
                             onClick={() => handleOpenDetail(row.id)}
                             style={actionButtonStyle}

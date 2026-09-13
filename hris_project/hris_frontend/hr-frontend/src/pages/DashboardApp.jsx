@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import api from "../api"; // Instance axios Anda
-import GenericCrudManager from "../components/GenericCrudManager";
 import UserManagement from "./user_management";
 import GroupPages from "./groups_pages";
 import APIEndpointManager from "./api_endpoints_pages";
@@ -22,26 +21,14 @@ export default function DashboardApp({
   onNavigateToOnboarding,
   pemicuKeluar,
 }) {
-  const [activeMenu, setActiveMenu] = useState("company");
+  const [activeMenu, setActiveMenu] = useState("welcome");
 
-  // State untuk menyimpan daftar hak akses user
   const [userPermissions, setUserPermissions] = useState({
     isSuperuser: false,
     allowedCodenames: [],
   });
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
-  // State untuk menyimpan opsi Dropdown (Company, Department, Section, Position)
-  const [masterOptions, setMasterOptions] = useState({
-    companies: [],
-    departments: [],
-    sections: [],
-    positions: [],
-  });
-
-  // ==========================================
-  // FETCH USER PERMISSIONS SAAT LOAD
-  // ==========================================
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
@@ -60,58 +47,98 @@ export default function DashboardApp({
     fetchPermissions();
   }, []);
 
-  // ==========================================
-  // FETCH MASTER DATA UNTUK DROPDOWN EMPLOYEE
-  // ==========================================
-  useEffect(() => {
-    const fetchMasterData = async () => {
-      try {
-        const [compRes, deptRes, secRes, posRes] = await Promise.all([
-          api.get("/api/v1/master-data/Section/"),
-          api.get("/api/v1/master-data/Position/"),
-        ]);
-
-        const compList = compRes.data.results || compRes.data || [];
-        const deptList = deptRes.data.results || deptRes.data || [];
-        const secList = secRes.data.results || secRes.data || [];
-        const posList = posRes.data.results || posRes.data || [];
-
-        setMasterOptions({
-          companies: compList.map((item) => ({ value: item.id, label: item.name })),
-          departments: deptList.map((item) => ({ value: item.id, label: item.name })),
-          sections: secList.map((item) => ({ value: item.id, label: item.name })),
-          positions: posList.map((item) => ({ value: item.id, label: item.name })),
-        });
-      } catch (error) {
-        console.error("Gagal memuat master data dropdown:", error);
-      }
-    };
-
-    fetchMasterData();
-  }, []);
-
-  // Helper function untuk cek apakah user punya hak akses tertentu
   const hasAccess = (codename) => {
     if (userPermissions.isSuperuser) return true;
+    if (userPermissions.allowedCodenames.includes("*")) return true;
     return userPermissions.allowedCodenames.includes(codename);
   };
 
+  // ==========================================
+  // COMPONENT WELCOMING PAGE INTERNAL
+  // ==========================================
+  const WelcomePage = () => (
+    <div style={{ animation: "fadeIn 0.3s ease-in-out" }}>
+      {/* CARD BANNER UCAPAN SELAMAT DATANG */}
+      <div style={welcomeBannerStyle}>
+        <div>
+          <h2 style={{ margin: "0 0 8px 0", fontSize: "22px" }}>
+            Selamat Datang di Portal HRIS 👋
+          </h2>
+          <p style={{ margin: 0, opacity: 0.9, fontSize: "14px", lineHeight: "1.5" }}>
+            Sistem Informasi Sumber Daya Manusia Terintegrasi. Kelola master data karyawan, 
+            pengajuan *Maker-Checker Staging*, serta pemetaan absensi biometrik ZKTeco BioTime secara terpusat.
+          </p>
+        </div>
+      </div>
+
+      {/* QUICK STATS / RINGKASAN MODUL */}
+      <h3 style={{ fontSize: "16px", color: "#1e293b", margin: "25px 0 15px 0" }}>
+        Akses Cepat Modul Utama
+      </h3>
+
+      <div style={quickGridStyle}>
+        {!loadingPermissions && hasAccess("EmployeeRead") && (
+          <div style={quickCardStyle} onClick={() => setActiveMenu("employee")}>
+            <div style={{ ...iconBadgeStyle, background: "#dbeafe", color: "#2563eb" }}>👥</div>
+            <div>
+              <h4 style={cardTitleStyle}>Master Employee</h4>
+              <p style={cardDescStyle}>Kelola data demografi, biodata, & pemetaan ZK BioTime.</p>
+            </div>
+          </div>
+        )}
+
+        {!loadingPermissions && hasAccess("employeeStaggingRead") && (
+          <div style={quickCardStyle} onClick={() => setActiveMenu("employeestagging")}>
+            <div style={{ ...iconBadgeStyle, background: "#fef3c7", color: "#d97706" }}>📝</div>
+            <div>
+              <h4 style={cardTitleStyle}>Employee Edit Request</h4>
+              <p style={cardDescStyle}>Persetujuan perubahan data (*Maker-Checker Staging*).</p>
+            </div>
+          </div>
+        )}
+
+        {!loadingPermissions && hasAccess("ZKTecoAttendanceRead") && (
+          <div style={quickCardStyle} onClick={() => setActiveMenu("zkteco-attendance")}>
+            <div style={{ ...iconBadgeStyle, background: "#dcfce7", color: "#16a34a" }}>⏰</div>
+            <div>
+              <h4 style={cardTitleStyle}>ZKTeco Attendance</h4>
+              <p style={cardDescStyle}>Sinkronisasi logs transaksi mesin absensi biometrik.</p>
+            </div>
+          </div>
+        )}
+
+        {!loadingPermissions && hasAccess("CompanyAccess") && (
+          <div style={quickCardStyle} onClick={() => setActiveMenu("company")}>
+            <div style={{ ...iconBadgeStyle, background: "#f3e8ff", color: "#9333ea" }}>🏢</div>
+            <div>
+              <h4 style={cardTitleStyle}>Master Company</h4>
+              <p style={cardDescStyle}>Kelola entitas perusahaan dan cabang organisasi.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // RENDER CONTENT DINAMIS BERDASARKAN activeMenu
   const renderContent = () => {
     switch (activeMenu) {
+      case "welcome":
+        return <WelcomePage />;
       case "company":
-        return <CompanyPage/>;
+        return <CompanyPage />;
       case "department":
-        return <DepartmentPage/>;
+        return <DepartmentPage />;
       case "section":
-        return <SectionPage/>;
+        return <SectionPage />;
       case "position":
-        return <PositionPage/>;
+        return <PositionPage />;
       case "employee":
-        return <EmployeePage/>;
+        return <EmployeePage />;
       case "employeestagging":
-        return <EmployeeEditStagingPage/>;
+        return <EmployeeEditStagingPage />;
       case "onboarding":
-        return <OnboardingPage1/>;
+        return <OnboardingPage1 />;
       case "contractlist":
         return <ContractPage />;
       case "attendance":
@@ -121,17 +148,21 @@ export default function DashboardApp({
       case "biometric-enrollment":
         return <BiometricEnrollmentPages />;
       case "zkteco-attendance":
-        return <AttendancePage/>;
+        return <AttendancePage />;
       case "user-management":
         return <UserManagement />;
       case "group-pages":
         return <GroupPages />;
       case "api-endpoints":
-        return hasAccess("APIEndpoints") ? <APIEndpointManager /> : <p>Anda tidak memiliki akses ke halaman ini.</p>;
+        return hasAccess("APIEndpointsAccess") ? (
+          <APIEndpointManager />
+        ) : (
+          <p style={{ color: "#ef4444" }}>Anda tidak memiliki akses ke halaman ini.</p>
+        );
       case "cronjob-page":
-        return <CronjobPage/>;
+        return <CronjobPage />;
       default:
-        return null;
+        return <WelcomePage />;
     }
   };
 
@@ -139,12 +170,26 @@ export default function DashboardApp({
     <div style={layoutStyle}>
       {/* SIDEBAR */}
       <aside style={sidebarStyle}>
-        <div style={logoStyle}>
+        <div 
+          style={{ ...logoStyle, cursor: "pointer" }} 
+          onClick={() => setActiveMenu("welcome")}
+          title="Kembali ke Dashboard Utama"
+        >
           <h2 style={{ margin: 0 }}>HRIS</h2>
-          <small>Human Resources</small>
+          <small>Human Resources System</small>
         </div>
 
-        <div style={{ marginTop: "30px" }}>
+        <div style={{ marginTop: "30px", flex: 1, overflowY: "auto" }}>
+          <button
+            onClick={() => setActiveMenu("welcome")}
+            style={{
+              ...menuButtonStyle,
+              ...(activeMenu === "welcome" ? activeMenuStyle : {}),
+            }}
+          >
+            🏠 Dashboard Home
+          </button>
+
           <p style={sectionTitleStyle}>MASTER DATA</p>
           {!loadingPermissions && hasAccess("CompanyAccess") && (
             <button
@@ -212,7 +257,7 @@ export default function DashboardApp({
               Employee Edit Request List
             </button>
           )}
-           {!loadingPermissions && hasAccess("OnboardingRead") && (
+          {!loadingPermissions && hasAccess("OnboardingRead") && (
             <button
               onClick={() => setActiveMenu("onboarding")}
               style={{
@@ -220,7 +265,7 @@ export default function DashboardApp({
                 ...(activeMenu === "onboarding" ? activeMenuStyle : {}),
               }}
             >
-              onBoarding List
+              Onboarding List
             </button>
           )}
           {!loadingPermissions && hasAccess("ContractRead") && (
@@ -275,14 +320,14 @@ export default function DashboardApp({
                 ...(activeMenu === "zkteco-attendance" ? activeMenuStyle : {}),
               }}
             >
-              Zkteco Attendance
+              ZKTeco Attendance
             </button>
           )}
 
-          <p style={{ ...sectionTitleStyle, marginTop: "30px" }}>SYSTEM</p>
+          <p style={{ ...sectionTitleStyle, marginTop: "20px" }}>SYSTEM</p>
 
           <button onClick={onNavigateToOnboarding} style={menuButtonStyle}>
-            Onboarding
+            Onboarding Portal
           </button>
           {!loadingPermissions && hasAccess("UserAccess") && (
             <button
@@ -303,7 +348,7 @@ export default function DashboardApp({
                 ...(activeMenu === "group-pages" ? activeMenuStyle : {}),
               }}
             >
-              Groups
+              Groups & Access
             </button>
           )}
           {!loadingPermissions && hasAccess("APIEndpointsAccess") && (
@@ -314,18 +359,18 @@ export default function DashboardApp({
                 ...(activeMenu === "api-endpoints" ? activeMenuStyle : {}),
               }}
             >
-              API List
+              API Endpoints List
             </button>
           )}
           {!loadingPermissions && hasAccess("CronJobAccess") && (
             <button
-                  onClick={() => setActiveMenu("cronjob-page")}
-                  style={{
-                    ...menuButtonStyle,
-                    ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
-                  }}
-                >
-                  Auto Scheuduler / Cronjob
+              onClick={() => setActiveMenu("cronjob-page")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
+              }}
+            >
+              Auto Scheduler / Cronjob
             </button>
           )}
         </div>
@@ -333,47 +378,83 @@ export default function DashboardApp({
         {/* LOGOUT */}
         <div style={logoutContainerStyle}>
           <button onClick={pemicuKeluar} style={logoutButtonStyle}>
-            Logout
+            🚪 Logout
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN CONTENT AREA */}
       <main style={mainStyle}>
         {/* HEADER */}
         <header style={headerStyle}>
           <div>
-            <h1 style={{ margin: 0 }}>HRIS Dashboard</h1>
+            <h1 style={{ margin: 0, fontSize: "24px", color: "#0f172a" }}>HRIS Dashboard</h1>
             <p style={subtitleStyle}>Human Resource Information System</p>
           </div>
           <div style={userBadgeStyle}>
-            {userPermissions.isSuperuser ? "Super Admin" : "User"}
+            {userPermissions.isSuperuser ? "Super Admin" : "User Access"}
           </div>
         </header>
 
-        {/* CONTENT */}
+        {/* DYNAMIC CONTENT */}
         <section>{renderContent()}</section>
       </main>
     </div>
   );
 }
 
-// STYLES
+// STYLES DENGAN WAKTU DAN LOGIKA DESAIN KONSISTEN
 const layoutStyle = { display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "Arial, sans-serif" };
 const sidebarStyle = { width: "230px", background: "#0f172a", color: "#fff", padding: "25px 15px", display: "flex", flexDirection: "column", boxSizing: "border-box" };
 const logoStyle = { padding: "0 10px" };
-const sectionTitleStyle = { fontSize: "11px", color: "#94a3b8", fontWeight: "bold", padding: "0 10px", letterSpacing: "1px" };
-const menuButtonStyle = { display: "block", width: "100%", padding: "11px 12px", marginBottom: "5px", border: "none", borderRadius: "5px", background: "transparent", color: "#cbd5e1", textAlign: "left", cursor: "pointer", fontSize: "14px" };
-const activeMenuStyle = { background: "#2563eb", color: "#fff" };
-const logoutContainerStyle = { marginTop: "auto" };
-const logoutButtonStyle = { width: "100%", padding: "10px", border: "1px solid #475569", borderRadius: "5px", background: "transparent", color: "#fff", cursor: "pointer" };
-const mainStyle = {
-  flex: 1,
-  padding: "30px",
-  boxSizing: "border-box",
-  minWidth: 0,          // Mencegah flexbox meluap ke kanan
-  overflowX: "hidden"   // Memastikan tidak ada horizontal scrollbar luar
+const sectionTitleStyle = { fontSize: "11px", color: "#94a3b8", fontWeight: "bold", padding: "0 10px", letterSpacing: "1px", marginTop: "15px" };
+const menuButtonStyle = { display: "block", width: "100%", padding: "10px 12px", marginBottom: "4px", border: "none", borderRadius: "6px", background: "transparent", color: "#cbd5e1", textAlign: "left", cursor: "pointer", fontSize: "13px", fontWeight: "500" };
+const activeMenuStyle = { background: "#2563eb", color: "#fff", fontWeight: "bold" };
+const logoutContainerStyle = { marginTop: "auto", paddingTop: "15px" };
+const logoutButtonStyle = { width: "100%", padding: "10px", border: "1px solid #334155", borderRadius: "6px", background: "#1e293b", color: "#fff", cursor: "pointer", fontWeight: "bold" };
+const mainStyle = { flex: 1, padding: "30px", boxSizing: "border-box", minWidth: 0, overflowX: "hidden" };
+const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" };
+const subtitleStyle = { marginTop: "4px", color: "#64748b", fontSize: "13px" };
+const userBadgeStyle = { background: "#e2e8f0", color: "#334155", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" };
+
+// STYLES KHUSUS WELCOMING PAGE
+const welcomeBannerStyle = {
+  background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+  color: "#ffffff",
+  padding: "24px 30px",
+  borderRadius: "12px",
+  boxShadow: "0 4px 6px -1px rgba(37, 99, 235, 0.2)",
 };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" };
-const subtitleStyle = { marginTop: "5px", color: "#64748b", fontSize: "14px" };
-const userBadgeStyle = { background: "#e2e8f0", padding: "8px 15px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" };
+
+const quickGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: "16px",
+};
+
+const quickCardStyle = {
+  backgroundColor: "#ffffff",
+  padding: "20px",
+  borderRadius: "10px",
+  border: "1px solid #e2e8f0",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+  display: "flex",
+  gap: "16px",
+  alignItems: "center",
+  cursor: "pointer",
+  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+};
+
+const iconBadgeStyle = {
+  width: "48px",
+  height: "48px",
+  borderRadius: "10px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "22px",
+  flexShrink: 0,
+};
+
+const cardTitleStyle = { margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" };
+const cardDescStyle = { margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" };

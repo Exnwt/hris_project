@@ -955,7 +955,7 @@ const EmployeePage = () => {
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "30px" }}>
             {formMode === "detail" ? (
               <>
-                {!loadingPermissions && hasAccess("EmployeeEdit") && formData.is_edited === false && (
+                {!loadingPermissions && hasAccess("EmployeeUpdate") && formData.is_edited === false && (
                   <button
                     type="button"
                     onClick={() => setFormMode("edit")}
@@ -1121,7 +1121,7 @@ const EmployeePage = () => {
                   <td style={{ ...tdStyle, textAlign: "center" }}>
                     {!loadingPermissions && (
                       <>
-                        {hasAccess("EmployeeDetail") && (
+                        {!loadingPermissions && hasAccess("EmployeeRead") && (
                           <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
                             Buka
                           </button>

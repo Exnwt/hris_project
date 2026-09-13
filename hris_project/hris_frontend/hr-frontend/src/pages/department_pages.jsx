@@ -160,7 +160,7 @@ const DepartmentPage = () => {
                     <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
                         {formMode === "detail" ? (
                         <>
-                            {!loadingPermissions && hasAccess("CompanyEdit") && (
+                            {!loadingPermissions && hasAccess("CompanyUpdate") && (
                             <button
                                 type="button"
                                 onClick={() => setFormMode("edit")}
@@ -273,13 +273,13 @@ const DepartmentPage = () => {
                             <td style={{ ...tdStyle, textAlign: "center" }}>
                                 {!loadingPermissions && (
                                 <>
-                                    {hasAccess("department-detail") && (
+                                    {hasAccess("DepartmentRead") && (
                                     <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
                                         Buka
                                     </button>
                                     )}
                                     {" "}
-                                    {hasAccess("department-delete") && (
+                                    {hasAccess("DepartmentDelete") && (
                                     <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
                                         Hapus
                                     </button>

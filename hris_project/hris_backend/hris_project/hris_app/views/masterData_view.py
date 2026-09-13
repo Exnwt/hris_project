@@ -36,7 +36,6 @@ class DepartmentDetailView(generics.RetrieveAPIView):
     serializer_class = DepartmentSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
 class DepartmentCreateView(generics.CreateAPIView):
     api_codename = 'DepartmentCreate'
@@ -60,7 +59,6 @@ class DepartmentUpdateView(generics.UpdateAPIView):
     serializer_class = DepartmentSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -79,7 +77,6 @@ class DepartmentDeleteView(generics.DestroyAPIView):
     serializer_class = DepartmentSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -104,7 +101,6 @@ class SectionDetailView(generics.RetrieveAPIView):
     serializer_class = SectionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
 
 class SectionCreateView(generics.CreateAPIView):
@@ -130,7 +126,6 @@ class SectionUpdateView(generics.UpdateAPIView):
     serializer_class = SectionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -149,7 +144,6 @@ class SectionDeleteView(generics.DestroyAPIView):
     serializer_class = SectionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -174,7 +168,6 @@ class PositionDetailView(generics.RetrieveAPIView):
     serializer_class = PositionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
 class PositionCreateView(generics.CreateAPIView):
     api_codename = 'PositionCreate'
@@ -198,7 +191,6 @@ class PositionUpdateView(generics.UpdateAPIView):
     serializer_class = PositionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -217,7 +209,6 @@ class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = PositionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
-    lookup_field = 'id'
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
