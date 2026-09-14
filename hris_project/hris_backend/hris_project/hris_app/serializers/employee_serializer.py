@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from hris_app.models import Employee, ContractList, EmployeeEditStagging, Area
-from hris_app.serializers import AreaSerializer
+from hris_app.serializers.masterData_serializer import AreaSerializer
 from django.utils import timezone
 
 
