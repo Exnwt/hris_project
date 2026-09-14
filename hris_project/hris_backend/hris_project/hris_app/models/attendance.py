@@ -56,7 +56,7 @@ class AttendanceLog(models.Model):
     check_type = models.CharField(max_length=2, choices=CheckTypeChoices.choices, default=CheckTypeChoices.CHECK_IN)
     sn_device = models.CharField(max_length=100, null=True, blank=True, help_text="Serial Number Mesin ZKTeco")
     raw_uid = models.CharField(max_length=50, help_text="UID Mentah dari Mesin ZK")
-    zk_id = models.BigIntegerField(_("ZkTeco Attendace ID"))
+    zk_id = models.BigIntegerField(_("ZkTeco Attendace ID"), null=True, blank=True)
 
     class Meta:
         ordering = ['-timestamp']
