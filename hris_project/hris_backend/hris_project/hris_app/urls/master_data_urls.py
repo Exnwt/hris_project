@@ -1,5 +1,5 @@
 from django.urls import include, path
-from hris_app.views import EmployeeListView, EmployeeDetailView, EmployeeCreateView, EmployeeUpdateView, EmployeeDeleteView, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView, CompanyViewSet, DepartmentListView, DepartmentDetailView, DepartmentCreateView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView, SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView, PositionListView, PositionDetailView, PositionCreateView, PositionUpdateView, PositionDeleteView, ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
+from hris_app.views import EmployeeListView, EmployeeDetailView, EmployeeCreateView, EmployeeUpdateView, EmployeeDeleteView, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView, CompanyViewSet, DepartmentListView, DepartmentDetailView, DepartmentCreateView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView, SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView, PositionListView, PositionDetailView, PositionCreateView, PositionUpdateView, PositionDeleteView, ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet, AreaListView, AreaDetailView, AreaCreateView, AreaUpdateView, AreaDeleteView
 from rest_framework.routers import DefaultRouter
 
 
@@ -28,6 +28,15 @@ urlpatterns = [
     path('Department/<int:pk>/', DepartmentDetailView.as_view(), name='department-detail'),
     path('Department/<int:pk>/update/', DepartmentUpdateView.as_view(), name='department-update'),
     path('Department/<int:pk>/delete/', DepartmentDeleteView.as_view(), name='department-delete'),
+
+    # ==========================================
+    # SECTION ENDPOINTS
+    # ==========================================
+    path('Area/', AreaListView.as_view(), name='section-list'),
+    path('Area/create/', AreaCreateView.as_view(), name='section-create'),
+    path('Area/<int:pk>/', AreaDetailView.as_view(), name='section-detail'),
+    path('Area/<int:pk>/update/', AreaUpdateView.as_view(), name='section-update'),
+    path('Area/<int:pk>/delete/', AreaDeleteView.as_view(), name='section-delete'),
 
     # ==========================================
     # SECTION ENDPOINTS

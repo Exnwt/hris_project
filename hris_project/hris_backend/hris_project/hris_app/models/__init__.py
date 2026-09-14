@@ -1,6 +1,6 @@
 from .api import APIEndpoint, GroupAccessAssignment
 from .company import Company
-from .division import Department, Section, Position
+from .division import Department, Section, Position, Area
 from .employee import Employee, EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging, EmployeeBiometric, EmployeeEditStagging
 from .attendance import Attendance, AttendanceLog
 from .contract import ContractList, ContractHistory

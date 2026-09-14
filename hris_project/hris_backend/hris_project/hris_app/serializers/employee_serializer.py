@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from hris_app.models import Employee, ContractList, EmployeeEditStagging
+from hris_app.models import Employee, ContractList, EmployeeEditStagging, Area
+from hris_app.serializers import AreaSerializer
 from django.utils import timezone
 
 
@@ -12,6 +13,14 @@ class EmployeeSerializer(serializers.ModelSerializer):
     total_contracts = serializers.SerializerMethodField()
     latest_contract_days_remaining = serializers.SerializerMethodField()
     latest_contract_start_date = serializers.SerializerMethodField()
+
+    areas_detail = AreaSerializer(source='areas', many=True, read_only=True)
+    # Untuk menulis/input (POST/PUT): Menerima list of ID [1, 2, 3]
+    areas = serializers.PrimaryKeyRelatedField(
+        queryset=Area.objects.all(),
+        many=True,
+        required=False
+    )
 
     class Meta:
         model = Employee

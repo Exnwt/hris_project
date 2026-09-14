@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from .company import Company
-from .division import Department, Section, Position
+from .division import Department, Section, Position, Area
 from django.utils.translation import gettext_lazy as _
 from datetime import timezone
 
@@ -118,6 +118,12 @@ class Employee(models.Model):
     department = models.ForeignKey(Department, on_delete=models.PROTECT, null=True, blank=True)
     section = models.ForeignKey(
         Section, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    areas = models.ManyToManyField(
+        Area,
+        related_name='employees',
+        blank=True,
+        help_text=_("Area lokasi kerja karyawan (bisa lebih dari satu)")
     )
     position = models.ForeignKey(Position, on_delete=models.PROTECT, null=True, blank=True)
 

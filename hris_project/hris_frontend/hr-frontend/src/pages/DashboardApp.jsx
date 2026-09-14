@@ -16,6 +16,7 @@ import SectionPage from "./section_pages";
 import PositionPage from "./position_pages";
 import OnboardingPage1 from "./onboarding_pages";
 import EmployeeEditStagingPage from "./EmployeeStagging_pages";
+import AreaPage from "./Area_pages";
 
 export default function DashboardApp({
   onNavigateToOnboarding,
@@ -131,6 +132,8 @@ export default function DashboardApp({
         return <DepartmentPage />;
       case "section":
         return <SectionPage />;
+      case "area":
+        return <AreaPage />;
       case "position":
         return <PositionPage />;
       case "employee":
@@ -222,6 +225,17 @@ export default function DashboardApp({
               }}
             >
               Section
+            </button>
+          )}
+          {!loadingPermissions && hasAccess("AreaRead") && (
+            <button
+              onClick={() => setActiveMenu("area")}
+              style={{
+                ...menuButtonStyle,
+                ...(activeMenu === "area" ? activeMenuStyle : {}),
+              }}
+            >
+              Area
             </button>
           )}
           {!loadingPermissions && hasAccess("PositionRead") && (

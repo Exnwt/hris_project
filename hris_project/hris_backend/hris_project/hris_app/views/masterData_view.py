@@ -10,11 +10,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions, generics
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from hris_app.models import Company, Department, Section, Position
-from hris_app.serializers.masterData_serializer import CompanySerializer, DepartmentSerializer, SectionSerializer, PositionSerializer
+from hris_app.models import Company, Department, Section, Position, Area
+from hris_app.serializers.masterData_serializer import CompanySerializer, DepartmentSerializer, SectionSerializer, PositionSerializer, AreaSerializer
 from hris_app.serializers.employee_serializer import EmployeeSerializer
 from hris_app.permissions import HasAPIAccessPermission
-from hris_app.views.services.ZKTeco_service import sync_department_to_zk
+from hris_app.views.services.ZKTeco_service import sync_department_to_zk, sync_position_to_zk, sync_area_to_zk
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -64,8 +64,32 @@ class DepartmentCreateView(generics.CreateAPIView):
 
         # 3. Jika sync gagal -> Batalkan pembuatan di DB local dan kembalikan response error
         if not success:
+            print('zkresult', zk_result)
+            
+            raw_detail = zk_result.get('detail') if isinstance(zk_result, dict) else zk_result
+            formatted_detail = ""
+
+            # 1. Jika detail dari ZK berbentuk Dictionary (misal: {'area_code': ['This field may not be null.']})
+            if isinstance(raw_detail, dict):
+                messages = []
+                for field, errors in raw_detail.items():
+                    if isinstance(errors, list):
+                        error_str = ", ".join(errors)
+                    else:
+                        error_str = str(errors)
+                    messages.append(f"{field}: {error_str}")
+                formatted_detail = " | ".join(messages)
+            
+            # 2. Jika detail dari ZK berbentuk List
+            elif isinstance(raw_detail, list):
+                formatted_detail = ", ".join(raw_detail)
+            
+            # 3. Jika sudah berbentuk String
+            else:
+                formatted_detail = str(raw_detail) if raw_detail else "Gagal sinkronisasi ke ZKTeco BioTime."
+
             return Response({
-                "detail": "Gagal sinkronisasi ke ZKTeco BioTime. Data tidak disimpan ke HRIS.",
+                "detail": formatted_detail,
                 "error": zk_result
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -120,6 +144,131 @@ class DepartmentDeleteView(generics.DestroyAPIView):
             {"message": f"Department {dept_name} berhasil dihapus."},
             status=status.HTTP_200_OK
         )
+
+class AreaListView(generics.ListAPIView):
+    api_codename = 'AreaRead'
+    queryset = Area.objects.all().order_by('-id')
+    serializer_class = AreaSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
+
+
+class AreaDetailView(generics.RetrieveAPIView):
+    api_codename = 'AreaRead'
+    queryset = Area.objects.all()
+    serializer_class = AreaSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
+
+
+class AreaCreateView(generics.CreateAPIView):
+    api_codename = 'AreaCreate'
+    queryset = Area.objects.all()
+    serializer_class = AreaSerializer  # Sesuaikan dengan serializer Area Anda
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        area_name = serializer.validated_data.get('name')
+        area_code = serializer.validated_data.get('code')
+        zk_id = serializer.validated_data.get('zk_id')
+        
+        success, zk_result = sync_area_to_zk(
+            area_name=area_name,
+            area_obj=None,
+            area_code=area_code,
+            zk_id=zk_id
+        )
+
+        # 3. Jika sync gagal -> Kembalikan error & batalkan simpan ke DB local
+        if not success:
+            print('zkresult', zk_result)
+            
+            raw_detail = zk_result.get('detail') if isinstance(zk_result, dict) else zk_result
+            formatted_detail = ""
+
+            # 1. Jika detail dari ZK berbentuk Dictionary (misal: {'area_code': ['This field may not be null.']})
+            if isinstance(raw_detail, dict):
+                messages = []
+                for field, errors in raw_detail.items():
+                    if isinstance(errors, list):
+                        error_str = ", ".join(errors)
+                    else:
+                        error_str = str(errors)
+                    messages.append(f"{field}: {error_str}")
+                formatted_detail = " | ".join(messages)
+            
+            # 2. Jika detail dari ZK berbentuk List
+            elif isinstance(raw_detail, list):
+                formatted_detail = ", ".join(raw_detail)
+            
+            # 3. Jika sudah berbentuk String
+            else:
+                formatted_detail = str(raw_detail) if raw_detail else "Gagal sinkronisasi ke ZKTeco BioTime."
+
+            return Response({
+                "detail": formatted_detail,
+                "error": zk_result
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Jika sync BERHASIL -> Ambil zk_id / code baru dari ZKTeco jika ada
+        print('zkresult',zk_result)
+        save_kwargs = {}
+        if isinstance(zk_result, dict):
+            if zk_result.get('zk_id') and not zk_id:
+                save_kwargs['zk_id'] = zk_result.get('zk_id')
+            if zk_result.get('code') and not area_code:
+                save_kwargs['code'] = zk_result.get('code')
+
+        # 5. Simpan ke Database Local HRIS
+        area_obj = serializer.save(**save_kwargs)
+
+        # 6. Susun Response HTTP 201 Created
+        headers = self.get_success_headers(serializer.data)
+        response_data = self.get_serializer(area_obj).data
+        response_data['zk_sync_status'] = True
+        response_data['zk_data'] = zk_result
+
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class AreaUpdateView(generics.UpdateAPIView):
+    api_codename = 'AreaUpdate'
+    queryset = Area.objects.all()
+    serializer_class = AreaSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AreaDeleteView(generics.DestroyAPIView):
+    api_codename = 'AreaDelete'
+    queryset = Area.objects.all()
+    serializer_class = AreaSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        Area_name = getattr(instance, 'name', getattr(instance, 'nama_section', str(instance)))
+        self.perform_destroy(instance)
+        return Response(
+            {"message": f"Section {Area_name} berhasil dihapus."},
+            status=status.HTTP_200_OK
+        )
+
 
 class SectionListView(generics.ListAPIView):
     api_codename = 'SectionRead'
@@ -215,9 +364,62 @@ class PositionCreateView(generics.CreateAPIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        self.perform_create(serializer)
+        pos_name = serializer.validated_data.get('name')
+        pos_code = serializer.validated_data.get('code')
+        zk_id = serializer.validated_data.get('zk_id')
+
+        success, zk_result = sync_position_to_zk(
+            pos_name=pos_name,
+            position_obj=None,
+            pos_code=pos_code,
+            zk_id=zk_id
+        )
+
+        if not success:
+            print('zkresult', zk_result)
+            
+            raw_detail = zk_result.get('detail') if isinstance(zk_result, dict) else zk_result
+            formatted_detail = ""
+
+            # 1. Jika detail dari ZK berbentuk Dictionary (misal: {'area_code': ['This field may not be null.']})
+            if isinstance(raw_detail, dict):
+                messages = []
+                for field, errors in raw_detail.items():
+                    if isinstance(errors, list):
+                        error_str = ", ".join(errors)
+                    else:
+                        error_str = str(errors)
+                    messages.append(f"{field}: {error_str}")
+                formatted_detail = " | ".join(messages)
+            
+            # 2. Jika detail dari ZK berbentuk List
+            elif isinstance(raw_detail, list):
+                formatted_detail = ", ".join(raw_detail)
+            
+            # 3. Jika sudah berbentuk String
+            else:
+                formatted_detail = str(raw_detail) if raw_detail else "Gagal sinkronisasi ke ZKTeco BioTime."
+
+            return Response({
+                "detail": formatted_detail,
+                "error": zk_result
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        save_kwargs = {}
+        if isinstance(zk_result, dict):
+            if zk_result.get('zk_id') and not zk_id:
+                save_kwargs['zk_id'] = zk_result.get('zk_id')
+            if zk_result.get('code') and not pos_code:
+                save_kwargs['code'] = zk_result.get('code')
+
+        position_obj = serializer.save(**save_kwargs)
+
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        response_data = self.get_serializer(position_obj).data
+        response_data['zk_sync_status'] = True
+        response_data['zk_data'] = zk_result
+
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
 class PositionUpdateView(generics.UpdateAPIView):
     api_codename = 'PositionUpdate'

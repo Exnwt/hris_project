@@ -3,12 +3,12 @@ import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
 import { usePermissions } from "../auth/auth";
 
-const PositionPage = () => {
+const AreaPage = () => {
   const { hasAccess, loadingPermissions } = usePermissions();
   const [currentView, setCurrentView] = useState("list");
   const [formMode, setFormMode] = useState("create");
 
-  const [positions, setPositions] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
@@ -23,29 +23,29 @@ const PositionPage = () => {
     zk_id: "",
   });
 
-  const BASE_URL = "/api/v1/master-data/Position";
+  const BASE_URL = "/api/v1/master-data/Area";
 
   useEffect(() => {
-    fetchPosition();
+    fetchArea();
   }, []);
 
-  const fetchPosition = async () => {
+  const fetchArea = async () => {
     setLoading(true);
     setError("");
     try {
       const response = await api.get(`${BASE_URL}/`);
       const data = response.data.results || response.data || [];
-      setPositions(Array.isArray(data) ? data : []);
+      setAreas(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Gagal mengambil data Position:", err);
-      setError("Gagal memuat data Position");
+      console.error("Gagal mengambil data Area:", err);
+      setError("Gagal memuat data Area");
     } finally {
       setLoading(false);
     }
   };
 
   // Filter Data berdasarkan Name, Code, atau ZK ID
-  const filteredData = positions.filter((item) => {
+  const filteredData = areas.filter((item) => {
     const name = item.name || "";
     const code = item.code || "";
     const zkId = String(item.zk_id || "");
@@ -84,7 +84,7 @@ const PositionPage = () => {
       setFormMode("detail");
       setCurrentView("form");
     } catch (err) {
-      alert("Gagal memuat detail Position");
+      alert("Gagal memuat detail Area");
     } finally {
       setLoading(false);
     }
@@ -102,13 +102,13 @@ const PositionPage = () => {
     try {
       if (formMode === "create") {
         await api.post(`${BASE_URL}/create/`, payload);
-        alert("Data Position berhasil ditambahkan!");
+        alert("Data Area berhasil ditambahkan!");
       } else if (formMode === "edit") {
         await api.put(`${BASE_URL}/${selectedId}/update/`, payload);
-        alert("Data Position berhasil diperbarui!");
+        alert("Data Area berhasil diperbarui!");
       }
       setCurrentView("list");
-      fetchPosition();
+      fetchArea();
     } catch (error) {
       const errDetail = error.response?.data?.detail || "Proses gagal, mohon periksa kembali inputan Anda.";
       alert(`❌ GAGAL SIMPAN:\n\n${errDetail}`);
@@ -118,29 +118,29 @@ const PositionPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data Position ini?")) return;
+    if (!window.confirm("Apakah Anda yakin ingin menghapus data Area ini?")) return;
     setLoading(true);
     try {
       await api.delete(`${BASE_URL}/${id}/delete/`);
-      alert("Data Position berhasil dihapus!");
+      alert("Data Area berhasil dihapus!");
       setCurrentView("list");
-      fetchPosition();
+      fetchArea();
     } catch (err) {
-      alert("Gagal menghapus data Position.");
+      alert("Gagal menghapus data Area.");
     } finally {
       setLoading(false);
     }
   };
 
-  const positionZKTecoSync = async () => {
+  const areaZKTecoSync = async () => {
     if (!selectedId) {
-      alert("Detail Informasi Position Tidak Bisa Didapatkan.");
+      alert("Detail Informasi Area Tidak Bisa Didapatkan.");
       return;
     }
     setLoading(true);
     try {
-      const syncResponse = await api.post("/api/v2/system/zkteco/positionSync/", {
-        position_id: selectedId,
+      const syncResponse = await api.post("/api/v2/system/zkteco/areaSync/", {
+        area_id: selectedId,
       });
       const successMessage = syncResponse.data?.message || "Berhasil melakukan sinkronisasi ke ZKTeco BioTime!";
       const zkId = syncResponse.data?.zk_id;
@@ -149,7 +149,7 @@ const PositionPage = () => {
 
       // Re-fetch detail terbaru agar zk_id & code ter-update pada form
       handleOpenDetail(selectedId);
-      fetchPosition();
+      fetchArea();
     } catch (error) {
       console.error("Gagal Push ke ZKTeco:", error.response?.data || error.message);
       const errData = error.response?.data;
@@ -174,8 +174,8 @@ const PositionPage = () => {
     }
   };
 
-  const totalPositions = positions.length;
-  const totalZkMapped = positions.filter((p) => p.zk_id).length;
+  const totalAreas = areas.length;
+  const totalZkMapped = areas.filter((a) => a.zk_id).length;
 
   // Cek apakah zk_id sudah ada
   const isZkMapped = Boolean(formData.zk_id);
@@ -188,10 +188,10 @@ const PositionPage = () => {
           <div>
             <h3 style={{ margin: 0, color: "#0f172a" }}>
               {formMode === "create"
-                ? "Tambah Position Baru"
+                ? "Tambah Area Baru"
                 : formMode === "edit"
-                ? `Edit Position: ${formData.name}`
-                : `Detail Position: ${formData.name}`}
+                ? `Edit Area: ${formData.name}`
+                : `Detail Area: ${formData.name}`}
             </h3>
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
@@ -199,7 +199,7 @@ const PositionPage = () => {
               ← Kembali ke List
             </button>
             {formMode === "detail" && (
-              <button onClick={positionZKTecoSync} disabled={loading} style={primaryButtonStyle}>
+              <button onClick={areaZKTecoSync} disabled={loading} style={primaryButtonStyle}>
                 Sync to ZKTeco
               </button>
             )}
@@ -208,13 +208,13 @@ const PositionPage = () => {
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
           <div style={formGridStyle}>
-            {/* Nama Position */}
+            {/* Nama Area */}
             <div>
-              <label style={labelStyle}>Nama Position / Jabatan *</label>
+              <label style={labelStyle}>Nama Area *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
-                placeholder="misal: Software Engineer"
+                placeholder="misal: Headquarters Jakarta"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 style={inputSearchStyle}
@@ -222,15 +222,15 @@ const PositionPage = () => {
               />
             </div>
 
-            {/* Position Code: Readonly jika sudah terhubung zk_id atau dalam mode detail */}
+            {/* Area Code: Readonly jika sudah terhubung zk_id atau dalam mode detail */}
             <div>
               <label style={labelStyle}>
-                Position Code {isZkMapped && <span style={{ color: "#2563eb", fontSize: "11px" }}>(Locked by ZKTeco)</span>}
+                Area Code {isZkMapped && <span style={{ color: "#2563eb", fontSize: "11px" }}>(Locked by ZKTeco)</span>}
               </label>
               <input
                 type="text"
                 disabled={formMode === "detail" || isZkMapped}
-                placeholder={isZkMapped ? "Otomatis tersinkron dari ZKTeco" : "misal: POS-SE"}
+                placeholder={isZkMapped ? "Otomatis tersinkron dari ZKTeco" : "misal: AREA-HQ"}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 style={{
@@ -240,9 +240,9 @@ const PositionPage = () => {
               />
             </div>
 
-            {/* ZKTeco Position ID: Selalu Readonly */}
+            {/* ZKTeco Area ID: Selalu Readonly */}
             <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>ZKTeco Position ID (BioTime Auto Sync)</label>
+              <label style={labelStyle}>ZKTeco Area ID (BioTime Auto Sync)</label>
               <input
                 type="text"
                 disabled={true}
@@ -256,17 +256,17 @@ const PositionPage = () => {
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
             {formMode === "detail" ? (
               <>
-                {!loadingPermissions && hasAccess("PositionEdit") && (
+                {!loadingPermissions && hasAccess("AreaEdit") && (
                   <button
                     type="button"
                     onClick={() => setFormMode("edit")}
                     style={primaryButtonStyle}
                   >
-                    ✏️ Edit Position
+                    ✏️ Edit Area
                   </button>
                 )}
 
-                {!loadingPermissions && hasAccess("PositionDelete") && (
+                {!loadingPermissions && hasAccess("AreaDelete") && (
                   <button
                     type="button"
                     onClick={() => handleDelete(selectedId)}
@@ -296,8 +296,8 @@ const PositionPage = () => {
                   {loading
                     ? "Menyimpan..."
                     : formMode === "edit"
-                    ? "Perbarui Position"
-                    : "Simpan Position Baru"}
+                    ? "Perbarui Area"
+                    : "Simpan Area Baru"}
                 </button>
               </>
             )}
@@ -312,32 +312,32 @@ const PositionPage = () => {
     <div style={containerStyle}>
       <div style={headerStyle}>
         <div>
-          <h2 style={{ margin: 0, color: "#0f172a" }}>Position Master Data</h2>
+          <h2 style={{ margin: 0, color: "#0f172a" }}>Area Master Data</h2>
           <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
-            Kelola Master Data Position dan Pemetaan ZKTeco BioTime
+            Kelola Master Data Area dan Pemetaan ZKTeco BioTime
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchPosition} style={refreshButtonStyle}>
+          <button onClick={fetchArea} style={refreshButtonStyle}>
             🔄 Refresh Data
           </button>
-          {!loadingPermissions && hasAccess("PositionCreate") && (
+          {!loadingPermissions && hasAccess("AreaCreate") && (
             <button onClick={handleOpenCreate} style={primaryButtonStyle}>
-              + Tambah Position Baru
+              + Tambah Area Baru
             </button>
           )}
         </div>
       </div>
 
       <div style={statsContainerStyle}>
-        <StatCard title="Total Position" count={totalPositions} isActive={true} />
+        <StatCard title="Total Area" count={totalAreas} isActive={true} />
         <StatCard title="Terhubung ZKTeco" count={totalZkMapped} color="#16a34a" bgColor="#f0fdf4" borderColor="#bbf7d0" />
       </div>
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        placeholder="Cari Kode, Nama Position, atau ZK ID..."
+        placeholder="Cari Kode, Nama Area, atau ZK ID..."
       />
 
       {error && <div style={errorBannerStyle}>{error}</div>}
@@ -346,8 +346,8 @@ const PositionPage = () => {
         <table style={tableStyle}>
           <thead>
             <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>Nama Position</th>
-              <th style={thStyle}>Position Code</th>
+              <th style={thStyle}>Nama Area</th>
+              <th style={thStyle}>Area Code</th>
               <th style={thStyle}>ZKTeco ID</th>
               <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
             </tr>
@@ -355,11 +355,11 @@ const PositionPage = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4" style={emptyTdStyle}>Memuat data Position...</td>
+                <td colSpan="4" style={emptyTdStyle}>Memuat data Area...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="4" style={emptyTdStyle}>Tidak ada data Position ditemukan.</td>
+                <td colSpan="4" style={emptyTdStyle}>Tidak ada data Area ditemukan.</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
@@ -380,13 +380,13 @@ const PositionPage = () => {
                   <td style={{ ...tdStyle, textAlign: "center" }}>
                     {!loadingPermissions && (
                       <>
-                        {hasAccess("PositionDetail") && (
+                        {hasAccess("AreaDetail") && (
                           <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
                             Buka
                           </button>
                         )}
                         {" "}
-                        {hasAccess("PositionDelete") && (
+                        {hasAccess("AreaDelete") && (
                           <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
                             Hapus
                           </button>
@@ -427,4 +427,4 @@ const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "
 const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
 const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "6px" };
 
-export default PositionPage;
+export default AreaPage;

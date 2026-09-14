@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from hris_app.models import Company, Department, Section, Position
+from hris_app.models import Company, Department, Section, Position, Area
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,6 +18,10 @@ class SectionSerializer(serializers.ModelSerializer):
         model = Section
         fields = '__all__'
 
+class AreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Area
+        fields = '__all__'
 
 class PositionSerializer(serializers.ModelSerializer):
     class Meta:
