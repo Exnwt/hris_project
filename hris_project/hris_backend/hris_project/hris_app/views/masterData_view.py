@@ -14,6 +14,7 @@ from hris_app.models import Company, Department, Section, Position
 from hris_app.serializers.masterData_serializer import CompanySerializer, DepartmentSerializer, SectionSerializer, PositionSerializer
 from hris_app.serializers.employee_serializer import EmployeeSerializer
 from hris_app.permissions import HasAPIAccessPermission
+from hris_app.views.services.ZKTeco_service import sync_department_to_zk
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -45,14 +46,47 @@ class DepartmentCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
 
     def create(self, request, *args, **kwargs):
+        # 1. Validasi input dari request (Belum simpan ke DB)
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        serializer.is_valid(raise_exception=True)
 
+        dept_name = serializer.validated_data.get('name')
+        dept_code = serializer.validated_data.get('code')
+        zk_id = serializer.validated_data.get('zk_id')
+
+        # 2. Jalankan sync ke ZKTeco TERLEBIH DAHULU (Sebelum Save ke DB Local)
+        success, zk_result = sync_department_to_zk(
+            dept_name=dept_name,
+            department_obj=None,
+            dept_code=dept_code,
+            zk_id=zk_id
+        )
+
+        # 3. Jika sync gagal -> Batalkan pembuatan di DB local dan kembalikan response error
+        if not success:
+            return Response({
+                "detail": "Gagal sinkronisasi ke ZKTeco BioTime. Data tidak disimpan ke HRIS.",
+                "error": zk_result
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Jika sync BERHASIL -> Siapkan data tambahan dari ZKTeco (misal: zk_id / code baru)
+        save_kwargs = {}
+        if isinstance(zk_result, dict):
+            if zk_result.get('zk_id') and not zk_id:
+                save_kwargs['zk_id'] = zk_result.get('zk_id')
+            if zk_result.get('code') and not dept_code:
+                save_kwargs['code'] = zk_result.get('code')
+        # 5. SIMPAN KE DATABASE LOCAL (Setelah ZKTeco sukses)
+        department_obj = serializer.save(**save_kwargs)
+
+        # 6. Susun Response Akhir
+        headers = self.get_success_headers(serializer.data)
+        response_data = self.get_serializer(department_obj).data
+        response_data['zk_sync_status'] = True
+        response_data['zk_data'] = zk_result
+
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+    
 class DepartmentUpdateView(generics.UpdateAPIView):
     api_codename = 'DepartmentUpdate'
     queryset = Department.objects.all()
