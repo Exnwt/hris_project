@@ -1,303 +1,410 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
 import { usePermissions } from "../auth/auth";
 
-
 const DepartmentPage = () => {
-    // const [userPermissions, setUserPermissions] = useState({
-        //     isSuperuser : false,
-        //     allowedCodenames: [],
-        // });        
+  const { hasAccess, loadingPermissions } = usePermissions();
+  const [currentView, setCurrentView] = useState("list");
+  const [formMode, setFormMode] = useState("create");
 
-    const { hasAccess, loadingPermissions } = usePermissions();
-    const [currentView, setCurrentView] = useState("list");
-    const [formMode, setFormMode] = useState("create");
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
 
-    const [departments, setDepartments] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [selectedId, setSelectedId] = useState(null);
+  // State Filter Pencarian
+  const [searchQuery, setSearchQuery] = useState("");
 
-    // buat filter
-    const [searchQuery, setSearchQuery] = useState("");
+  // State Form dengan field name, code, dan zk_id
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    zk_id: "",
+  });
 
-    const [formData, setFormData] = useState({
-        name: "",
-    });
+  const BASE_URL = "/api/v1/master-data/Department";
 
-    const BASE_URL = "/api/v1/master-data/Department";
+  useEffect(() => {
+    fetchDepartment();
+  }, []);
 
-    useEffect(() =>{
-        fetchDepartment();
-    },[]);
-
-    const fetchDepartment = async () => {
-        setLoading(true);
-        setError("")
-        try{
-            const response = await api.get(`${BASE_URL}/`)
-            console.log('response', response)
-            const data = response.data.results || response.data || [] ;
-            setDepartments(Array.isArray(data) ? data : []);
-        }catch (err) {
-            console.error("Gagal mengambil data Department:", err);
-            setError("Gagal memuat data Department")
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filteredData = departments.filter((item) => {
-        const name = item.name || "";
-
-        return (
-            name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    });
-
-    const handleOpenCreate = () => {
-        setFormData({
-            name: "",
-        });
-        setFormMode("create");
-        setSelectedId(null);
-        setCurrentView("form");
-    };
-
-    const handleOpenDetail = async (id) => {
-        setLoading(true);
-        setSelectedId(id);
-        try{
-            const response = await api.get(`${BASE_URL}/${id}`);
-            const data = response.data;
-
-            setFormData({
-                name: data.name || ""
-            })
-            setFormMode("detail")
-            setCurrentView("form");
-        }   catch (err) {
-            alert("Gagal memuat detail Department");
-        } finally {
-            setLoading(false);
-        }
-
-    };
-
-    const handleSubmit = async (e) => {
-        if (e) e.preventDefault();
-        setLoading(true);
-        try {
-            if (formMode === "create") {
-                await api.post(`${BASE_URL}/create/`, formData);
-                alert("Data berhasil di tambahkan")
-            } else if (formMode === "edit") {
-                await api.put(`${BASE_URL}/${selectedId}/update/`, formData);
-                alert("Data Berhasil di Update")
-            }
-            setCurrentView("list");
-            fetchDepartment();
-        } catch (error) {
-            alert("Proses Gagal mohon di cek kembali ", error)
-        }finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Apakah anda yakin ingin menghapus data ini ?")) return;
-        setLoading(true);
-        try {
-            await api.delete(`${BASE_URL}/${id}/delete/`);
-            alert("Data berhasil di hapus!");
-            setCurrentView("list");
-            fetchDepartment();
-        } catch (err) {
-            alert("Gagal menghapus data : ", err)
-        }finally{
-            setLoading(false);
-        }
+  const fetchDepartment = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await api.get(`${BASE_URL}/`);
+      const data = response.data.results || response.data || [];
+      setDepartments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Gagal mengambil data Department:", err);
+      setError("Gagal memuat data Department");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const totalDepartments = departments.length;
+  // Filter Data berdasarkan Name atau Code
+  const filteredData = departments.filter((item) => {
+    const name = item.name || "";
+    const code = item.code || "";
+    const zkId = String(item.zk_id || "");
 
-
-    if (currentView === "form") {
-        return(
-            <div style={containerStyle}>
-                <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
-                <div>
-                    <h3 style={{ margin: 0, color: "#0f172a" }}>
-                    {formMode === "create"
-                        ? "Tambah Department Baru"
-                        : formMode === "edit"
-                        ? `Edit Department: ${formData.name}`
-                        : `Detail Department: ${formData.name}`}
-                    </h3>
-                </div>
-                <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
-                    ← Kembali ke List
-                </button>
-                </div>
-                <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-                    <div style={formGridStyle}>
-                        <div>
-                        <label style={labelStyle}>Nama Department *</label>
-                        <input
-                            type="text"
-                            disabled={formMode === "detail"}
-                            placeholder="misal: IT"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            style={inputSearchStyle}
-                            required
-                        />
-                        </div>
-
-                    </div>
-
-                    <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
-                        {formMode === "detail" ? (
-                        <>
-                            {!loadingPermissions && hasAccess("CompanyUpdate") && (
-                            <button
-                                type="button"
-                                onClick={() => setFormMode("edit")}
-                                style={primaryButtonStyle}
-                            >
-                                ✏️ Edit Company
-                            </button>
-                            )}
-
-                            {!loadingPermissions && hasAccess("CompanyDelete") && (
-                            <button
-                                type="button"
-                                onClick={() => handleDelete(selectedId)}
-                                style={clearFilterButtonStyle}
-                            >
-                                🗑️ Hapus
-                            </button>
-                            )}
-                        </>
-                        ) : (
-                        <>
-                            <button
-                            type="button"
-                            onClick={() => {
-                                if (formMode === "edit") {
-                                setFormMode("detail");
-                                } else {
-                                setCurrentView("list");
-                                }
-                            }}
-                            style={cancelButtonStyle}
-                            >
-                            Batal
-                            </button>
-
-                            <button type="submit" disabled={loading} style={primaryButtonStyle}>
-                            {loading
-                                ? "Menyimpan..."
-                                : formMode === "edit"
-                                ? "Perbarui Department"
-                                : "Simpan Departmen Baru"}
-                            </button>
-                        </>
-                        )}
-                    </div>
-                </form>
-            </div>
-        );
-    }
-
-    // list view 
+    const query = searchQuery.toLowerCase();
     return (
-        <div style={containerStyle}>
-            <div style={headerStyle}>
-                <div>
-                    <h2 style={{margin: 0, color: "#0f172a"}}>
-                        Department Master Data
-                    </h2>
-                    <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
-                        Kelola Data Department
-                    </p>
-                </div>
-                <div style={{display: "flex", gap: "10px"}}>
-                    <button onClick={fetchDepartment} style={refreshButtonStyle}>
-                        🔄 Refresh Data
-                    </button>
-                    {!loadingPermissions && hasAccess("department-create") && (
-                        <button onClick={handleOpenCreate} style={primaryButtonStyle}>
-                            + Tambah Company Baru
-                        </button>
-                    )}
-                </div>
-            </div>
-            <div style={statsContainerStyle}>
-                <StatCard
-                title="Total Department"
-                count={totalDepartments}
-                isActive={true}
-                />
-            </div>
-            <FilterBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            placeholder="Cari Kode, Nama Department"
-            />
-            {error && <div style={errorBannerStyle}>{error}</div>}
-            <div style={tableWrapperStyle}>
-                <table style={tableStyle}>
-                    <thead>
-                        <tr style={tableHeaderRowStyle}>
-                        <th style={thStyle}>Nama Department</th>
-                        <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                        <tr>
-                            <td colSpan="5" style={emptyTdStyle}>Memuat data Department...</td>
-                        </tr>
-                        ) : filteredData.length === 0 ? (
-                        <tr>
-                            <td colSpan="5" style={emptyTdStyle}>Tidak ada data Department ditemukan.</td>
-                        </tr>
-                        ) : (
-                        filteredData.map((row, index) => (
-                            <tr key={row.id || index} style={tableBodyRowStyle}>
-                            <td style={tdStyle}>
-                                <strong>{row.name}</strong>
-                            </td>
-                            <td style={{ ...tdStyle, textAlign: "center" }}>
-                                {!loadingPermissions && (
-                                <>
-                                    {hasAccess("DepartmentRead") && (
-                                    <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
-                                        Buka
-                                    </button>
-                                    )}
-                                    {" "}
-                                    {hasAccess("DepartmentDelete") && (
-                                    <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
-                                        Hapus
-                                    </button>
-                                    )}
-                                </>
-                                )}
-                            </td>
-                            </tr>
-                        ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      name.toLowerCase().includes(query) ||
+      code.toLowerCase().includes(query) ||
+      zkId.includes(query)
     );
+  });
 
+  const handleOpenCreate = () => {
+    setFormData({
+      name: "",
+      code: "",
+      zk_id: "",
+    });
+    setFormMode("create");
+    setSelectedId(null);
+    setCurrentView("form");
+  };
 
+  const handleOpenDetail = async (id) => {
+    setLoading(true);
+    setSelectedId(id);
+    try {
+      const response = await api.get(`${BASE_URL}/${id}/`);
+      const data = response.data;
+
+      setFormData({
+        name: data.name || "",
+        code: data.code || "",
+        zk_id: data.zk_id || "",
+      });
+      setFormMode("detail");
+      setCurrentView("form");
+    } catch (err) {
+      alert("Gagal memuat detail Department");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+
+    const payload = {
+      name: formData.name,
+      code: formData.code || null,
+    };
+
+    try {
+      if (formMode === "create") {
+        await api.post(`${BASE_URL}/create/`, payload);
+        alert("Data Department berhasil ditambahkan!");
+      } else if (formMode === "edit") {
+        await api.put(`${BASE_URL}/${selectedId}/update/`, payload);
+        alert("Data Department berhasil diperbarui!");
+      }
+      setCurrentView("list");
+      fetchDepartment();
+    } catch (error) {
+      const errDetail = error.response?.data?.detail || "Proses gagal, mohon periksa kembali inputan Anda.";
+      alert(`❌ GAGAL SIMPAN:\n\n${errDetail}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus data Department ini?")) return;
+    setLoading(true);
+    try {
+      await api.delete(`${BASE_URL}/${id}/delete/`);
+      alert("Data Department berhasil dihapus!");
+      setCurrentView("list");
+      fetchDepartment();
+    } catch (err) {
+      alert("Gagal menghapus data Department.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const departmentZKTecoSync = async () => {
+    if (!selectedId) {
+      alert("Detail Informasi Department Tidak Bisa Didapatkan.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const syncResponse = await api.post("/api/v2/system/zkteco/departmentSync/", {
+        department_id: selectedId,
+      });
+      const successMessage = syncResponse.data?.message || "Berhasil melakukan sinkronisasi ke ZKTeco BioTime!";
+      const zkId = syncResponse.data?.zk_id;
+      
+      alert(`✅ SINKRONISASI BERHASIL!\n\n${successMessage}\nID BioTime: ${zkId || "-"}`);
+      
+      // Re-fetch detail terbaru agar zk_id & code ter-update pada form
+      handleOpenDetail(selectedId);
+      fetchDepartment();
+    } catch (error) {
+      console.error("Gagal Push ke ZKTeco:", error.response?.data || error.message);
+      const errData = error.response?.data;
+      let errorMessage = "Terjadi kesalahan sistem saat menghubungi server ZKTeco.";
+
+      if (errData) {
+        if (typeof errData.detail === "string") {
+          errorMessage = errData.detail;
+        } else if (errData.error && typeof errData.error === "object") {
+          errorMessage = JSON.stringify(errData.error);
+        } else if (typeof errData === "string") {
+          errorMessage = errData;
+        } else {
+          errorMessage = JSON.stringify(errData);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      alert(`❌ GAGAL SYNC ZKTECO:\n\n${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalDepartments = departments.length;
+  const totalZkMapped = departments.filter((d) => d.zk_id).length;
+
+  // Cek apakah zk_id sudah ada
+  const isZkMapped = Boolean(formData.zk_id);
+
+  // VIEW 1: FORM VIEW
+  if (currentView === "form") {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+          <div>
+            <h3 style={{ margin: 0, color: "#0f172a" }}>
+              {formMode === "create"
+                ? "Tambah Department Baru"
+                : formMode === "edit"
+                ? `Edit Department: ${formData.name}`
+                : `Detail Department: ${formData.name}`}
+            </h3>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+              ← Kembali ke List
+            </button>
+            {formMode === "detail" && (
+              <button onClick={departmentZKTecoSync} disabled={loading} style={primaryButtonStyle}>
+                Sync to ZKTeco
+              </button>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
+          <div style={formGridStyle}>
+            {/* Nama Department */}
+            <div>
+              <label style={labelStyle}>Nama Department *</label>
+              <input
+                type="text"
+                disabled={formMode === "detail"}
+                placeholder="misal: Information Technology"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                style={inputSearchStyle}
+                required
+              />
+            </div>
+
+            {/* Department Code: Readonly jika sudah terhubung zk_id atau dalam mode detail */}
+            <div>
+              <label style={labelStyle}>
+                Department Code {isZkMapped && <span style={{ color: "#2563eb", fontSize: "11px" }}>(Locked by ZKTeco)</span>}
+              </label>
+              <input
+                type="text"
+                disabled={formMode === "detail" || isZkMapped}
+                placeholder={isZkMapped ? "Otomatis tersinkron dari ZKTeco" : "misal: DEPT-IT"}
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                style={{
+                  ...inputSearchStyle,
+                  ...(isZkMapped ? { backgroundColor: "#f1f5f9", cursor: "not-allowed" } : {}),
+                }}
+              />
+            </div>
+
+            {/* ZKTeco Department ID: Selalu Readonly */}
+            <div style={{ gridColumn: "span 2" }}>
+              <label style={labelStyle}>ZKTeco Department ID (BioTime Auto Sync)</label>
+              <input
+                type="text"
+                disabled={true}
+                placeholder="Unmapped (Klik 'Sync to ZKTeco' untuk menghubungkan)"
+                value={formData.zk_id || ""}
+                style={{ ...inputSearchStyle, backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#1e293b", fontWeight: "bold" }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "20px" }}>
+            {formMode === "detail" ? (
+              <>
+                {!loadingPermissions && hasAccess("DepartmentEdit") && (
+                  <button
+                    type="button"
+                    onClick={() => setFormMode("edit")}
+                    style={primaryButtonStyle}
+                  >
+                    ✏️ Edit Department
+                  </button>
+                )}
+
+                {!loadingPermissions && hasAccess("DepartmentDelete") && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(selectedId)}
+                    style={clearFilterButtonStyle}
+                  >
+                    🗑️ Hapus
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (formMode === "edit") {
+                      setFormMode("detail");
+                    } else {
+                      setCurrentView("list");
+                    }
+                  }}
+                  style={cancelButtonStyle}
+                >
+                  Batal
+                </button>
+
+                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                  {loading
+                    ? "Menyimpan..."
+                    : formMode === "edit"
+                    ? "Perbarui Department"
+                    : "Simpan Department Baru"}
+                </button>
+              </>
+            )}
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // VIEW 2: LIST VIEW
+  return (
+    <div style={containerStyle}>
+      <div style={headerStyle}>
+        <div>
+          <h2 style={{ margin: 0, color: "#0f172a" }}>Department Master Data</h2>
+          <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
+            Kelola Master Data Department dan Pemetaan ZKTeco BioTime
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={fetchDepartment} style={refreshButtonStyle}>
+            🔄 Refresh Data
+          </button>
+          {!loadingPermissions && hasAccess("DepartmentCreate") && (
+            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+              + Tambah Department Baru
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div style={statsContainerStyle}>
+        <StatCard title="Total Department" count={totalDepartments} isActive={true} />
+        <StatCard title="Terhubung ZKTeco" count={totalZkMapped} color="#16a34a" bgColor="#f0fdf4" borderColor="#bbf7d0" />
+      </div>
+
+      <FilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        placeholder="Cari Kode, Nama Department, atau ZK ID..."
+      />
+
+      {error && <div style={errorBannerStyle}>{error}</div>}
+
+      <div style={tableWrapperStyle}>
+        <table style={tableStyle}>
+          <thead>
+            <tr style={tableHeaderRowStyle}>
+              <th style={thStyle}>Nama Department</th>
+              <th style={thStyle}>Department Code</th>
+              <th style={thStyle}>ZKTeco ID</th>
+              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="4" style={emptyTdStyle}>Memuat data Department...</td>
+              </tr>
+            ) : filteredData.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={emptyTdStyle}>Tidak ada data Department ditemukan.</td>
+              </tr>
+            ) : (
+              filteredData.map((row, index) => (
+                <tr key={row.id || index} style={tableBodyRowStyle}>
+                  <td style={tdStyle}>
+                    <strong>{row.name}</strong>
+                  </td>
+                  <td style={tdStyle}>{row.code || "-"}</td>
+                  <td style={tdStyle}>
+                    {row.zk_id ? (
+                      <span style={{ ...badgeStyle, background: "#dcfce7", color: "#15803d" }}>
+                        ZK ID: {row.zk_id}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#94a3b8", fontSize: "12px" }}>Unmapped</span>
+                    )}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                    {!loadingPermissions && (
+                      <>
+                        {hasAccess("DepartmentDetail") && (
+                          <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
+                            Buka
+                          </button>
+                        )}
+                        {" "}
+                        {hasAccess("DepartmentDelete") && (
+                          <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
+                            Hapus
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 };
+
+// STYLES
 const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
 const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
 const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
@@ -314,6 +421,7 @@ const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
 const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
 const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
 const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
+const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" };
 const actionButtonStyle = { padding: "6px 12px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
 const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
 const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };

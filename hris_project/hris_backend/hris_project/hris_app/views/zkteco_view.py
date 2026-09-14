@@ -127,7 +127,6 @@ class SyncDepartmentToZKBiotimeView(APIView):
             )
 
         try:
-            # Perbaikan nama variabel instance
             department_obj = Department.objects.get(id=department_id)
         except Department.DoesNotExist:
             return Response(
@@ -135,7 +134,6 @@ class SyncDepartmentToZKBiotimeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 1. Autentikasi Token
         zk_token = self.zk_auth.get_token()
         if not zk_token:
             return Response(
@@ -150,7 +148,7 @@ class SyncDepartmentToZKBiotimeView(APIView):
 
         zk_id = department_obj.zk_id if department_obj.zk_id else None
         zk_payload = {
-            'dept_code': department_obj.code,
+            'dept_code': department_obj.code if department_obj.code else None,
             'dept_name': department_obj.name
         }
 
@@ -158,6 +156,7 @@ class SyncDepartmentToZKBiotimeView(APIView):
 
         try:
             if zk_id:
+                print(1111)
                 update_url = f"{sync_url}{zk_id}/"
                 zk_response = requests.put(
                     update_url,
@@ -176,8 +175,57 @@ class SyncDepartmentToZKBiotimeView(APIView):
                         "message": f"Gagal Mengupdate Department {department_obj.name} ke ZKTeco BioTime!",
                         "zk_data": zk_response.json()
                     }, status=zk_response.status_code)
-
+                
             else:
+                print(222)
+                # Cari departemen berdasarkan dept_name di ZK BioTime
+                search_url = f"{sync_url}?dept_name={department_obj.name}"
+                search_response = requests.get(
+                    search_url,
+                    headers=headers,
+                    timeout=10
+                )
+                print(3333, search_response)
+                found_zk_dept = None
+                if search_response.status_code == 200:
+                    res_data = search_response.json()
+                    print(3333111,res_data)
+                    results = res_data.get('data', []) if isinstance(res_data, dict) else res_data
+                    print(333222, results)
+                    if results and len(results) > 0:
+                        found_zk_dept = results[0]
+                        print(333444, found_zk_dept)
+
+                if found_zk_dept:
+                    print(4444)
+                    matched_zk_id = found_zk_dept.get('id')
+                    update_url = f"{sync_url}{matched_zk_id}/"
+                    
+                    zk_response = requests.put(
+                        update_url,
+                        json=zk_payload,
+                        headers=headers,
+                        timeout=10
+                    )
+
+                    if zk_response.status_code in [200, 201]:
+                        department_obj.zk_id = matched_zk_id
+                        if found_zk_dept.get('dept_code'):
+                            department_obj.code = found_zk_dept.get('dept_code')
+                        department_obj.save()
+
+                        return Response({
+                            "message": f"Department ditemukan di ZKTeco & berhasil diperbarui!",
+                            "zk_id": matched_zk_id,
+                            "zk_data": zk_response.json()
+                        }, status=status.HTTP_200_OK)
+
+                if not department_obj.code :
+                     return Response({
+                        "detail": "Code Wajib Di Isi Terlebih Dahulu",
+                        "error": zk_response.json()
+                    }, status=zk_response.status_code)
+
                 zk_response = requests.post(
                     sync_url,
                     json=zk_payload,
@@ -191,6 +239,7 @@ class SyncDepartmentToZKBiotimeView(APIView):
                     # Simpan ID dari BioTime ke database local HRIS
                     if res_data and res_data.get('id'):
                         department_obj.zk_id = res_data.get('id')
+                        department_obj.zk_id = res_data.get('dept_code')
                         department_obj.save()
 
                     return Response({
