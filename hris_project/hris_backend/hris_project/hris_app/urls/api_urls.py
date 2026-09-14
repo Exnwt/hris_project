@@ -16,7 +16,7 @@ router.register(r'Attedances', AttendanceViewSet, basename='Attendace')
 urlpatterns = [
     # Check personal permissions
     path('my-permissions/', UserPermissionView.as_view(), name='my-permissions'),
-    path('Attendance-Logs', AttendanceLogViewSet.as_view(), name='attendance-log'),
+    path('attendanceLogs/', AttendanceLogViewSet.as_view(), name='attendance-log'),
     # Biometric Machine / ZKTeco Sync Endpoints
     path('biometric/enroll/', BiometricEnrollmentView.as_view(), name='biometric-enroll'),
     path('biometric/verify-clock/', BiometricVerificationView.as_view(), name='biometric-verify-clock'),
