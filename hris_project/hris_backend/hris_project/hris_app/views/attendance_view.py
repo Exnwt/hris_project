@@ -10,6 +10,7 @@ from rest_framework import viewsets, permissions, status, generics
 from hris_app.permissions import HasAPIAccessPermission
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt    
+from rest_framework.pagination import PageNumberPagination
 logger = logging.getLogger(__name__)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
@@ -19,30 +20,41 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated, HasAPIAccessPermission]
     
-    
+
+class FlexiblePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10000  # Dinaikkan batas maksimalnya jika menggunakan angka
+
 class AttendanceLogViewSet(generics.ListAPIView):
-    """ViewSet untuk Frontend melihat riwayat absensi"""
+    """ViewSet untuk Frontend melihat riwayat absensi dengan pagination fleksibel"""
     api_codename = "ZKTecoAttendanceRead"
-    queryset = AttendanceLog.objects.select_related('employee', 'employee__department').all()
+    queryset = AttendanceLog.objects.select_related('employee', 'employee__department', 'employee__position').all()
     serializer_class = AttendanceLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = FlexiblePagination
+
+    def paginate_queryset(self, queryset):
+        # Jika frontend mengirim page_size=all, matikan pagination untuk menampilkan seluruh data
+        if self.request.query_params.get('page_size') == 'all':
+            return None
+        return super().paginate_queryset(queryset)
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Jika bukan admin/HR, hanya tampilkan absensi miliknya sendiri
-        # user = self.request.user
-        # if not user.is_staff and hasattr(user, 'employee_profile'):
-        #     queryset = queryset.filter(employee=user.employee_profile)
 
-        # Filter tanggal jika dikirim via Query Parameters
+        # Filter berdasarkan Tanggal (Support Start Only, End Only, atau Range)
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
+
         if start_date and end_date:
             queryset = queryset.filter(timestamp__date__range=[start_date, end_date])
+        elif start_date:
+            queryset = queryset.filter(timestamp__date__gte=start_date)
+        elif end_date:
+            queryset = queryset.filter(timestamp__date__lte=end_date)
 
-        print("iniqueryset", queryset)
         return queryset
-
 # @method_decorator(csrf_exempt, name='dispatch')
 # class ZKDeviceCDataView(View):
 #     """

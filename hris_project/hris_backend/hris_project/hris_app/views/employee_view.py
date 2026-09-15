@@ -17,13 +17,14 @@ from rest_framework.views import APIView
 from hris_app.models import Employee, EmployeeEditStagging
 from django.utils import timezone
 import datetime
-
+from django.db.models import Q
 class EmployeeListView(generics.ListAPIView):
     api_codename = 'EmployeeRead'
-    queryset = Employee.objects.all().order_by('-id')
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [HasAPIAccessPermission]
+    def get_queryset(self):
+        return Employee.objects.filter(Q(is_onboarding=False) | Q(is_onboarding=True, form_status='approved')).order_by('-id')
 
 class EmployeeDetailView(generics.RetrieveAPIView):
     api_codename = 'EmployeeRead'
@@ -196,6 +197,7 @@ class ApproveEmployeeUpdateView(APIView):
             # Layer 1: Check / Mark as Progress
             if action == "CHECK":
                 update_req.status = 'progress'
+                update_req.form_status = 'progress'
                 update_req.save()
                 return Response({"message": "Status pengajuan berhasil diubah menjadi Progress."})
 
@@ -214,7 +216,8 @@ class ApproveEmployeeUpdateView(APIView):
                 employee.is_edited = False
                 employee.save()
 
-                update_req.status = 'approved'
+                update_req.status = 'active'
+                update_req.form_status = 'approved'
                 update_req.reviewed_by = request.user
                 update_req.reviewed_at = timezone.now()
                 update_req.save()
@@ -228,7 +231,8 @@ class ApproveEmployeeUpdateView(APIView):
                     employee.is_edited = False
                     employee.save()
 
-                update_req.status = 'rejected'
+                update_req.status = 'inactive'
+                update_req.form_status = 'rejected'
                 update_req.reviewed_by = request.user
                 update_req.reviewed_at = timezone.now()
                 update_req.rejection_reason = request.data.get("reason", "")

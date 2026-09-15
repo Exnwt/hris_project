@@ -43,7 +43,6 @@ class Attendance(models.Model):
         return f"{self.employee.nama_lengkap} - {self.date} [{self.status}]"
     
 
-# buat zkteco attendance log model
 class AttendanceLog(models.Model):
     class CheckTypeChoices(models.TextChoices):
         CHECK_IN = 'I', 'Check In'
@@ -51,17 +50,23 @@ class AttendanceLog(models.Model):
         OVERTIME_IN = '1', 'Overtime In'
         OVERTIME_OUT = '2', 'Overtime Out'
 
-    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING, related_name='attendance_logs', null=True, blank=True)
+    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, related_name='attendance_logs', null=True, blank=True)
+    
+    employee_nik = models.CharField(max_length=50, null=True, blank=True)
+    employee_name = models.CharField(max_length=200, null=True, blank=True)
+    department_name = models.CharField(max_length=200, null=True, blank=True)
+    position_name = models.CharField(max_length=200, null=True, blank=True)
+    
     timestamp = models.DateTimeField()
     check_type = models.CharField(max_length=2, choices=CheckTypeChoices.choices, default=CheckTypeChoices.CHECK_IN)
     sn_device = models.CharField(max_length=100, null=True, blank=True, help_text="Serial Number Mesin ZKTeco")
-    raw_uid = models.CharField(max_length=50, help_text="UID Mentah dari Mesin ZK")
-    zk_id = models.BigIntegerField(_("ZkTeco Attendace ID"), null=True, blank=True)
-    raw_payload = models.JSONField(_("Attendance Raw PayLoad"), null=True, blank=True)
+    raw_uid = models.CharField(max_length=50, null=True, blank=True, help_text="UID Mentah / emp_code dari Mesin ZK")
+    zk_id = models.BigIntegerField(_("ZKTeco Attendance ID"), unique=True, null=True, blank=True)
+    raw_payload = models.JSONField(_("Attendance Raw Payload"), null=True, blank=True)
 
     class Meta:
         ordering = ['-timestamp']
-        unique_together = ('employee', 'timestamp') # Cegah duplikasi data log
 
     def __str__(self):
-        return f"{self.employee.nama_lengkap} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        emp_display = self.employee_name or (self.employee.name if self.employee else "Unknown")
+        return f"{emp_display} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
