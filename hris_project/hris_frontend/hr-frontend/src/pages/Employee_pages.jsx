@@ -1,8 +1,20 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
+import ExcelManagerModal from "../components/ExcelManagerModal";
 
 const EmployeePage = () => {
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const employeeFields = [
+    { field: "nik_karyawan", label: "NIK Karyawan" },
+    { field: "nama_lengkap", label: "Nama Lengkap" },
+    { field: "nik_ktp", label: "NIK KTP" },
+    { field: "phone_number", label: "No WhatsApp" },
+    { field: "email", label: "Email" },
+    { field: "jenis_kelamin", label: "Jenis Kelamin" },
+    { field: "join_date", label: "Tanggal Masuk" },
+    { field: "shirt_size", label: "Ukuran Baju" },
+  ];
   // ==========================================
   // 1. STATE PERMISSION HAK AKSES
   // ==========================================
@@ -1020,6 +1032,16 @@ const EmployeePage = () => {
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
+          <button onClick={() => setShowExcelModal(true)}>
+            📊 Import / Export Excel
+          </button>
+          {/* MODAL EXCEL GLOBAL */}
+          <ExcelManagerModal
+            isOpen={showExcelModal}
+            onClose={() => setShowExcelModal(false)}
+            targetModel="Employee"
+            availableFields={employeeFields}
+          />
           <button onClick={fetchEmployees} style={refreshButtonStyle}>
             🔄 Refresh Data
           </button>

@@ -43,3 +43,19 @@ class GroupAccessAssignment(models.Model):
     def __str__(self):
         return f"{self.group.name} -> {self.api_endpoint.name}"
 
+
+class ExcelTemplate(models.Model):
+    name = models.CharField(max_length=150)  # Nama Template, misal: "Format Laporan KTP & WA"
+    target_model = models.CharField(max_length=100)  # Misal: "Employee", "Department"
+    description = models.TextField(null=True, blank=True)
+    
+    # JSONField menyimpan urutan dan daftar kolom yang dipilih
+    # Format: [{"field": "nik_karyawan", "label": "NIK Karyawan"}, {"field": "nama_lengkap", "label": "Nama"}]
+    selected_fields = models.JSONField(help_text="Menyimpan urutan dan daftar kolom")
+    
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.target_model})"

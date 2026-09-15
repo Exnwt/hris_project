@@ -1,4 +1,4 @@
-from .api import APIEndpoint, GroupAccessAssignment
+from .api import APIEndpoint, GroupAccessAssignment, ExcelTemplate
 from .company import Company
 from .division import Department, Section, Position, Area
 from .employee import Employee, EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging, EmployeeBiometric, EmployeeEditStagging
