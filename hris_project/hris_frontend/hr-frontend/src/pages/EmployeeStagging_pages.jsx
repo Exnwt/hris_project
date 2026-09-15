@@ -325,8 +325,7 @@ const EmployeeEditStagingPage = () => {
               )}
 
               {/* Layer 2 & 3: Approve and Reject Buttons */}
-              {["draft", "pending", "progress"].includes(selectedStaging.status) && (
-                <>
+              {["draft", "pending", "progress"].includes(selectedStaging.status) && !loadingPermissions && hasAccess("employeeStaggingReject") && (
                   <button
                     disabled={actionLoading}
                     onClick={() => setShowRejectModal(true)}
@@ -334,14 +333,15 @@ const EmployeeEditStagingPage = () => {
                   >
                     Tolak (Reject)
                   </button>
-                  <button
-                    disabled={actionLoading}
-                    onClick={() => handleApprove(selectedStaging.id)}
-                    style={btnSuccessStyle}
-                  >
-                    {actionLoading ? "Menyimpan..." : "Setujui (Approve)"}
-                  </button>
-                </>
+              )}
+              {["draft", "pending", "progress"].includes(selectedStaging.status)  && !loadingPermissions && hasAccess("employeeStaggingApprove") && (
+                <button
+                  disabled={actionLoading}
+                  onClick={() => handleApprove(selectedStaging.id)}
+                  style={btnSuccessStyle}
+                >
+                  {actionLoading ? "Menyimpan..." : "Setujui (Approve)"}
+                </button>
               )}
             </div>
           </div>

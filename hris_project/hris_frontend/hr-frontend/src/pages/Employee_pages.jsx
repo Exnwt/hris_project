@@ -1121,7 +1121,7 @@ const EmployeePage = () => {
                   <td style={{ ...tdStyle, textAlign: "center" }}>
                     {!loadingPermissions && (
                       <>
-                        {!loadingPermissions && hasAccess("EmployeeRead") && (
+                        {!loadingPermissions && hasAccess("EmployeeRequestEdit") && (
                           <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
                             Buka
                           </button>

@@ -965,7 +965,7 @@ const OnboardingPage1 = () => {
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "30px" }}>
             {formMode === "detail" ? (
               <>
-                {!loadingPermissions && hasAccess("EmployeeEdit") && (
+                {!loadingPermissions && hasAccess("EmployeeUpdate") && (
                   <button
                     type="button"
                     onClick={() => setFormMode("edit")}

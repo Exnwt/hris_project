@@ -35,7 +35,7 @@ class BiotimeLogin:
 class SyncEmployeeToZkBiotimeView(APIView):
   # Ganti dengan password ZK BioTime
     zk_auth = BiotimeLogin()
-
+    print(1111)
     def post(self, request):
         employee_id = request.data.get("employee_id")
 
@@ -47,7 +47,7 @@ class SyncEmployeeToZkBiotimeView(APIView):
             employee = Employee.objects.get(id=employee_id)
         except Employee.DoesNotExist:
             return Response({"detail": "Karyawan tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
-
+        print(22222)
         # 2. Dapatkan Token ZK BioTime Secara Otomatis
         zk_token = self.zk_auth.get_token()
         if not zk_token:
@@ -56,15 +56,17 @@ class SyncEmployeeToZkBiotimeView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # 3. Buat Payload Karyawan untuk ZK BioTime
+        print(33333)
         zk_payload = {
             "emp_code": employee.nik_karyawan,
             "first_name": employee.nama_lengkap,
-            "department": employee.department.id if employee.department else 1,  # Default ID Dept 1 jika null
+            "department": employee.department.zk_id if employee.department.zk_id else 1,  # Default ID Dept 1 jika null
             "area": [1],  # ID Area Mesin di ZK
             "position" : employee.position.id if employee.position else 1,
         }
 
         # 4. Header dengan Token JWT ZK
+        print(4444)
         headers = {
             "Authorization": f"Token {zk_token}",
             "Content-Type": "application/json",
@@ -72,6 +74,7 @@ class SyncEmployeeToZkBiotimeView(APIView):
 
         # 5. Kirim Request Sync Server-to-Server
         try:
+            print(5555)
             sync_url = f"{BiotimeLogin.ZK_BASE_URL}/personnel/api/employees/"
             if employee.biometric_user_id :
                 update_url = f"{sync_url}{employee.biometric_user_id}/"
@@ -87,12 +90,14 @@ class SyncEmployeeToZkBiotimeView(APIView):
                         "message": f"Berhasil sinkronisasi karyawan1 {employee.nama_lengkap} ke ZKTeco BioTime!",
                         "zk_data": zk_response.json()
                     }, status=status.HTTP_200_OK)
+            print(6666,zk_payload)
             zk_response = requests.post(
                 sync_url,
                 json=zk_payload,
                 headers=headers,
                 timeout=10
             )
+            print(77777)
             if zk_response.status_code in [200, 201]:
                 res_data = zk_response.json()
                 res_id = ''
@@ -106,12 +111,14 @@ class SyncEmployeeToZkBiotimeView(APIView):
                     "zk_data": zk_response.json()
                 }, status=status.HTTP_200_OK)
             else:
+                print(8888, zk_response.json())
                 return Response({
                     "detail": "ZKTeco Menolak Request",
                     "error": zk_response.json()
                 }, status=zk_response.status_code)
 
         except requests.exceptions.RequestException as e:
+            print(99999)
             return Response({
                 "detail": f"Gagal terhubung ke Server ZKTeco: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -383,10 +390,12 @@ class GetEmployeeFromZKBiotime(APIView):
 
 class GetTransactionsZKBiottimeView(APIView):
     zk_auth = BiotimeLogin()
-
+    print('transation111')
     def get(self, request):
+        print('transation222')
         # 1. Autentikasi Token
         zk_token = self.zk_auth.get_token()
+        print('transation333', zk_token)
         if not zk_token:
             return Response(
                 {"detail": "Gagal Melakukan Autentikasi ke Server ZKTeco BioTime."}, 
@@ -464,6 +473,7 @@ class GetTransactionsZKBiottimeView(APIView):
                 params=params,
                 timeout=15
             )
+            print('transationresponse', zk_response)
 
             if zk_response.status_code == 200:
                 data = zk_response.json()
@@ -487,3 +497,6 @@ class GetTransactionsZKBiottimeView(APIView):
             )
 
 
+TASK_REGISTRY = {
+    'GetTransactionsZKBiottimeView': GetTransactionsZKBiottimeView
+}
