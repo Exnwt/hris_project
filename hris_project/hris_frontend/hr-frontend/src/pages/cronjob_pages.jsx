@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Instance axios Anda
+import api from "../api";
 
 const CronjobPage = () => {
   const [cronjobs, setCronjobs] = useState([]);
@@ -14,13 +14,17 @@ const CronjobPage = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const [editItem, setEditItem] = useState(null);
 
-  const [formData, setFormData] = useState({
+  const initialForm = {
     name: "",
     code_name: "",
-    schedule: "*/5 * * * *",
+    start_time: "", // HH:mm
+    interval_value: 5,
+    interval_type: "minutes",
     description: "",
     is_active: true,
-  });
+  };
+
+  const [formData, setFormData] = useState(initialForm);
 
   const BASE_URL = "api/v2/system/cronjobs/";
 
@@ -49,18 +53,14 @@ const CronjobPage = () => {
       setFormData({
         name: item.name || "",
         code_name: item.code_name || "",
-        schedule: item.schedule || "",
+        start_time: item.start_time ? item.start_time.substring(0, 5) : "",
+        interval_value: item.interval_value || 5,
+        interval_type: item.interval_type || "minutes",
         description: item.description || "",
         is_active: item.is_active ?? true,
       });
     } else {
-      setFormData({
-        name: "",
-        code_name: "",
-        schedule: "*/5 * * * *",
-        description: "",
-        is_active: true,
-      });
+      setFormData(initialForm);
     }
     setModalOpen(true);
   };
@@ -69,11 +69,16 @@ const CronjobPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const payload = {
+        ...formData,
+        start_time: formData.start_time === "" ? null : formData.start_time,
+      };
+
       if (editItem) {
-        await api.put(`${BASE_URL}${editItem.id}/`, formData);
+        await api.put(`${BASE_URL}${editItem.id}/`, payload);
         alert("Cronjob berhasil diperbarui!");
       } else {
-        await api.post(BASE_URL, formData);
+        await api.post(BASE_URL, payload);
         alert("Cronjob baru berhasil ditambahkan!");
       }
       setModalOpen(false);
@@ -122,123 +127,148 @@ const CronjobPage = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case "SUCCESS":
-        return <span style={{ ...badgeStyle, background: "#dcfce7", color: "#15803d" }}>SUCCESS</span>;
+        return <span className="badge badge-success">SUCCESS</span>;
       case "FAILED":
-        return <span style={{ ...badgeStyle, background: "#fee2e2", color: "#b91c1c" }}>FAILED</span>;
+        return <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c" }}>FAILED</span>;
       case "RUNNING":
-        return <span style={{ ...badgeStyle, background: "#e0f2fe", color: "#0369a1" }}>RUNNING...</span>;
+        return <span className="badge" style={{ background: "#e0f2fe", color: "#0369a1" }}>RUNNING...</span>;
       default:
-        return <span style={{ ...badgeStyle, background: "#f1f5f9", color: "#475569" }}>IDLE</span>;
+        return <span className="badge badge-default">IDLE</span>;
     }
   };
 
+  const renderScheduleText = (row) => {
+    const typeLabel = { minutes: "Menit", hours: "Jam", days: "Hari" };
+    const label = typeLabel[row.interval_type] || "Waktu";
+    let text = `Setiap ${row.interval_value} ${label}`;
+    if (row.start_time) {
+      text += ` (Mulai ${row.start_time.substring(0, 5)})`;
+    }
+    return text;
+  };
+
   return (
-    <div style={containerStyle}>
+    <div className="page-container">
       {/* HEADER */}
-      <div style={headerStyle}>
+      <div className="page-header">
         <div>
-          <h2 style={{ margin: 0, color: "#0f172a" }}>Cronjob & Scheduled Tasks</h2>
-          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
+          <h2>Cronjob & Scheduled Tasks</h2>
+          <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
             Monitor dan atur eksekusi jadwal tugas otomatis (seperti sync ZKTeco & Rekap Absensi)
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchCronjobs} style={refreshButtonStyle}>🔄 Refresh</button>
-          <button onClick={() => handleOpenModal()} style={primaryButtonStyle}>+ Tambah Task Baru</button>
+        <div className="page-header-actions">
+          <button onClick={fetchCronjobs} className="btn btn-secondary">🔄 Refresh</button>
+          <button onClick={() => handleOpenModal()} className="btn btn-primary">+ Tambah Task Baru</button>
         </div>
       </div>
 
       {/* STAT CARDS */}
-      <div style={statsContainerStyle}>
-        <div style={statCardStyle}>
-          <span style={statTitleStyle}>Total Tasks</span>
-          <span style={statNumberStyle}>{cronjobs.length}</span>
+      <div className="stats-grid">
+        <div className="stat-card-box">
+          <span className="stat-card-title">Total Tasks</span>
+          <span className="stat-card-number">{cronjobs.length}</span>
         </div>
-        <div style={statCardStyle}>
-          <span style={statTitleStyle}>Task Aktif</span>
-          <span style={{ ...statNumberStyle, color: "#16a34a" }}>
+        <div className="stat-card-box">
+          <span className="stat-card-title">Task Aktif</span>
+          <span className="stat-card-number" style={{ color: "#16a34a" }}>
             {cronjobs.filter((c) => c.is_active).length}
           </span>
         </div>
-        <div style={statCardStyle}>
-          <span style={statTitleStyle}>Gagal (Last Run)</span>
-          <span style={{ ...statNumberStyle, color: "#dc2626" }}>
+        <div className="stat-card-box">
+          <span className="stat-card-title">Gagal (Last Run)</span>
+          <span className="stat-card-number" style={{ color: "#dc2626" }}>
             {cronjobs.filter((c) => c.last_status === "FAILED").length}
           </span>
         </div>
       </div>
 
       {/* FILTER BAR */}
-      <div style={filterBarStyle}>
+      <div style={{ marginBottom: "20px" }}>
         <input
           type="text"
           placeholder="Cari Nama Task atau Code Name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={inputSearchStyle}
+          className="input-control"
+          style={{ maxWidth: "400px" }}
         />
       </div>
 
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
       {/* TABLE */}
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>Nama Task</th>
-              <th style={thStyle}>Code Command</th>
-              <th style={thStyle}>Jadwal Cron</th>
-              <th style={thStyle}>Status Terakhir</th>
-              <th style={thStyle}>Eksekusi Terakhir</th>
-              <th style={thStyle}>Status Task</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            <tr>
+              <th>Nama Task</th>
+              <th>Code Command</th>
+              <th>Jadwal Otomatis</th>
+              <th>Status Terakhir</th>
+              <th>Eksekusi Terakhir</th>
+              <th>Status</th>
+              <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" style={emptyTdStyle}>Memuat data task cronjob...</td>
+                <td colSpan="7" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>
+                  Memuat data task cronjob...
+                </td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="7" style={emptyTdStyle}>Tidak ada task cronjob ditemukan.</td>
+                <td colSpan="7" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>
+                  Tidak ada task cronjob ditemukan.
+                </td>
               </tr>
             ) : (
               filteredData.map((row) => (
-                <tr key={row.id} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>
-                    <strong style={{ color: "#0f172a" }}>{row.name}</strong>
-                    {row.description && (
-                      <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>{row.description}</p>
-                    )}
+                <tr key={row.id}>
+                  <td>
+                    <strong>{row.name}</strong>
                   </td>
-                  <td style={tdStyle}>
-                    <code style={codeStyle}>{row.code_name}</code>
+                  <td>
+                    <code style={{ background: "#f1f5f9", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", color: "#2563eb" }}>
+                      {row.code_name}
+                    </code>
                   </td>
-                  <td style={tdStyle}>
-                    <span style={badgeCronStyle}>{row.schedule}</span>
+                  <td>
+                    <span className="badge" style={{ background: "#fef3c7", color: "#b45309", fontFamily: "monospace" }}>
+                      {renderScheduleText(row)}
+                    </span>
                   </td>
-                  <td style={tdStyle}>{getStatusBadge(row.last_status)}</td>
-                  <td style={tdStyle}>
+                  <td>{getStatusBadge(row.last_status)}</td>
+                  <td>
                     {row.last_run ? new Date(row.last_run).toLocaleString("id-ID") : "-"}
                   </td>
-                  <td style={tdStyle}>
+                  <td>
                     <span style={{ color: row.is_active ? "#16a34a" : "#94a3b8", fontWeight: "bold" }}>
                       {row.is_active ? "● Active" : "○ Inactive"}
                     </span>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
-                    <button
-                      onClick={() => handleRunNow(row.id)}
-                      disabled={executingId === row.id}
-                      style={btnRunStyle}
-                    >
-                      {executingId === row.id ? "Running..." : "🚀 Run"}
-                    </button>{" "}
-                    <button onClick={() => showLogModal(row)} style={actionButtonStyle}>Logs</button>{" "}
-                    <button onClick={() => handleOpenModal(row)} style={actionButtonStyle}>Edit</button>{" "}
-                    <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>Hapus</button>
+                  <td style={{ textAlign: "center" }}>
+                    <div className="action-group">
+                      <button
+                        onClick={() => handleRunNow(row.id)}
+                        disabled={executingId === row.id}
+                        className="btn btn-secondary"
+                        style={{ background: "#dcfce7", color: "#15803d", borderColor: "#86efac" }}
+                      >
+                        {executingId === row.id ? "Running..." : "🚀 Run"}
+                      </button>
+                      <button onClick={() => showLogModal(row)} className="btn btn-action-view">
+                        Logs
+                      </button>
+                      <button onClick={() => handleOpenModal(row)} className="btn btn-action-view">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(row.id)} className="btn btn-action-delete">
+                        Hapus
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -249,64 +279,106 @@ const CronjobPage = () => {
 
       {/* MODAL FORM CREATE/EDIT */}
       {modalOpen && (
-        <div style={overlayStyle}>
-          <div style={modalBoxStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "15px" }}>
-              <h3 style={{ margin: 0 }}>{editItem ? "Edit Cronjob Task" : "Tambah Cronjob Task"}</h3>
-              <button onClick={() => setModalOpen(false)} style={closeModalBtnStyle}>✕</button>
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: "550px" }}>
+            <div className="page-header" style={{ marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, color: "#0f172a" }}>
+                {editItem ? "Edit Cronjob Task" : "Tambah Cronjob Task"}
+              </h3>
+              <button type="button" onClick={() => setModalOpen(false)} className="btn-close-modal">✕</button>
             </div>
+
             <form onSubmit={handleSubmit}>
-              <label style={labelStyle}>Nama Task *</label>
-              <input
-                type="text"
-                placeholder="misal: Sync Absensi ZKTeco"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputStyle}
-                required
-              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div>
+                  <label className="form-label">Nama Task *</label>
+                  <input
+                    type="text"
+                    placeholder="misal: Sync Absensi ZKTeco"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="input-control"
+                    required
+                  />
+                </div>
 
-              <label style={labelStyle}>Code Command (Django Command) *</label>
-              <input
-                type="text"
-                placeholder="misal: sync_zkteco_attendance"
-                value={formData.code_name}
-                onChange={(e) => setFormData({ ...formData, code_name: e.target.value })}
-                style={inputStyle}
-                required
-              />
+                <div>
+                  <label className="form-label">Code Command (Django Command) *</label>
+                  <input
+                    type="text"
+                    placeholder="misal: sync_zkteco_attendance"
+                    value={formData.code_name}
+                    onChange={(e) => setFormData({ ...formData, code_name: e.target.value })}
+                    className="input-control"
+                    required
+                  />
+                </div>
 
-              <label style={labelStyle}>Jadwal Cron Expression *</label>
-              <input
-                type="text"
-                placeholder="*/5 * * * * (Setiap 5 menit)"
-                value={formData.schedule}
-                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                style={inputStyle}
-                required
-              />
+                {/* KONFIGURASI JADWAL BARU */}
+                <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                  <h4 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#334155" }}>Konfigurasi Jadwal (Schedule)</h4>
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                    <div>
+                      <label className="form-label">Mulai Dari Jam (Opsional)</label>
+                      <input
+                        type="time"
+                        value={formData.start_time}
+                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                        className="input-control"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Nilai Interval *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.interval_value}
+                        onChange={(e) => setFormData({ ...formData, interval_value: parseInt(e.target.value) })}
+                        className="input-control"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <label style={labelStyle}>Deskripsi</label>
-              <textarea
-                rows="3"
-                placeholder="Deskripsi singkat fungsi cronjob ini..."
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                style={{ ...inputStyle, width: "100%", boxSizing: "border-box" }}
-              />
+                  <label className="form-label">Satuan Waktu Interval *</label>
+                  <select
+                    value={formData.interval_type}
+                    onChange={(e) => setFormData({ ...formData, interval_type: e.target.value })}
+                    className="input-control"
+                    required
+                  >
+                    <option value="minutes">Menit</option>
+                    <option value="hours">Jam</option>
+                    <option value="days">Hari</option>
+                  </select>
+                </div>
 
-              <label style={{ ...labelStyle, display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                />
-                Aktifkan Jadwal Cronjob
-              </label>
+                <div>
+                  <label className="form-label">Deskripsi (Opsional)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Deskripsi singkat fungsi cronjob ini..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="input-control"
+                  />
+                </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
-                <button type="button" onClick={() => setModalOpen(false)} style={cancelButtonStyle}>Batal</button>
-                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", marginTop: "8px" }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                  />
+                  Aktifkan Jadwal Cronjob Ini
+                </label>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
+                <button type="button" onClick={() => setModalOpen(false)} className="btn btn-cancel">Batal</button>
+                <button type="submit" disabled={loading} className="btn btn-primary">
                   {loading ? "Menyimpan..." : "Simpan Task"}
                 </button>
               </div>
@@ -317,20 +389,35 @@ const CronjobPage = () => {
 
       {/* MODAL LOG OUTPUT */}
       {logModalOpen && selectedLog && (
-        <div style={overlayStyle}>
-          <div style={{ ...modalBoxStyle, width: "650px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "15px" }}>
-              <h3 style={{ margin: 0 }}>Log Output: {selectedLog.name}</h3>
-              <button onClick={() => setLogModalOpen(false)} style={closeModalBtnStyle}>✕</button>
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: "650px" }}>
+            <div className="page-header" style={{ marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, color: "#0f172a" }}>Log Output: {selectedLog.name}</h3>
+              <button onClick={() => setLogModalOpen(false)} className="btn-close-modal">✕</button>
             </div>
-            <p style={{ fontSize: "13px", color: "#64748b" }}>
+            
+            <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "12px" }}>
               Status: {getStatusBadge(selectedLog.last_status)} | Eksekusi Terakhir: {selectedLog.last_run ? new Date(selectedLog.last_run).toLocaleString("id-ID") : "-"}
             </p>
-            <pre style={logOutputConsoleStyle}>
-              {selectedLog.last_message || "Belum ada log eksekusi."}
+            
+            {/* Terminal Style Log Area (Tetap inline karena ini spesifik UI console) */}
+            <pre style={{ 
+              background: "#0f172a", 
+              color: "#38bdf8", 
+              padding: "16px", 
+              borderRadius: "8px", 
+              maxHeight: "350px", 
+              overflowY: "auto", 
+              fontSize: "13px", 
+              fontFamily: "monospace", 
+              whiteSpace: "pre-wrap",
+              border: "1px solid #334155"
+            }}>
+              {selectedLog.last_message || "Belum ada log eksekusi pada task ini."}
             </pre>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "15px" }}>
-              <button onClick={() => setLogModalOpen(false)} style={cancelButtonStyle}>Tutup Log</button>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", paddingTop: "12px", borderTop: "1px solid #e2e8f0" }}>
+              <button onClick={() => setLogModalOpen(false)} className="btn btn-cancel">Tutup Log</button>
             </div>
           </div>
         </div>
@@ -338,40 +425,5 @@ const CronjobPage = () => {
     </div>
   );
 };
-
-// ==========================================
-// STYLES
-// ==========================================
-const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
-const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const primaryButtonStyle = { padding: "8px 16px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const cancelButtonStyle = { padding: "8px 16px", background: "#64748b", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const btnRunStyle = { padding: "5px 10px", background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", borderRadius: "4px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" };
-const actionButtonStyle = { padding: "5px 10px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const actionDeleteStyle = { padding: "5px 10px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const statsContainerStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "15px", marginBottom: "20px" };
-const statCardStyle = { background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column" };
-const statTitleStyle = { fontSize: "12px", color: "#64748b", fontWeight: "bold" };
-const statNumberStyle = { fontSize: "22px", fontWeight: "bold", marginTop: "5px", color: "#0f172a" };
-const filterBarStyle = { display: "flex", gap: "12px", marginBottom: "20px" };
-const inputSearchStyle = { width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px" };
-const inputStyle = { width: "100%", padding: "8px 12px", marginBottom: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px", boxSizing: "border-box" };
-const errorBannerStyle = { padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "14px" };
-const tableWrapperStyle = { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" };
-const tableHeaderRowStyle = { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" };
-const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
-const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
-const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
-const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
-const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold" };
-const badgeCronStyle = { background: "#fef3c7", color: "#b45309", padding: "3px 8px", borderRadius: "4px", fontSize: "12px", fontFamily: "monospace", fontWeight: "bold" };
-const codeStyle = { background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px", fontSize: "12px", color: "#2563eb" };
-const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "4px" };
-const overlayStyle = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100 };
-const modalBoxStyle = { background: "#fff", padding: "24px", borderRadius: "12px", width: "450px", maxWidth: "90%", maxHeight: "90vh", overflowY: "auto" };
-const closeModalBtnStyle = { background: "transparent", border: "none", fontSize: "18px", cursor: "pointer", color: "#64748b" };
-const logOutputConsoleStyle = { background: "#0f172a", color: "#38bdf8", padding: "15px", borderRadius: "8px", maxHeight: "300px", overflowY: "auto", fontSize: "12px", fontFamily: "monospace" };
 
 export default CronjobPage;
