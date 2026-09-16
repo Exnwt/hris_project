@@ -5,7 +5,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from hris_app.models import Employee, Company
+from hris_app.models import Employee, Company, Department, Section,Area,Position
 
 WEBHOOK_SECRET = "SecretTokenRahasiaHRIS2026"
 
@@ -45,19 +45,24 @@ class IncomingWebhookView(APIView):
         print(f"[WEBHOOK RECEIVED] Event: {event_type}, Payload: {payload}")
         try:
             if event_type in ["employee.created", "employee.updated"]:
-                def clean_val(val):
-                    if val is None:
+                def clean_val(value):
+                    if value is None:
                         return None
-                    if isinstance(val, str) and not val.strip():
-                        return None
-                    return val
+                        
+                    if isinstance(value, str):
+                        cleaned_text = value.strip() # Hapus spasi ujung
+                        if cleaned_text == "":
+                            return None
+                            
+                        # Tambahkan .upper() agar otomatis jadi KAPITAL
+                        return cleaned_text.upper() 
+                    return value
 
                 # Ambil Identifier Kunci
-                onboarding_id = clean_val(payload.get("onboarding_id"))
+                onboarding_id = payload.get("onboarding_id")
                 nik_ktp = clean_val(payload.get("nik_ktp"))
                 nik = clean_val(payload.get("nik_karyawan"))
                 nama = clean_val(payload.get("nama_lengkap"))
-
                 # 🟢 4. LOGIKA PENCEKAN KEBERADAAN DATA (LOOKUP)
                 # Cari record berdasarkan onboarding_id OR nik_ktp OR nik_karyawan
                 lookup_query = Q()
@@ -65,8 +70,6 @@ class IncomingWebhookView(APIView):
                     lookup_query |= Q(onboarding_id=onboarding_id)
                 if nik_ktp:
                     lookup_query |= Q(nik_ktp=nik_ktp)
-                if nik:
-                    lookup_query |= Q(nik_karyawan=nik)
 
                 employee = None
                 if lookup_query:
@@ -75,19 +78,24 @@ class IncomingWebhookView(APIView):
                 # 🟢 5. PERSIAPAN DATA DEFAULT UPDATE / CREATE
                 defaults_data = {
                     "nama_lengkap": nama,
-                    "nik_karyawan": nik,
                     "nik_ktp": nik_ktp,
-                    "passport_number": clean_val(payload.get("passport_number")),
                     "nationality": payload.get("nationality", "WNI"),
-                    "pendidikan": payload.get("pendidikan", "LAINNYA"),
                     "phone_number": clean_val(payload.get("phone_number")),
                     "email": clean_val(payload.get("email")),
                     "jenis_kelamin": payload.get("jenis_kelamin", "L"),
                     "tempat_lahir": clean_val(payload.get("tempat_lahir")),
                     "tanggal_lahir": clean_val(payload.get("tanggal_lahir")),
-                    "agama": payload.get("agama", "ISLAM"),
+                    "agama": payload.get("agama"),
                     "blood_type": clean_val(payload.get("blood_type")),
-
+                    "pendidikan": payload.get("pendidikan"),
+                    "passport_number": clean_val(payload.get("passport_number")),
+                    
+                    # relation
+                    "company": payload.get("company_id"),
+                    "department": payload.get("department_id"),
+                    "section": payload.get("section_id"),
+                    "position": payload.get("position_id"),
+                    
                     # Data Alamat
                     "address": clean_val(payload.get("address")),
                     "kelurahan": clean_val(payload.get("kelurahan")),
@@ -95,11 +103,6 @@ class IncomingWebhookView(APIView):
                     "city": clean_val(payload.get("city")),
                     "province": clean_val(payload.get("province")),
                     "pos_code": clean_val(payload.get("pos_code")),
-
-                    # Ukuran Seragam & Perlengkapan
-                    "shirt_size": payload.get("shirt_size", "S"),
-                    "pants_size": int(payload.get("pants_size") or 30),
-                    "shoes_size": int(payload.get("shoes_size") or 35),
 
                     # Data Keluarga & Status
                     "Employee_status": payload.get("Employee_status", "TK/0"),
@@ -117,6 +120,14 @@ class IncomingWebhookView(APIView):
                     "emergency_contact_phone": clean_val(payload.get("emergency_contact_phone")),
                     "emergency_contact_relation": payload.get("emergency_contact_relation", "ayah"),
 
+                    # Ukuran Seragam & Perlengkapan
+                    "shirt_size": payload.get("shirt_size", "S"),
+                    "pants_size": int(payload.get("pants_size")),
+                    "shoes_size": int(payload.get("shoes_size")),
+                    "tanggal_induksi":clean_val(payload.get("tanggal_induksi")),
+                    "poin_of_hire":clean_val(payload.get("tanggal_induksi")),
+                    "is_staff":payload.get("is_staff"),
+                    
                     # ID Onboarding dan Flag Status
                     "is_onboarding": True,
                     "form_status": "progress",

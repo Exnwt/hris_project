@@ -109,7 +109,6 @@ class Employee(models.Model):
     pendidikan = models.CharField(max_length=20, choices=EducationChoices.choices, default='LAINNYA')
     passport_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     join_date = models.DateField(null=True, blank=True)
-    Employee_status = models.CharField(_("Employee Relation Status"), max_length=10, choices=EMPLOYEE_STATUS_CHOICES, default='TK/0')
     status = models.CharField(_("Status"), max_length=15, choices=STATUS_CHOICES, default='draft')
     form_status = models.CharField(_("Form Status"), max_length=15, choices=FORM_STATUS_CHOICES, default='draft')
 
@@ -138,6 +137,7 @@ class Employee(models.Model):
 
     
     # other relation and Emergency Contact
+    Employee_status = models.CharField(_("Employee Relation Status"), max_length=10, choices=EMPLOYEE_STATUS_CHOICES, default='TK/0')
     couple_name = models.CharField(_("Couple Name"), max_length=100, null=True, blank=True)
     couple_date_birth = models.DateField(_("Couple Date of Birth"), null=True, blank=True)
     
@@ -163,7 +163,7 @@ class Employee(models.Model):
     is_staff = models.BooleanField(_("Grade"), default=False)
     raw_payload = models.JSONField(null=True, blank=True)
     is_onboarding = models.BooleanField(_("Is Onboarding"),  default=False)
-    onboarding_id = models.CharField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
+    onboarding_id = models.BigIntegerField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
     is_edited = models.BooleanField(_("Edited"), default=False)
 
 
