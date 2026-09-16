@@ -5,17 +5,6 @@ import ExcelManagerModal from "../components/ExcelManagerModal";
 
 const EmployeePage = () => {
   const [showExcelModal, setShowExcelModal] = useState(false);
-  const employeeFields = [
-    { field: "nik_karyawan", label: "NIK Karyawan" },
-    { field: "nama_lengkap", label: "Nama Lengkap" },
-    { field: "nik_ktp", label: "NIK KTP" },
-    { field: "phone_number", label: "No WhatsApp" },
-    { field: "email", label: "Email" },
-    { field: "jenis_kelamin", label: "Jenis Kelamin" },
-    { field: "join_date", label: "Tanggal Masuk" },
-    { field: "shirt_size", label: "Ukuran Baju" },
-  ];
-
   // State Modal Deaktivasi Karyawan
   const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [inactiveReason, setInactiveReason] = useState("");
@@ -1070,7 +1059,6 @@ const EmployeePage = () => {
             isOpen={showExcelModal}
             onClose={() => setShowExcelModal(false)}
             targetModel="Employee"
-            availableFields={employeeFields}
           />
           <button onClick={fetchEmployees} className="btn btn-secondary">
             🔄 Refresh Data

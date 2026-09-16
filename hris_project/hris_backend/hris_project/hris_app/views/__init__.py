@@ -1,4 +1,4 @@
 from .employee_view import EmployeeListView, EmployeeDetailView, EmployeeCreateView, EmployeeUpdateView, EmployeeDeleteView, EmployeeEditStaggingListView, SubmitEmployeeEditView, ApproveEmployeeUpdateView
 from .masterData_view import CompanyViewSet, DepartmentListView, DepartmentDetailView, DepartmentCreateView, DepartmentUpdateView, DepartmentDeleteView, SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView, PositionListView, PositionDetailView, PositionCreateView, PositionUpdateView, PositionDeleteView, AreaListView, AreaDetailView, AreaCreateView, AreaUpdateView, AreaDeleteView
 from .contract_view import ContractListReadView,ContractDetailReadView,ContractCreateView,ContractUpdateView,ContractDeleteView, ContractHistoryViewSet
-from .api_view import APIEndpointViewSet, GroupAccessAssignmentViewSet, ExcelTemplateListCreateView, ExcelTemplateDetailView, GlobalExportView, GlobalImportView, UserPermissionView
+from .api_view import APIEndpointViewSet, GroupAccessAssignmentViewSet, ExcelTemplateListCreateView, ExcelTemplateDetailView, GlobalExportView, GlobalImportView, UserPermissionView, ModelFieldsView, GlobalTemplateView

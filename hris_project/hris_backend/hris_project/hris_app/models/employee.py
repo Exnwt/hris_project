@@ -160,7 +160,7 @@ class Employee(models.Model):
     tangal_induksi = models.DateField(_("Tanggal Induksi"), null=True, blank=True)
     poin_of_hire = models.CharField(_("Point Of Hire"), max_length=50, null=True, blank=True)
     is_local = models.BooleanField(_("Origin Type"), default=False)
-    is_staff = models.BooleanField(_("Grade"), default=False)
+    is_staff = models.BooleanField(_("Staff / Non-Staff"), default=False)
     raw_payload = models.JSONField(null=True, blank=True)
     is_onboarding = models.BooleanField(_("Is Onboarding"),  default=False)
     onboarding_id = models.BigIntegerField(_("OnBoarding ID"), max_length=50, null=True, blank=True)
