@@ -271,7 +271,7 @@ export default function DashboardApp({
               Contract
             </button>
           )}
-          {!loadingPermissions && hasAccess("AttendaceRead") && (
+          {/* {!loadingPermissions && hasAccess("AttendaceRead") && (
             <button
               onClick={() => setActiveMenu("attendance")}
               className={`btn-sidebar-menu ${activeMenu === "attendance" ? "active" : ""}`}
@@ -294,7 +294,7 @@ export default function DashboardApp({
             >
               Biometric Enrollment
             </button>
-          )}
+          )} */}
           {!loadingPermissions && hasAccess("ZKTecoAttendanceRead") && (
             <button
               onClick={() => setActiveMenu("zkteco-attendance")}
@@ -306,9 +306,9 @@ export default function DashboardApp({
 
           <p className="sidebar-section-title">SYSTEM</p>
 
-          <button onClick={onNavigateToOnboarding} className="btn-sidebar-menu">
+          {/* <button onClick={onNavigateToOnboarding} className="btn-sidebar-menu">
             Onboarding Portal
-          </button>
+          </button> */}
           {!loadingPermissions && hasAccess("UserAccess") && (
             <button
               onClick={() => setActiveMenu("user-management")}
