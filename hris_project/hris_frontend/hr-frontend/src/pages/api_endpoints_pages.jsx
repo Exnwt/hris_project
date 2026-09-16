@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../api"; // Sesuaikan path instance axios / api client Anda
+import api from "../api";
 
 const APIEndpointManager = () => {
   const [endpoints, setEndpoints] = useState([]);
@@ -7,32 +7,33 @@ const APIEndpointManager = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // State untuk Modal Form (Create / Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
+  
+  const initialFormState = {
     name: "",
     code_name: "",
+    model_name: "Employee",
     description: "",
-  });
+    is_read: false,
+    is_create: false,
+    is_update: false,
+    is_delete: false,
+    is_additional: false, // Flag Additional
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
   const [saving, setSaving] = useState(false);
 
-  // ==========================================
-  // 1. FETCH ALL API ENDPOINTS
-  // ==========================================
   const fetchEndpoints = async () => {
     try {
       setLoading(true);
       setError("");
-      // Sesuaikan URL endpoint DRF Anda (contoh: /api/v2/access/APIEndpoints/)
-      console.log("Fetching API Endpoints from: api/v2/access/APIEndpoints/");
       const response = await api.get("api/v2/access/APIEndpoints/");
-      console.log("Fetched API Endpoints:", response.data);
-      setEndpoints(response.data);
+      const data = response.data.results || response.data || [];
+      setEndpoints(Array.isArray(data) ? data : []);
     } catch (err) {
-        console.error("erorr nih:", err);
       setError("Gagal mengambil daftar API Endpoint.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -42,22 +43,23 @@ const APIEndpointManager = () => {
     fetchEndpoints();
   }, []);
 
-  // ==========================================
-  // 2. HANDLER FORM INPUT & MODAL
-  // ==========================================
   const handleOpenModal = (item = null) => {
     if (item) {
-      // Edit Mode
       setEditingId(item.id);
       setFormData({
-        name: item.name,
-        code_name: item.code_name,
+        name: item.name || "",
+        code_name: item.code_name || "",
+        model_name: item.model_name || "General",
         description: item.description || "",
+        is_read: !!item.is_read,
+        is_create: !!item.is_create,
+        is_update: !!item.is_update,
+        is_delete: !!item.is_delete,
+        is_additional: !!item.is_additional,
       });
     } else {
-      // Create Mode
       setEditingId(null);
-      setFormData({ name: "", code_name: "", description: "" });
+      setFormData(initialFormState);
     }
     setIsModalOpen(true);
   };
@@ -65,43 +67,35 @@ const APIEndpointManager = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
-    setFormData({ name: "", code_name: "", description: "" });
+    setFormData(initialFormState);
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // ==========================================
-  // 3. SUBMIT (CREATE / UPDATE)
-  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setSaving(true);
       if (editingId) {
-        // Update (PUT/PATCH)
         await api.put(`api/v2/access/APIEndpoints/${editingId}/`, formData);
       } else {
-        // Create (POST)
         await api.post("api/v2/access/APIEndpoints/", formData);
       }
       handleCloseModal();
       fetchEndpoints();
     } catch (err) {
       alert(err.response?.data?.detail || "Gagal menyimpan data API Endpoint");
-      console.error(err);
     } finally {
       setSaving(false);
     }
   };
 
-  // ==========================================
-  // 4. DELETE
-  // ==========================================
   const handleDelete = async (id, name) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus API Endpoint "${name}"?`)) {
       try {
@@ -109,95 +103,113 @@ const APIEndpointManager = () => {
         fetchEndpoints();
       } catch (err) {
         alert("Gagal menghapus API Endpoint.");
-        console.error(err);
       }
     }
   };
 
-    // Filter pencarian berdasarkan Name atau Code Name
-    // Menggunakan optional chaining atau default array []
-    const filteredEndpoints = (endpoints || []).filter(
-        (item) =>
-        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.code_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  
+  const filteredEndpoints = (endpoints || []).filter(
+    (item) =>
+      item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.code_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.model_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div style={styles.container}>
+    <div className="page-container">
       {/* HEADER PAGE */}
-      <div style={styles.header}>
+      <div className="page-header">
         <div>
-          <h1 style={styles.title}>Master API Endpoints</h1>
-          <p style={styles.subtitle}>
-            Kelola daftar katalog endpoint API yang tersedia di sistem HRD.
+          <h2>Master API Endpoints</h2>
+          <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
+            Kelola daftar katalog endpoint API, tipe aksinya (CRUD), dan fitur tambahan.
           </p>
         </div>
-        <button style={styles.btnPrimary} onClick={() => handleOpenModal()}>
-          + Tambah Endpoint
-        </button>
+        <div className="page-header-actions">
+          <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+            + Tambah Endpoint
+          </button>
+        </div>
       </div>
 
       {/* SEARCH BAR */}
-      <div style={styles.filterSection}>
+      <div style={{ marginBottom: "20px" }}>
         <input
           type="text"
-          placeholder="Cari nama API atau code name..."
+          placeholder="Cari nama API, model, atau code name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={styles.searchInput}
+          className="input-control"
+          style={{ maxWidth: "400px" }}
         />
       </div>
 
-      {/* ERROR MESSAGE */}
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      {/* TABLE / LIST */}
+      {/* TABLE */}
       {loading ? (
-        <p style={{ textAlign: "center", padding: "20px" }}>Memuat data API Endpoints...</p>
+        <p style={{ textAlign: "center", padding: "30px", color: "#64748b" }}>
+          Memuat data API Endpoints...
+        </p>
       ) : (
-        <div style={styles.tableCard}>
-          <table style={styles.table}>
+        <div className="table-wrapper">
+          <table className="custom-table">
             <thead>
               <tr>
-                <th style={styles.th}>No</th>
-                <th style={styles.th}>Nama API</th>
-                <th style={styles.th}>Code Name (Identifier)</th>
-                <th style={styles.th}>Deskripsi</th>
-                <th style={{ ...styles.th, textAlign: "center" }}>Aksi</th>
+                <th>No</th>
+                <th>Model / Modul</th>
+                <th>Nama API</th>
+                <th>Code Name</th>
+                <th>Status Tipe Akses</th>
+                <th style={{ textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {filteredEndpoints.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={styles.tdEmpty}>
+                  <td colSpan="6" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>
                     Tidak ada data API Endpoint ditemukan.
                   </td>
                 </tr>
               ) : (
                 filteredEndpoints.map((item, index) => (
-                  <tr key={item.id} style={styles.tr}>
-                    <td style={styles.td}>{index + 1}</td>
-                    <td style={styles.td}>
+                  <tr key={item.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      <span className="badge badge-default" style={{ backgroundColor: "#e2e8f0" }}>
+                        {item.model_name || "General"}
+                      </span>
+                    </td>
+                    <td>
                       <strong>{item.name}</strong>
+                      {item.is_additional && (
+                        <span className="badge" style={{ marginLeft: "8px", background: "#f3e8ff", color: "#7e22ce" }}>
+                          Additional
+                        </span>
+                      )}
                     </td>
-                    <td style={styles.td}>
-                      <code style={styles.codeBadge}>{item.code_name}</code>
+                    <td>
+                      <code style={{ background: "#f1f5f9", padding: "4px 8px", borderRadius: "4px", fontSize: "12px" }}>
+                        {item.code_name}
+                      </code>
                     </td>
-                    <td style={styles.td}>{item.description || "-"}</td>
-                    <td style={{ ...styles.td, textAlign: "center" }}>
-                      <button
-                        style={styles.btnEdit}
-                        onClick={() => handleOpenModal(item)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        style={styles.btnDelete}
-                        onClick={() => handleDelete(item.id, item.name)}
-                      >
-                        Hapus
-                      </button>
+                    <td>
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        {item.is_read && <span className="badge badge-success">Read</span>}
+                        {item.is_create && <span className="badge" style={{ background: "#dbeafe", color: "#1d4ed8" }}>Create</span>}
+                        {item.is_update && <span className="badge" style={{ background: "#fef3c7", color: "#b45309" }}>Update</span>}
+                        {item.is_delete && <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c" }}>Delete</span>}
+                        {item.is_additional && <span className="badge" style={{ background: "#f3e8ff", color: "#7e22ce" }}>Additional</span>}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <div className="action-group">
+                        <button className="btn btn-action-view" onClick={() => handleOpenModal(item)}>
+                          Edit
+                        </button>
+                        <button className="btn btn-action-delete" onClick={() => handleDelete(item.id, item.name)}>
+                          Hapus
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -207,72 +219,98 @@ const APIEndpointManager = () => {
         </div>
       )}
 
-      {/* MODAL FORM (CREATE / EDIT) */}
+      {/* MODAL FORM */}
       {isModalOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <div style={styles.modalHeader}>
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: "550px" }}>
+            <div className="page-header" style={{ marginBottom: "16px" }}>
               <h3>{editingId ? "Edit API Endpoint" : "Tambah API Endpoint Baru"}</h3>
-              <button style={styles.btnClose} onClick={handleCloseModal}>
-                ✕
-              </button>
+              <button onClick={handleCloseModal} className="btn-close-modal">✕</button>
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Nama API / Fungsi *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Contoh: Create Employee"
-                  required
-                  style={styles.input}
-                />
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div>
+                  <label className="form-label">Target Model / Modul *</label>
+                  <input
+                    type="text"
+                    name="model_name"
+                    value={formData.model_name}
+                    onChange={handleChange}
+                    placeholder="Contoh: Employee, Department, Contract"
+                    required
+                    className="input-control"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Nama API / Fungsi *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Contoh: Approve Edit Staging"
+                    required
+                    className="input-control"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Code Name (Unique Identifier) *</label>
+                  <input
+                    type="text"
+                    name="code_name"
+                    value={formData.code_name}
+                    onChange={handleChange}
+                    placeholder="Contoh: EmployeeStaggingApprove"
+                    required
+                    className="input-control"
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Pengaturan Tipe Akses & Karakteristik:</label>
+                  <div className="crud-matrix-grid">
+                    <label className="crud-checkbox-label">
+                      <input type="checkbox" name="is_read" checked={formData.is_read} onChange={handleChange} /> Read
+                    </label>
+                    <label className="crud-checkbox-label">
+                      <input type="checkbox" name="is_create" checked={formData.is_create} onChange={handleChange} /> Create
+                    </label>
+                    <label className="crud-checkbox-label">
+                      <input type="checkbox" name="is_update" checked={formData.is_update} onChange={handleChange} /> Update
+                    </label>
+                    <label className="crud-checkbox-label">
+                      <input type="checkbox" name="is_delete" checked={formData.is_delete} onChange={handleChange} /> Delete
+                    </label>
+                    
+                    {/* CHECKBOX ADDITIONAL */}
+                    <label className="crud-checkbox-label" style={{ backgroundColor: "#f3e8ff", color: "#6b21a8" }}>
+                      <input type="checkbox" name="is_additional" checked={formData.is_additional} onChange={handleChange} />
+                      Is Additional
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Deskripsi (Sangat disarankan untuk Additional Access)</label>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Contoh: Memberikan izin khusus untuk menyetujui (Approve) pengajuan edit data karyawan..."
+                    className="input-control"
+                  />
+                </div>
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Code Name (Unique Identifier) *</label>
-                <input
-                  type="text"
-                  name="code_name"
-                  value={formData.code_name}
-                  onChange={handleChange}
-                  placeholder="Contoh: api-employee-create"
-                  required
-                  style={styles.input}
-                />
-                <small style={styles.helpText}>
-                  Digunakan pada `api_codename` di backend Django.
-                </small>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Deskripsi (Opsional)</label>
-                <textarea
-                  name="description"
-                  rows="3"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Penjelasan fungsi dari API ini..."
-                  style={styles.textarea}
-                />
-              </div>
-
-              <div style={styles.modalFooter}>
-                <button
-                  type="button"
-                  style={styles.btnSecondary}
-                  onClick={handleCloseModal}
-                >
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+                <button type="button" className="btn btn-cancel" onClick={handleCloseModal}>
                   Batal
                 </button>
-                <button
-                  type="submit"
-                  style={styles.btnPrimary}
-                  disabled={saving}
-                >
+                <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
@@ -282,40 +320,6 @@ const APIEndpointManager = () => {
       )}
     </div>
   );
-};
-
-// ==========================================
-// STYLES (Inline CSS)
-// ==========================================
-const styles = {
-  container: { padding: "30px", maxWidth: "1100px", margin: "0 auto", fontFamily: "sans-serif" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" },
-  title: { margin: 0, fontSize: "24px", color: "#1a1a1a" },
-  subtitle: { margin: "5px 0 0", color: "#666", fontSize: "14px" },
-  filterSection: { marginBottom: "20px" },
-  searchInput: { width: "100%", maxWidth: "350px", padding: "10px 14px", borderRadius: "6px", border: "1px solid #ccc", fontSize: "14px" },
-  tableCard: { backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" },
-  table: { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" },
-  th: { backgroundColor: "#f8fafc", padding: "12px 16px", borderBottom: "1px solid #e2e8f0", color: "#475569", fontWeight: "600" },
-  tr: { borderBottom: "1px solid #f1f5f9" },
-  td: { padding: "14px 16px", color: "#334155", verticalAlign: "middle" },
-  tdEmpty: { padding: "30px", textAlign: "center", color: "#94a3b8" },
-  codeBadge: { backgroundColor: "#f1f5f9", padding: "4px 8px", borderRadius: "4px", color: "#0f172a", fontSize: "13px", fontFamily: "monospace" },
-  btnPrimary: { backgroundColor: "#2563eb", color: "#fff", border: "none", padding: "10px 18px", borderRadius: "6px", cursor: "pointer", fontWeight: "500" },
-  btnSecondary: { backgroundColor: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1", padding: "9px 16px", borderRadius: "6px", cursor: "pointer", marginRight: "10px" },
-  btnEdit: { backgroundColor: "#e0f2fe", color: "#0369a1", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", marginRight: "8px" },
-  btnDelete: { backgroundColor: "#fee2e2", color: "#b91c1c", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" },
-  errorBox: { padding: "12px 16px", backgroundColor: "#fef2f2", color: "#991b1b", borderRadius: "6px", marginBottom: "20px" },
-  modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.4)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 },
-  modalContent: { backgroundColor: "#fff", padding: "24px", borderRadius: "8px", width: "100%", maxWidth: "480px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)" },
-  modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" },
-  btnClose: { background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#64748b" },
-  formGroup: { marginBottom: "16px" },
-  label: { display: "block", marginBottom: "6px", fontWeight: "500", fontSize: "14px", color: "#334155" },
-  input: { width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box" },
-  textarea: { width: "100%", padding: "9px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "14px", boxSizing: "border-box", fontFamily: "inherit" },
-  helpText: { display: "block", marginTop: "4px", fontSize: "12px", color: "#64748b" },
-  modalFooter: { display: "flex", justifyContent: "flex-end", marginTop: "24px" }
 };
 
 export default APIEndpointManager;

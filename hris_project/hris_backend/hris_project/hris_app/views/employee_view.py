@@ -172,14 +172,11 @@ class SubmitEmployeeEditView(APIView):
             )
 
 class ApproveEmployeeUpdateView(APIView):
-    # Mapping Codename spesifik untuk setiap Action
     action_codenames = {
-        'CHECK': 'employeeStaggingCheck',  # Cukup role peninjau/checker
-        'APPROVE':  'employeeStaggingApprove',   # Role manager/approver
-        'REJECT':   'employeeStaggingReject',    # Role manager/approver
+        'CHECK': 'employeeStaggingCheck',
+        'APPROVE': 'employeeStaggingApprove',
+        'REJECT': 'employeeStaggingReject',
     }
-    
-    # Optional: fallback codename jika action tidak terdaftar
     api_codename = 'employeeApproveStagging'
 
     authentication_classes = [JWTAuthentication]
@@ -191,20 +188,22 @@ class ApproveEmployeeUpdateView(APIView):
         except EmployeeEditStagging.DoesNotExist:
             return Response({"detail": "Request tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        action = request.data.get("action")  # 'PROGRESS', 'APPROVE', atau 'REJECT'
+        action = request.data.get("action")  # 'CHECK', 'APPROVE', atau 'REJECT'
 
         try:
+            employee = update_req.employee
+
             # Layer 1: Check / Mark as Progress
             if action == "CHECK":
                 update_req.status = 'progress'
-                update_req.form_status = 'progress'
+                if employee:
+                    employee.form_status = 'progress'
+                    employee.save()
                 update_req.save()
                 return Response({"message": "Status pengajuan berhasil diubah menjadi Progress."})
 
-            # Layer 2: Approve Data
+            # Layer 2: Approve Data (Termasuk jika ada perubahan status ke 'inactive')
             elif action == "APPROVE":
-                employee = update_req.employee
-                
                 for field_name, values in update_req.changes_payload.items():
                     new_value = values.get("new")
                     if isinstance(new_value, str) and new_value.strip() == "":
@@ -214,10 +213,10 @@ class ApproveEmployeeUpdateView(APIView):
                         setattr(employee, field_name, new_value)
                 
                 employee.is_edited = False
+                employee.form_status = 'approved'
                 employee.save()
 
-                update_req.status = 'active'
-                update_req.form_status = 'approved'
+                update_req.status = 'approved'
                 update_req.reviewed_by = request.user
                 update_req.reviewed_at = timezone.now()
                 update_req.save()
@@ -226,16 +225,19 @@ class ApproveEmployeeUpdateView(APIView):
 
             # Layer 3: Reject Data
             elif action == "REJECT":
-                employee = update_req.employee
+                reason = request.data.get("reason", "").strip()
+                if not reason:
+                    return Response({"detail": "Alasan penolakan (reason) wajib diisi!"}, status=status.HTTP_400_BAD_REQUEST)
+
                 if employee:
                     employee.is_edited = False
+                    employee.form_status = 'rejected'
                     employee.save()
 
-                update_req.status = 'inactive'
-                update_req.form_status = 'rejected'
+                update_req.status = 'rejected'
                 update_req.reviewed_by = request.user
                 update_req.reviewed_at = timezone.now()
-                update_req.rejection_reason = request.data.get("reason", "")
+                update_req.rejection_reason = reason
                 update_req.save()
 
                 return Response({"message": "Permohonan perubahan data ditolak."})
@@ -245,4 +247,6 @@ class ApproveEmployeeUpdateView(APIView):
             return Response({"detail": f"Terjadi kesalahan: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"detail": "Action tidak valid."}, status=status.HTTP_400_BAD_REQUEST)
+
+
     

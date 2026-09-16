@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Instance axios Anda
+import api from "../api";
 import UserManagement from "./user_management";
 import GroupPages from "./groups_pages";
 import APIEndpointManager from "./api_endpoints_pages";
@@ -58,16 +58,16 @@ export default function DashboardApp({
   // COMPONENT WELCOMING PAGE INTERNAL
   // ==========================================
   const WelcomePage = () => (
-    <div style={{ animation: "fadeIn 0.3s ease-in-out" }}>
-      {/* CARD BANNER UCAPAN SELAMAT DATANG */}
-      <div style={welcomeBannerStyle}>
+    <div>
+      {/* BANNER UCAPAN SELAMAT DATANG */}
+      <div className="welcome-banner">
         <div>
           <h2 style={{ margin: "0 0 8px 0", fontSize: "22px" }}>
             Selamat Datang di Portal HRIS 👋
           </h2>
           <p style={{ margin: 0, opacity: 0.9, fontSize: "14px", lineHeight: "1.5" }}>
             Sistem Informasi Sumber Daya Manusia Terintegrasi. Kelola master data karyawan, 
-            pengajuan *Maker-Checker Staging*, serta pemetaan absensi biometrik ZKTeco BioTime secara terpusat.
+            pengajuan <em>Maker-Checker Staging</em>, serta pemetaan absensi biometrik ZKTeco BioTime secara terpusat.
           </p>
         </div>
       </div>
@@ -77,43 +77,51 @@ export default function DashboardApp({
         Akses Cepat Modul Utama
       </h3>
 
-      <div style={quickGridStyle}>
+      <div className="quick-grid">
         {!loadingPermissions && hasAccess("EmployeeRead") && (
-          <div style={quickCardStyle} onClick={() => setActiveMenu("employee")}>
-            <div style={{ ...iconBadgeStyle, background: "#dbeafe", color: "#2563eb" }}>👥</div>
+          <div className="quick-card" onClick={() => setActiveMenu("employee")}>
+            <div className="icon-badge" style={{ background: "#dbeafe", color: "#2563eb" }}>👥</div>
             <div>
-              <h4 style={cardTitleStyle}>Master Employee</h4>
-              <p style={cardDescStyle}>Kelola data demografi, biodata, & pemetaan ZK BioTime.</p>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" }}>Master Employee</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
+                Kelola data demografi, biodata, & pemetaan ZK BioTime.
+              </p>
             </div>
           </div>
         )}
 
         {!loadingPermissions && hasAccess("employeeStaggingRead") && (
-          <div style={quickCardStyle} onClick={() => setActiveMenu("employeestagging")}>
-            <div style={{ ...iconBadgeStyle, background: "#fef3c7", color: "#d97706" }}>📝</div>
+          <div className="quick-card" onClick={() => setActiveMenu("employeestagging")}>
+            <div className="icon-badge" style={{ background: "#fef3c7", color: "#d97706" }}>📝</div>
             <div>
-              <h4 style={cardTitleStyle}>Employee Edit Request</h4>
-              <p style={cardDescStyle}>Persetujuan perubahan data (*Maker-Checker Staging*).</p>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" }}>Employee Edit Request</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
+                Persetujuan perubahan data (<em>Maker-Checker Staging</em>).
+              </p>
             </div>
           </div>
         )}
 
         {!loadingPermissions && hasAccess("ZKTecoAttendanceRead") && (
-          <div style={quickCardStyle} onClick={() => setActiveMenu("zkteco-attendance")}>
-            <div style={{ ...iconBadgeStyle, background: "#dcfce7", color: "#16a34a" }}>⏰</div>
+          <div className="quick-card" onClick={() => setActiveMenu("zkteco-attendance")}>
+            <div className="icon-badge" style={{ background: "#dcfce7", color: "#16a34a" }}>⏰</div>
             <div>
-              <h4 style={cardTitleStyle}>ZKTeco Attendance</h4>
-              <p style={cardDescStyle}>Sinkronisasi logs transaksi mesin absensi biometrik.</p>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" }}>ZKTeco Attendance</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
+                Sinkronisasi logs transaksi mesin absensi biometrik.
+              </p>
             </div>
           </div>
         )}
 
         {!loadingPermissions && hasAccess("CompanyAccess") && (
-          <div style={quickCardStyle} onClick={() => setActiveMenu("company")}>
-            <div style={{ ...iconBadgeStyle, background: "#f3e8ff", color: "#9333ea" }}>🏢</div>
+          <div className="quick-card" onClick={() => setActiveMenu("company")}>
+            <div className="icon-badge" style={{ background: "#f3e8ff", color: "#9333ea" }}>🏢</div>
             <div>
-              <h4 style={cardTitleStyle}>Master Company</h4>
-              <p style={cardDescStyle}>Kelola entitas perusahaan dan cabang organisasi.</p>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" }}>Master Company</h4>
+              <p style={{ margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" }}>
+                Kelola entitas perusahaan dan cabang organisasi.
+              </p>
             </div>
           </div>
         )}
@@ -144,12 +152,12 @@ export default function DashboardApp({
         return <OnboardingPage1 />;
       case "contractlist":
         return <ContractPage />;
-      case "attendance":
-        return <AttendancePages />;
-      case "attendace-scanner":
-        return <AttendanceScannerPages />;
-      case "biometric-enrollment":
-        return <BiometricEnrollmentPages />;
+      // case "attendance":
+      //   return <AttendancePages />;
+      // case "attendace-scanner":
+      //   return <AttendanceScannerPages />;
+      // case "biometric-enrollment":
+      //   return <BiometricEnrollmentPages />;
       case "zkteco-attendance":
         return <AttendancePage />;
       case "user-management":
@@ -170,37 +178,31 @@ export default function DashboardApp({
   };
 
   return (
-    <div style={layoutStyle}>
+    <div className="dashboard-layout">
       {/* SIDEBAR */}
-      <aside style={sidebarStyle}>
+      <aside className="sidebar">
         <div 
-          style={{ ...logoStyle, cursor: "pointer" }} 
+          className="sidebar-logo"
           onClick={() => setActiveMenu("welcome")}
           title="Kembali ke Dashboard Utama"
         >
-          <h2 style={{ margin: 0 }}>HRIS</h2>
+          <h2>HRIS</h2>
           <small>Human Resources System</small>
         </div>
 
-        <div style={{ marginTop: "30px", flex: 1, overflowY: "auto" }}>
+        <div className="sidebar-menu-container">
           <button
             onClick={() => setActiveMenu("welcome")}
-            style={{
-              ...menuButtonStyle,
-              ...(activeMenu === "welcome" ? activeMenuStyle : {}),
-            }}
+            className={`btn-sidebar-menu ${activeMenu === "welcome" ? "active" : ""}`}
           >
             🏠 Dashboard Home
           </button>
 
-          <p style={sectionTitleStyle}>MASTER DATA</p>
+          <p className="sidebar-section-title">MASTER DATA</p>
           {!loadingPermissions && hasAccess("CompanyAccess") && (
             <button
               onClick={() => setActiveMenu("company")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "company" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "company" ? "active" : ""}`}
             >
               Company
             </button>
@@ -208,10 +210,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("DepartmentRead") && (
             <button
               onClick={() => setActiveMenu("department")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "department" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "department" ? "active" : ""}`}
             >
               Department
             </button>
@@ -219,10 +218,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("SectionRead") && (
             <button
               onClick={() => setActiveMenu("section")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "section" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "section" ? "active" : ""}`}
             >
               Section
             </button>
@@ -230,10 +226,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("AreaRead") && (
             <button
               onClick={() => setActiveMenu("area")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "area" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "area" ? "active" : ""}`}
             >
               Area
             </button>
@@ -241,10 +234,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("PositionRead") && (
             <button
               onClick={() => setActiveMenu("position")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "position" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "position" ? "active" : ""}`}
             >
               Position
             </button>
@@ -252,10 +242,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("EmployeeRead") && (
             <button
               onClick={() => setActiveMenu("employee")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "employee" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "employee" ? "active" : ""}`}
             >
               Employee
             </button>
@@ -263,10 +250,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("employeeStaggingRead") && (
             <button
               onClick={() => setActiveMenu("employeestagging")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "employeestagging" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "employeestagging" ? "active" : ""}`}
             >
               Employee Edit Request List
             </button>
@@ -274,10 +258,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("OnboardingRead") && (
             <button
               onClick={() => setActiveMenu("onboarding")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "onboarding" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "onboarding" ? "active" : ""}`}
             >
               Onboarding List
             </button>
@@ -285,10 +266,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("ContractRead") && (
             <button
               onClick={() => setActiveMenu("contractlist")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "contractlist" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "contractlist" ? "active" : ""}`}
             >
               Contract
             </button>
@@ -296,10 +274,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("AttendaceRead") && (
             <button
               onClick={() => setActiveMenu("attendance")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "attendance" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "attendance" ? "active" : ""}`}
             >
               Attendance
             </button>
@@ -307,10 +282,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("AttendanceScannerAccess") && (
             <button
               onClick={() => setActiveMenu("attendace-scanner")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "attendace-scanner" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "attendace-scanner" ? "active" : ""}`}
             >
               Attendance Scanner
             </button>
@@ -318,10 +290,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("BiometricEnrollmentAccess") && (
             <button
               onClick={() => setActiveMenu("biometric-enrollment")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "biometric-enrollment" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "biometric-enrollment" ? "active" : ""}`}
             >
               Biometric Enrollment
             </button>
@@ -329,27 +298,21 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("ZKTecoAttendanceRead") && (
             <button
               onClick={() => setActiveMenu("zkteco-attendance")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "zkteco-attendance" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "zkteco-attendance" ? "active" : ""}`}
             >
               ZKTeco Attendance
             </button>
           )}
 
-          <p style={{ ...sectionTitleStyle, marginTop: "20px" }}>SYSTEM</p>
+          <p className="sidebar-section-title">SYSTEM</p>
 
-          <button onClick={onNavigateToOnboarding} style={menuButtonStyle}>
+          <button onClick={onNavigateToOnboarding} className="btn-sidebar-menu">
             Onboarding Portal
           </button>
           {!loadingPermissions && hasAccess("UserAccess") && (
             <button
               onClick={() => setActiveMenu("user-management")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "user-management" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "user-management" ? "active" : ""}`}
             >
               User Management
             </button>
@@ -357,10 +320,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("GroupsAccess") && (
             <button
               onClick={() => setActiveMenu("group-pages")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "group-pages" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "group-pages" ? "active" : ""}`}
             >
               Groups & Access
             </button>
@@ -368,10 +328,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("APIEndpointsAccess") && (
             <button
               onClick={() => setActiveMenu("api-endpoints")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "api-endpoints" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "api-endpoints" ? "active" : ""}`}
             >
               API Endpoints List
             </button>
@@ -379,10 +336,7 @@ export default function DashboardApp({
           {!loadingPermissions && hasAccess("CronJobAccess") && (
             <button
               onClick={() => setActiveMenu("cronjob-page")}
-              style={{
-                ...menuButtonStyle,
-                ...(activeMenu === "cronjob-page" ? activeMenuStyle : {}),
-              }}
+              className={`btn-sidebar-menu ${activeMenu === "cronjob-page" ? "active" : ""}`}
             >
               Auto Scheduler / Cronjob
             </button>
@@ -390,22 +344,24 @@ export default function DashboardApp({
         </div>
 
         {/* LOGOUT */}
-        <div style={logoutContainerStyle}>
-          <button onClick={pemicuKeluar} style={logoutButtonStyle}>
+        <div className="sidebar-logout-container">
+          <button onClick={pemicuKeluar} className="btn-sidebar-logout">
             🚪 Logout
           </button>
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main style={mainStyle}>
+      <main className="main-content">
         {/* HEADER */}
-        <header style={headerStyle}>
+        <header className="dashboard-header">
           <div>
             <h1 style={{ margin: 0, fontSize: "24px", color: "#0f172a" }}>HRIS Dashboard</h1>
-            <p style={subtitleStyle}>Human Resource Information System</p>
+            <p style={{ marginTop: "4px", color: "#64748b", fontSize: "13px" }}>
+              Human Resource Information System
+            </p>
           </div>
-          <div style={userBadgeStyle}>
+          <div className="user-badge">
             {userPermissions.isSuperuser ? "Super Admin" : "User Access"}
           </div>
         </header>
@@ -416,59 +372,3 @@ export default function DashboardApp({
     </div>
   );
 }
-
-// STYLES DENGAN WAKTU DAN LOGIKA DESAIN KONSISTEN
-const layoutStyle = { display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "Arial, sans-serif" };
-const sidebarStyle = { width: "230px", background: "#0f172a", color: "#fff", padding: "25px 15px", display: "flex", flexDirection: "column", boxSizing: "border-box" };
-const logoStyle = { padding: "0 10px" };
-const sectionTitleStyle = { fontSize: "11px", color: "#94a3b8", fontWeight: "bold", padding: "0 10px", letterSpacing: "1px", marginTop: "15px" };
-const menuButtonStyle = { display: "block", width: "100%", padding: "10px 12px", marginBottom: "4px", border: "none", borderRadius: "6px", background: "transparent", color: "#cbd5e1", textAlign: "left", cursor: "pointer", fontSize: "13px", fontWeight: "500" };
-const activeMenuStyle = { background: "#2563eb", color: "#fff", fontWeight: "bold" };
-const logoutContainerStyle = { marginTop: "auto", paddingTop: "15px" };
-const logoutButtonStyle = { width: "100%", padding: "10px", border: "1px solid #334155", borderRadius: "6px", background: "#1e293b", color: "#fff", cursor: "pointer", fontWeight: "bold" };
-const mainStyle = { flex: 1, padding: "30px", boxSizing: "border-box", minWidth: 0, overflowX: "hidden" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" };
-const subtitleStyle = { marginTop: "4px", color: "#64748b", fontSize: "13px" };
-const userBadgeStyle = { background: "#e2e8f0", color: "#334155", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" };
-
-// STYLES KHUSUS WELCOMING PAGE
-const welcomeBannerStyle = {
-  background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-  color: "#ffffff",
-  padding: "24px 30px",
-  borderRadius: "12px",
-  boxShadow: "0 4px 6px -1px rgba(37, 99, 235, 0.2)",
-};
-
-const quickGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-  gap: "16px",
-};
-
-const quickCardStyle = {
-  backgroundColor: "#ffffff",
-  padding: "20px",
-  borderRadius: "10px",
-  border: "1px solid #e2e8f0",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-  display: "flex",
-  gap: "16px",
-  alignItems: "center",
-  cursor: "pointer",
-  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-};
-
-const iconBadgeStyle = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "10px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "22px",
-  flexShrink: 0,
-};
-
-const cardTitleStyle = { margin: "0 0 4px 0", fontSize: "15px", color: "#0f172a" };
-const cardDescStyle = { margin: 0, fontSize: "12px", color: "#64748b", lineHeight: "1.4" };

@@ -22,7 +22,15 @@ class APIEndpoint(models.Model):
     description = models.TextField(
         null=True, blank=True, help_text="Deskripsi tambahan untuk fungsi api ini"
     )
+    model_name = models.CharField(max_length=100, default="General", help_text="Nama Model / Modul (Contoh: Employee, Department, Contract)")
+    is_read = models.BooleanField(_("Read"), default=False)
+    is_update = models.BooleanField(_("Update"), default=False)
+    is_create = models.BooleanField(_("Create"), default=False)
+    is_delete = models.BooleanField(_("Delete"), default=False)
     is_crud = models.BooleanField(_("CRUD API"), default=True)
+    is_additional = models.BooleanField(_("Additional"), default=False)
+
+
     def __str__(self):
         return f"{self.name} ({len(self.code_name)} API)"
     

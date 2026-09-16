@@ -15,20 +15,20 @@ const EmployeePage = () => {
     { field: "join_date", label: "Tanggal Masuk" },
     { field: "shirt_size", label: "Ukuran Baju" },
   ];
-  // ==========================================
-  // 1. STATE PERMISSION HAK AKSES
-  // ==========================================
+
+  // State Modal Deaktivasi Karyawan
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
+  const [inactiveReason, setInactiveReason] = useState("");
+  const [targetInactiveEmp, setTargetInactiveEmp] = useState(null);
+
   const [userPermissions, setUserPermissions] = useState({
     isSuperuser: false,
     allowedCodenames: [],
   });
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
-  // ==========================================
-  // 2. STATE DATA UTAMA
-  // ==========================================
-  const [currentView, setCurrentView] = useState("list"); // 'list' | 'form'
-  const [formMode, setFormMode] = useState("create"); // 'create' | 'edit' | 'detail'
+  const [currentView, setCurrentView] = useState("list");
+  const [formMode, setFormMode] = useState("create");
 
   const [employees, setEmployees] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -38,11 +38,13 @@ const EmployeePage = () => {
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
-  // Filter State
+  // State Modal Edit Reason
+  const [showEditReasonModal, setShowEditReasonModal] = useState(false);
+  const [editReason, setEditReason] = useState("");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("ALL");
 
-  // Initial Form State Berdasarkan Model Employee Terbaru
   const initialFormState = {
     biometric_user_id: "",
     zk_code: "",
@@ -64,13 +66,11 @@ const EmployeePage = () => {
     status: "draft",
     form_status: "draft",
 
-    // Relasi
     company: null,
     department: null,
     section: null,
     position: null,
 
-    // Alamat
     address: "",
     kelurahan: "",
     kecamatan: "",
@@ -78,7 +78,6 @@ const EmployeePage = () => {
     province: "",
     pos_code: "",
 
-    // Keluarga & Kontak Darurat
     couple_name: "",
     couple_date_birth: "",
     first_child_name: "",
@@ -91,12 +90,10 @@ const EmployeePage = () => {
     emergency_contact_phone: "",
     emergency_contact_relation: "ayah",
 
-    // Ukuran & Seragam
     shirt_size: "M",
     pants_size: 30,
     shoes_size: 40,
 
-    // Informasi Tambahan
     tangal_induksi: null,
     poin_of_hire: "",
     is_local: false,
@@ -109,9 +106,6 @@ const EmployeePage = () => {
   const [formData, setFormData] = useState(initialFormState);
   const BASE_URL = "/api/v1/master-data";
 
-  // ==========================================
-  // 3. FETCH PERMISSIONS & MASTER DATA
-  // ==========================================
   useEffect(() => {
     fetchPermissions();
     fetchEmployees();
@@ -129,30 +123,14 @@ const EmployeePage = () => {
         employee_id: selectedId,
       });
 
-      const successMessage = syncResponse.data?.message || "Berhasil melakukan sinkronisasi ke ZKTeco BioTime!";
+      const successMessage = syncResponse.data?.message || "Berhasil sinkronisasi ke ZKTeco BioTime!";
       const zkId = syncResponse.data?.zk_id;
       alert(`✅ SINKRONISASI BERHASIL!\n\n${successMessage}\nID BioTime: ${zkId || "-"}`);
 
       fetchEmployees();
     } catch (err) {
-      console.error("Gagal Push ke ZKTeco:", err.response?.data || err.message);
-      const errData = err.response?.data;
-      let errorMessage = "Terjadi kesalahan sistem saat menghubungi server ZKTeco.";
-
-      if (errData) {
-        if (typeof errData.detail === "string") {
-          errorMessage = errData.detail;
-        } else if (errData.error && typeof errData.error === "object") {
-          errorMessage = JSON.stringify(errData.error);
-        } else if (typeof errData === "string") {
-          errorMessage = errData;
-        } else {
-          errorMessage = JSON.stringify(errData);
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      alert(`❌ GAGAL SYNC ZKTECO:\n\n${errorMessage}`);
+      console.error("Gagal Push ZKTeco:", err.response?.data || err.message);
+      alert(`❌ GAGAL SYNC ZKTECO:\n\n${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -166,7 +144,7 @@ const EmployeePage = () => {
         allowedCodenames: response.data.allowed_codenames || [],
       });
     } catch (error) {
-      console.error("Gagal mengambil permission user:", error);
+      console.error("Gagal mengambil permission:", error);
     } finally {
       setLoadingPermissions(false);
     }
@@ -208,9 +186,6 @@ const EmployeePage = () => {
     }
   };
 
-  // ==========================================
-  // FILTERING & STATISTIK
-  // ==========================================
   const filteredData = employees.filter((item) => {
     const name = item.nama_lengkap || "";
     const nik = String(item.nik_karyawan || "");
@@ -236,9 +211,6 @@ const EmployeePage = () => {
   const totalFemale = employees.filter((i) => i.jenis_kelamin === "P").length;
   const totalZkMapped = employees.filter((i) => i.biometric_user_id).length;
 
-  // ==========================================
-  // HANDLERS FORM & ACTION
-  // ==========================================
   const handleOpenCreate = () => {
     setFormData(initialFormState);
     setFormMode("create");
@@ -322,6 +294,17 @@ const EmployeePage = () => {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+
+    if (formMode === "edit") {
+      setEditReason("");
+      setShowEditReasonModal(true);
+      return;
+    }
+
+    executeSubmit();
+  };
+
+  const executeSubmit = async (reasonText = "") => {
     setLoading(true);
 
     const payload = {
@@ -343,31 +326,64 @@ const EmployeePage = () => {
         const staggingPayload = {
           employee_id: selectedId,
           changes: changes,
+          edit_reason: reasonText,
         };
         await api.post(`${BASE_URL}/employee-stagging/submit/`, staggingPayload);
         alert("Data Perubahan karyawan berhasil Direquest ke Staging!");
       }
+      setShowEditReasonModal(false);
       setCurrentView("list");
       fetchEmployees();
     } catch (err) {
       console.error("SAVE ERROR:", err.response?.data || err);
-      const backendMessage = err.response?.data?.detail || "Gagal menyimpan data karyawan. Periksa kembali inputan Anda.";
-      alert(backendMessage);
+      alert(err.response?.data?.detail || "Gagal menyimpan data karyawan.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data karyawan ini?")) return;
+  const handleConfirmEditSubmit = () => {
+    if (!editReason.trim()) {
+      alert("Harap isi alasan perubahan data terlebih dahulu!");
+      return;
+    }
+    executeSubmit(editReason);
+  };
+
+  const handleOpenInactiveModal = (emp) => {
+    setTargetInactiveEmp(emp);
+    setInactiveReason("");
+    setShowInactiveModal(true);
+  };
+
+  const handleConfirmInactive = async () => {
+    if (!inactiveReason.trim()) {
+      alert("Harap masukkan alasan penonaktifan karyawan!");
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.delete(`${BASE_URL}/Employees/${id}/delete/`);
-      alert("Karyawan berhasil dihapus!");
-      setCurrentView("list");
+      const staggingPayload = {
+        employee_id: targetInactiveEmp.id,
+        changes: {
+          status: {
+            old: targetInactiveEmp.status || "active",
+            new: "inactive",
+          },
+        },
+        edit_reason: `[REQUEST DEAKTIVASI]: ${inactiveReason}`,
+      };
+
+      await api.post(`${BASE_URL}/employee-stagging/submit/`, staggingPayload);
+      alert("Request penonaktifan karyawan berhasil dikirim ke Staging!");
+
+      setShowInactiveModal(false);
+      setTargetInactiveEmp(null);
       fetchEmployees();
     } catch (err) {
-      alert("Gagal menghapus data karyawan.");
+      console.error("INACTIVE ERROR:", err.response?.data || err);
+      alert(err.response?.data?.detail || "Gagal mengajukan penonaktifan.");
     } finally {
       setLoading(false);
     }
@@ -378,31 +394,28 @@ const EmployeePage = () => {
     ...departments.map((d) => ({ value: String(d.id), label: d.name || d.nama_department })),
   ];
 
-  // ==========================================
-  // VIEW 1: FORM VIEW
-  // ==========================================
   if (currentView === "form") {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+      <div className="page-container">
+        <div className="page-header" style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
           <div>
-            <h3 style={{ margin: 0, color: "#0f172a" }}>
+            <h3>
               {formMode === "create"
                 ? "Tambah Karyawan Baru"
                 : formMode === "edit"
                 ? `Edit Karyawan: ${formData.nama_lengkap}`
                 : `Detail Karyawan: ${formData.nama_lengkap}`}
             </h3>
-            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "13px" }}>
+            <p style={{ color: "#64748b", fontSize: "13px", marginTop: "4px" }}>
               Isi data demografi, organisasi, alamat, keluarga, serta atribut seragam.
             </p>
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+          <div className="page-header-actions">
+            <button onClick={() => setCurrentView("list")} className="btn btn-cancel">
               ← Kembali ke List
             </button>
             {formMode === "detail" && (
-              <button onClick={PushZKTeco} style={primaryButtonStyle}>
+              <button onClick={PushZKTeco} className="btn btn-primary">
                 Sync to ZKTeco
               </button>
             )}
@@ -410,142 +423,142 @@ const EmployeePage = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-          {/* SECTION A: DATA DIRI & BIOMETRIK */}
-          <h4 style={sectionHeaderStyle}>A. Data Diri & Biometrik</h4>
-          <div style={formGridStyle}>
+          {/* SECTION A */}
+          <h4 className="section-header">A. Data Diri & Biometrik</h4>
+          <div className="form-grid">
             <div>
-              <label style={labelStyle}>Nama Lengkap *</label>
+              <label className="form-label">Nama Lengkap *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.nama_lengkap}
                 onChange={(e) => setFormData({ ...formData, nama_lengkap: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
             <div>
-              <label style={labelStyle}>NIK Karyawan</label>
+              <label className="form-label">NIK Karyawan</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.nik_karyawan}
                 onChange={(e) => setFormData({ ...formData, nik_karyawan: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>ID Biometrik ZKTeco (PIN Mesin)</label>
+              <label className="form-label">ID Biometrik ZKTeco (PIN Mesin)</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.biometric_user_id}
                 onChange={(e) => setFormData({ ...formData, biometric_user_id: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>ZK Employee Code</label>
+              <label className="form-label">ZK Employee Code</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.zk_code}
                 onChange={(e) => setFormData({ ...formData, zk_code: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>NIK KTP</label>
+              <label className="form-label">NIK KTP</label>
               <input
                 type="text"
                 maxLength={16}
                 disabled={formMode === "detail"}
                 value={formData.nik_ktp}
                 onChange={(e) => setFormData({ ...formData, nik_ktp: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Nomor Passport</label>
+              <label className="form-label">Nomor Passport</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.passport_number}
                 onChange={(e) => setFormData({ ...formData, passport_number: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Kewarganegaraan</label>
+              <label className="form-label">Kewarganegaraan</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.nationality}
                 onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="WNI">Warga Negara Indonesia (WNI)</option>
                 <option value="WNA">Warga Negara Asing (Expat)</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>No. WhatsApp / HP</label>
+              <label className="form-label">No. WhatsApp / HP</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.phone_number}
                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 disabled={formMode === "detail"}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Jenis Kelamin</label>
+              <label className="form-label">Jenis Kelamin</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.jenis_kelamin}
                 onChange={(e) => setFormData({ ...formData, jenis_kelamin: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="L">Laki-laki</option>
                 <option value="P">Perempuan</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Tempat Lahir</label>
+              <label className="form-label">Tempat Lahir</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.tempat_lahir}
                 onChange={(e) => setFormData({ ...formData, tempat_lahir: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Lahir</label>
+              <label className="form-label">Tanggal Lahir</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.tanggal_lahir}
                 onChange={(e) => setFormData({ ...formData, tanggal_lahir: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Agama</label>
+              <label className="form-label">Agama</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.agama}
                 onChange={(e) => setFormData({ ...formData, agama: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="ISLAM">Islam</option>
                 <option value="KRISTEN">Kristen</option>
@@ -557,12 +570,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Golongan Darah</label>
+              <label className="form-label">Golongan Darah</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.blood_type}
                 onChange={(e) => setFormData({ ...formData, blood_type: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -571,12 +584,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Pendidikan terakhir</label>
+              <label className="form-label">Pendidikan Terakhir</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.pendidikan}
                 onChange={(e) => setFormData({ ...formData, pendidikan: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="SMA">SMA/Sederajat</option>
                 <option value="D3">Diploma 3</option>
@@ -587,12 +600,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Status Pernikahan / PTKP</label>
+              <label className="form-label">Status Pernikahan / PTKP</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.Employee_status}
                 onChange={(e) => setFormData({ ...formData, Employee_status: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="TK/0">Belum Menikah / Janda (TK/0)</option>
                 <option value="K/0">Menikah (K/0)</option>
@@ -606,16 +619,16 @@ const EmployeePage = () => {
             </div>
           </div>
 
-          {/* SECTION B: PEKERJAAN & ORGANISASI */}
-          <h4 style={sectionHeaderStyle}>B. Pekerjaan & Organisasi</h4>
-          <div style={formGridStyle}>
+          {/* SECTION B */}
+          <h4 className="section-header">B. Pekerjaan & Organisasi</h4>
+          <div className="form-grid">
             <div>
-              <label style={labelStyle}>Company</label>
+              <label className="form-label">Company</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="">-- Pilih Company --</option>
                 {companies.map((c) => (
@@ -624,12 +637,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Department</label>
+              <label className="form-label">Department</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="">-- Pilih Department --</option>
                 {departments.map((d) => (
@@ -638,12 +651,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Position (Jabatan)</label>
+              <label className="form-label">Position (Jabatan)</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.position}
                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="">-- Pilih Position --</option>
                 {positions.map((p) => (
@@ -652,42 +665,42 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Join Date (Tanggal Masuk)</label>
+              <label className="form-label">Join Date (Tanggal Masuk)</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.join_date}
                 onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Induksi</label>
+              <label className="form-label">Tanggal Induksi</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.tangal_induksi}
                 onChange={(e) => setFormData({ ...formData, tangal_induksi: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Point Of Hire</label>
+              <label className="form-label">Point Of Hire</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.poin_of_hire}
                 onChange={(e) => setFormData({ ...formData, poin_of_hire: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Status Sistem</label>
+              <label className="form-label">Status Sistem</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="draft">Draft</option>
                 <option value="progress">In Progress</option>
@@ -696,12 +709,12 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Form Status</label>
+              <label className="form-label">Form Status</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.form_status}
                 onChange={(e) => setFormData({ ...formData, form_status: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="draft">Draft</option>
                 <option value="progress">In Progress</option>
@@ -710,207 +723,207 @@ const EmployeePage = () => {
               </select>
             </div>
             <div style={{ display: "flex", gap: "20px", alignItems: "center", marginTop: "15px" }}>
-              <label style={{ cursor: "pointer", fontSize: "13px", color: "#334155" }}>
+              <label style={{ cursor: "pointer", fontSize: "13px" }}>
                 <input
                   type="checkbox"
                   disabled={formMode === "detail"}
                   checked={formData.is_local}
                   onChange={(e) => setFormData({ ...formData, is_local: e.target.checked })}
-                /> {" "}
+                />{" "}
                 Is Local (Pekerja Lokal)
               </label>
 
-              <label style={{ cursor: "pointer", fontSize: "13px", color: "#334155" }}>
+              <label style={{ cursor: "pointer", fontSize: "13px" }}>
                 <input
                   type="checkbox"
                   disabled={formMode === "detail"}
                   checked={formData.is_staff}
                   onChange={(e) => setFormData({ ...formData, is_staff: e.target.checked })}
-                /> {" "}
+                />{" "}
                 Is Staff (Grade Staff)
               </label>
             </div>
           </div>
 
-          {/* SECTION C: ALAMAT LENGKAP */}
-          <h4 style={sectionHeaderStyle}>C. Alamat Domisili / KTP</h4>
-          <div style={formGridStyle}>
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>Alamat Lengkap</label>
+          {/* SECTION C */}
+          <h4 className="section-header">C. Alamat Domisili / KTP</h4>
+          <div className="form-grid">
+            <div className="form-group-full">
+              <label className="form-label">Alamat Lengkap</label>
               <textarea
                 disabled={formMode === "detail"}
                 rows={2}
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                style={{ ...inputSearchStyle, width: "100%" }}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Kelurahan</label>
+              <label className="form-label">Kelurahan</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.kelurahan}
                 onChange={(e) => setFormData({ ...formData, kelurahan: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Kecamatan</label>
+              <label className="form-label">Kecamatan</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.kecamatan}
                 onChange={(e) => setFormData({ ...formData, kecamatan: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Kota / Kabupaten</label>
+              <label className="form-label">Kota / Kabupaten</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Provinsi</label>
+              <label className="form-label">Provinsi</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.province}
                 onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Kode Pos</label>
+              <label className="form-label">Kode Pos</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.pos_code}
                 onChange={(e) => setFormData({ ...formData, pos_code: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
           </div>
 
-          {/* SECTION D: KELUARGA & KONTAK DARURAT */}
-          <h4 style={sectionHeaderStyle}>D. Data Keluarga & Kontak Darurat</h4>
-          <div style={formGridStyle}>
+          {/* SECTION D */}
+          <h4 className="section-header">D. Data Keluarga & Kontak Darurat</h4>
+          <div className="form-grid">
             <div>
-              <label style={labelStyle}>Nama Suami/Istri</label>
+              <label className="form-label">Nama Suami/Istri</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.couple_name}
                 onChange={(e) => setFormData({ ...formData, couple_name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Lahir Suami/Istri</label>
+              <label className="form-label">Tanggal Lahir Suami/Istri</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.couple_date_birth}
                 onChange={(e) => setFormData({ ...formData, couple_date_birth: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Nama Anak Pertama</label>
+              <label className="form-label">Nama Anak Pertama</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.first_child_name}
                 onChange={(e) => setFormData({ ...formData, first_child_name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Lahir Anak Pertama</label>
+              <label className="form-label">Tanggal Lahir Anak Pertama</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.first_child_date_birth}
                 onChange={(e) => setFormData({ ...formData, first_child_date_birth: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Nama Anak Kedua</label>
+              <label className="form-label">Nama Anak Kedua</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.second_child_name}
                 onChange={(e) => setFormData({ ...formData, second_child_name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Lahir Anak Kedua</label>
+              <label className="form-label">Tanggal Lahir Anak Kedua</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.second_child_date_birth}
                 onChange={(e) => setFormData({ ...formData, second_child_date_birth: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Nama Anak Ketiga</label>
+              <label className="form-label">Nama Anak Ketiga</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.third_child_name}
                 onChange={(e) => setFormData({ ...formData, third_child_name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Lahir Anak Ketiga</label>
+              <label className="form-label">Tanggal Lahir Anak Ketiga</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.third_child_date_birth}
                 onChange={(e) => setFormData({ ...formData, third_child_date_birth: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Nama Kontak Darurat</label>
+              <label className="form-label">Nama Kontak Darurat</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.emergency_contact_name}
                 onChange={(e) => setFormData({ ...formData, emergency_contact_name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>No. HP Kontak Darurat</label>
+              <label className="form-label">No. HP Kontak Darurat</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 value={formData.emergency_contact_phone}
                 onChange={(e) => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Hubungan Kontak Darurat</label>
+              <label className="form-label">Hubungan Kontak Darurat</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.emergency_contact_relation}
                 onChange={(e) => setFormData({ ...formData, emergency_contact_relation: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="ayah">Ayah</option>
                 <option value="ibu">Ibu</option>
@@ -922,16 +935,16 @@ const EmployeePage = () => {
             </div>
           </div>
 
-          {/* SECTION E: UKURAN SERAGAM */}
-          <h4 style={sectionHeaderStyle}>E. Ukuran Seragam & Perlengkapan</h4>
-          <div style={formGridStyle}>
+          {/* SECTION E */}
+          <h4 className="section-header">E. Ukuran Seragam & Perlengkapan</h4>
+          <div className="form-grid">
             <div>
-              <label style={labelStyle}>Ukuran Baju</label>
+              <label className="form-label">Ukuran Baju</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.shirt_size}
                 onChange={(e) => setFormData({ ...formData, shirt_size: e.target.value })}
-                style={selectStyle}
+                className="select-control"
               >
                 <option value="S">S</option>
                 <option value="M">M</option>
@@ -942,48 +955,44 @@ const EmployeePage = () => {
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Ukuran Celana</label>
+              <label className="form-label">Ukuran Celana</label>
               <input
                 type="number"
                 disabled={formMode === "detail"}
                 value={formData.pants_size}
                 onChange={(e) => setFormData({ ...formData, pants_size: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
             <div>
-              <label style={labelStyle}>Ukuran Sepatu</label>
+              <label className="form-label">Ukuran Sepatu</label>
               <input
                 type="number"
                 disabled={formMode === "detail"}
                 value={formData.shoes_size}
                 onChange={(e) => setFormData({ ...formData, shoes_size: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
               />
             </div>
           </div>
 
-          {/* BUTTON ACTIONS */}
+          {/* BUTTON ACTIONS FORM */}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "30px" }}>
             {formMode === "detail" ? (
               <>
                 {!loadingPermissions && hasAccess("EmployeeUpdate") && formData.is_edited === false && (
-                  <button
-                    type="button"
-                    onClick={() => setFormMode("edit")}
-                    style={primaryButtonStyle}
-                  >
+                  <button type="button" onClick={() => setFormMode("edit")} className="btn btn-primary">
                     ✏️ Edit Karyawan
                   </button>
                 )}
 
-                {!loadingPermissions && hasAccess("EmployeeDelete") && formData.is_edited === false && (
+                {!loadingPermissions && hasAccess("EmployeeDelete") && formData.status !== "inactive" && (
                   <button
                     type="button"
-                    onClick={() => handleDelete(selectedId)}
-                    style={clearFilterButtonStyle}
+                    onClick={() => handleOpenInactiveModal({ id: selectedId, nama_lengkap: formData.nama_lengkap, status: formData.status })}
+                    className="btn btn-action-delete"
                   >
-                    🗑️ Hapus
+                    🚫 Nonaktifkan
                   </button>
                 )}
               </>
@@ -998,12 +1007,12 @@ const EmployeePage = () => {
                       setCurrentView("list");
                     }
                   }}
-                  style={cancelButtonStyle}
+                  className="btn btn-cancel"
                 >
                   Batal
                 </button>
 
-                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                <button type="submit" disabled={loading} className="btn btn-primary">
                   {loading
                     ? "Menyimpan..."
                     : formMode === "edit"
@@ -1014,47 +1023,67 @@ const EmployeePage = () => {
             )}
           </div>
         </form>
+
+        {/* MODAL EDIT REASON */}
+        {showEditReasonModal && (
+          <div className="modal-overlay">
+            <div className="modal-card">
+              <h4 style={{ marginBottom: "12px", color: "#111827" }}>Alasan Perubahan Data (Edit Reason)</h4>
+              <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "12px" }}>
+                Jelaskan alasan mengapa Anda mengajukan perubahan data karyawan ini untuk di-review oleh HR.
+              </p>
+              <textarea
+                rows={4}
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                placeholder="Contoh: Karyawan melampirkan KTP baru, perubahan nomor HP aktif, dll..."
+                className="input-control"
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "12px" }}>
+                <button onClick={() => setShowEditReasonModal(false)} className="btn btn-cancel">Batal</button>
+                <button onClick={handleConfirmEditSubmit} disabled={loading} className="btn btn-primary">
+                  {loading ? "Mengirim..." : "Kirim Pengajuan Edit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // ==========================================
-  // VIEW 2: LIST VIEW
-  // ==========================================
+  // LIST VIEW
   return (
-    <div style={containerStyle}>
-      {/* HEADER */}
-      <div style={headerStyle}>
+    <div className="page-container">
+      <div className="page-header">
         <div>
-          <h2 style={{ margin: 0, color: "#0f172a" }}>Master Data Employee</h2>
-          <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
+          <h2>Master Data Employee</h2>
+          <p style={{ color: "#64748b", fontSize: "14px", marginTop: "4px" }}>
             Kelola data demografi dan pemetaan biometrik mesin absensi
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={() => setShowExcelModal(true)}>
+        <div className="page-header-actions">
+          <button onClick={() => setShowExcelModal(true)} className="btn btn-secondary">
             📊 Import / Export Excel
           </button>
-          {/* MODAL EXCEL GLOBAL */}
           <ExcelManagerModal
             isOpen={showExcelModal}
             onClose={() => setShowExcelModal(false)}
             targetModel="Employee"
             availableFields={employeeFields}
           />
-          <button onClick={fetchEmployees} style={refreshButtonStyle}>
+          <button onClick={fetchEmployees} className="btn btn-secondary">
             🔄 Refresh Data
           </button>
           {!loadingPermissions && hasAccess("EmployeeCreate") && (
-            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+            <button onClick={handleOpenCreate} className="btn btn-primary">
               + Tambah Karyawan Baru
             </button>
           )}
         </div>
       </div>
 
-      {/* STATISTIC CARDS */}
-      <div style={statsContainerStyle}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "15px", marginBottom: "20px", width: "100%" }}>
         <StatCard
           title="Total Karyawan"
           count={employees.length}
@@ -1072,7 +1101,6 @@ const EmployeePage = () => {
         />
       </div>
 
-      {/* REUSABLE FILTER BAR */}
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -1083,39 +1111,38 @@ const EmployeePage = () => {
         onReset={() => setFilterDepartment("ALL")}
       />
 
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      {/* TABLE DATA */}
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>NIK Karyawan</th>
-              <th style={thStyle}>Nama Karyawan</th>
-              <th style={thStyle}>ID ZKTeco</th>
-              <th style={thStyle}>Department</th>
-              <th style={thStyle}>Jabatan</th>
-              <th style={thStyle}>Join Date</th>
-              <th style={thStyle}>Status</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            <tr>
+              <th>NIK Karyawan</th>
+              <th>Nama Karyawan</th>
+              <th>ID ZKTeco</th>
+              <th>Department</th>
+              <th>Jabatan</th>
+              <th>Join Date</th>
+              <th>Status</th>
+              <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={emptyTdStyle}>Memuat data karyawan...</td>
+                <td colSpan="8" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>Memuat data karyawan...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="8" style={emptyTdStyle}>Tidak ada data karyawan ditemukan.</td>
+                <td colSpan="8" style={{ textAlign: "center", padding: "30px", color: "#94a3b8" }}>Tidak ada data karyawan ditemukan.</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={row.id || index} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>
+                <tr key={row.id || index}>
+                  <td>
                     <strong style={{ color: "#2563eb" }}>{row.nik_karyawan || "-"}</strong>
                   </td>
-                  <td style={tdStyle}>
+                  <td>
                     <strong>{row.nama_lengkap}</strong>
                     {row.is_edited && (
                       <span style={{ marginLeft: "6px", color: "#d97706", fontSize: "11px", fontWeight: "bold" }}>
@@ -1123,38 +1150,37 @@ const EmployeePage = () => {
                       </span>
                     )}
                   </td>
-                  <td style={tdStyle}>
+                  <td>
                     {row.biometric_user_id ? (
-                      <span style={{ ...badgeStyle, background: "#dcfce7", color: "#15803d" }}>
+                      <span className="badge badge-success">
                         ID: {row.biometric_user_id}
                       </span>
                     ) : (
                       <span style={{ color: "#94a3b8", fontSize: "12px" }}>Unmapped</span>
                     )}
                   </td>
-                  <td style={tdStyle}>{row.department_name || row.department?.name || "-"}</td>
-                  <td style={tdStyle}>{row.position_name || row.position?.name || "-"}</td>
-                  <td style={tdStyle}>{row.join_date || "-"}</td>
-                  <td style={tdStyle}>
-                    <span style={{ ...badgeStyle, background: row.status === 'active' ? '#dcfce7' : '#f1f5f9', color: row.status === 'active' ? '#15803d' : '#64748b' }}>
+                  <td>{row.department_name || row.department?.name || "-"}</td>
+                  <td>{row.position_name || row.position?.name || "-"}</td>
+                  <td>{row.join_date || "-"}</td>
+                  <td>
+                    <span className={`badge ${row.status === 'active' ? 'badge-success' : 'badge-default'}`}>
                       {row.status}
                     </span>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                  <td style={{ textAlign: "center" }}>
                     {!loadingPermissions && (
-                      <>
-                        {!loadingPermissions && hasAccess("EmployeeRequestEdit") && (
-                          <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
+                      <div className="action-group">
+                        {hasAccess("EmployeeRequestEdit") && (
+                          <button onClick={() => handleOpenDetail(row.id)} className="btn btn-action-view">
                             Buka
                           </button>
                         )}
-                        {" "}
-                        {hasAccess("EmployeeDelete") && (
-                          <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
-                            Hapus
+                        {hasAccess("EmployeeDelete") && row.status !== "inactive" && (
+                          <button onClick={() => handleOpenInactiveModal(row)} className="btn btn-action-delete">
+                            🚫 Nonaktifkan
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -1163,36 +1189,37 @@ const EmployeePage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* MODAL DEAKTIVASI */}
+      {showInactiveModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h4 style={{ color: "#DC2626", marginBottom: "12px" }}>
+              Nonaktifkan Karyawan: {targetInactiveEmp?.nama_lengkap}
+            </h4>
+            <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "12px" }}>
+              Pengajuan penonaktifan ini akan masuk ke <strong>Employee Staging</strong> untuk disetujui oleh HR/Manager.
+            </p>
+            <textarea
+              rows={4}
+              value={inactiveReason}
+              onChange={(e) => setInactiveReason(e.target.value)}
+              placeholder="Masukkan alasan penonaktifan (Contoh: Resign, Pemutusan Kontrak, dll)..."
+              className="input-control"
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "12px" }}>
+              <button onClick={() => setShowInactiveModal(false)} className="btn btn-cancel">
+                Batal
+              </button>
+              <button onClick={handleConfirmInactive} disabled={loading} className="btn btn-danger">
+                {loading ? "Mengirim..." : "Kirim Request Deaktivasi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-// ==========================================
-// STYLES
-// ==========================================
-const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
-const sectionHeaderStyle = { marginTop: "24px", marginBottom: "12px", paddingBottom: "6px", borderBottom: "2px solid #3b82f6", color: "#1e293b", fontSize: "15px" };
-const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const primaryButtonStyle = { padding: "8px 16px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const cancelButtonStyle = { padding: "8px 16px", background: "#64748b", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const clearFilterButtonStyle = { padding: "8px 16px", background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const statsContainerStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "15px", marginBottom: "20px" };
-const inputSearchStyle = { flex: 1, minWidth: "200px", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", width: "100%", boxSizing: "border-box" };
-const inputDateStyle = { width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" };
-const selectStyle = { padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", background: "#fff", width: "100%", boxSizing: "border-box" };
-const errorBannerStyle = { padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "14px" };
-const tableWrapperStyle = { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" };
-const tableHeaderRowStyle = { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" };
-const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
-const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
-const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
-const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
-const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" };
-const actionButtonStyle = { padding: "6px 12px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
-const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "6px" };
 
 export default EmployeePage;

@@ -63,7 +63,7 @@ urlpatterns = [
     path('Employees/create/', EmployeeCreateView.as_view(), name='employee-create'),
     path('Employees/<int:pk>/', EmployeeDetailView.as_view(), name='employee-detail'),
     path('Employees/<int:pk>/update/', EmployeeUpdateView.as_view(), name='employee-update'),
-    path('Employees/<int:pk>/delete/', EmployeeDeleteView.as_view(), name='employee-delete'),
+    # path('Employees/<int:pk>/delete/', EmployeeDeleteView.as_view(), name='employee-delete'),
 
     # ==========================================
     # EMPLOYEE EDIT STAGGING ENDPOINTS
@@ -83,7 +83,7 @@ urlpatterns = [
     path('ContractList/<int:pk>/', ContractDetailReadView.as_view(), name='contract-detail'),
     path('ContractList/create/', ContractCreateView.as_view(), name='contract-create'),
     path('ContractList/<int:pk>/update/', ContractUpdateView.as_view(), name='contract-update'),
-    path('ContractList/<int:pk>/delete/', ContractDeleteView.as_view(), name='contract-delete'),
+    # path('ContractList/<int:pk>/delete/', ContractDeleteView.as_view(), name='contract-delete'),
 
 
 ]
