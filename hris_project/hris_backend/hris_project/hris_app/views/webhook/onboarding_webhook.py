@@ -79,7 +79,7 @@ class IncomingWebhookView(APIView):
                 defaults_data = {
                     "nama_lengkap": nama,
                     "nik_ktp": nik_ktp,
-                    "nationality": payload.get("nationality", "WNI"),
+                    "nationality": payload.get("nationality"),
                     "phone_number": clean_val(payload.get("phone_number")),
                     "email": clean_val(payload.get("email")),
                     "jenis_kelamin": payload.get("jenis_kelamin", "L"),
@@ -91,10 +91,11 @@ class IncomingWebhookView(APIView):
                     "passport_number": clean_val(payload.get("passport_number")),
                     
                     # relation
-                    "company": payload.get("company_id"),
-                    "department": payload.get("department_id"),
-                    "section": payload.get("section_id"),
-                    "position": payload.get("position_id"),
+                    "company_id": payload.get("company"),
+                    "department_id":  payload.get("department"),
+                    "section_id":  payload.get("section"),
+                    "position_id":  payload.get("position"),
+                    "area_id":  payload.get("area"),
                     
                     # Data Alamat
                     "address": clean_val(payload.get("address")),
@@ -105,7 +106,7 @@ class IncomingWebhookView(APIView):
                     "pos_code": clean_val(payload.get("pos_code")),
 
                     # Data Keluarga & Status
-                    "Employee_status": payload.get("Employee_status", "TK/0"),
+                    "Employee_status": payload.get("Employee_status"),
                     "couple_name": clean_val(payload.get("couple_name")),
                     "couple_date_birth": clean_val(payload.get("couple_date_birth")),
                     "first_child_name": clean_val(payload.get("first_child_name")),
@@ -118,14 +119,14 @@ class IncomingWebhookView(APIView):
                     # Kontak Darurat
                     "emergency_contact_name": clean_val(payload.get("emergency_contact_name")),
                     "emergency_contact_phone": clean_val(payload.get("emergency_contact_phone")),
-                    "emergency_contact_relation": payload.get("emergency_contact_relation", "ayah"),
+                    "emergency_contact_relation": payload.get("emergency_contact_relation"),
 
                     # Ukuran Seragam & Perlengkapan
                     "shirt_size": payload.get("shirt_size", "S"),
                     "pants_size": int(payload.get("pants_size")),
                     "shoes_size": int(payload.get("shoes_size")),
                     "tanggal_induksi":clean_val(payload.get("tanggal_induksi")),
-                    "poin_of_hire":clean_val(payload.get("tanggal_induksi")),
+                    "poin_of_hire":clean_val(payload.get("poin_of_hire")),
                     "is_staff":payload.get("is_staff"),
                     
                     # ID Onboarding dan Flag Status
@@ -133,7 +134,6 @@ class IncomingWebhookView(APIView):
                     "form_status": "progress",
                     "status": "progress"
                 }
-
                 if onboarding_id:
                     defaults_data["onboarding_id"] = onboarding_id
 
