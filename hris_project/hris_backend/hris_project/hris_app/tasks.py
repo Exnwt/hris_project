@@ -9,5 +9,5 @@ def cron_sync_attendance():
 
 # Registrasi Task
 TASK_REGISTRY = {
-    'sync_zkteco_attendance': cron_sync_attendance,
+    'sync_attendance_to_zk': cron_sync_attendance,
 }

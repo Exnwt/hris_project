@@ -8,17 +8,25 @@ class AttedanceSerializers(serializers.ModelSerializer):
         fields = '__all__'   
              
 # zkteco attendace
+
 class AttendanceLogSerializer(serializers.ModelSerializer):
-    employee_nik = serializers.CharField(source='employee.nik_karyawan', read_only=True)
-    employee_name = serializers.CharField(source='employee.nama_lengkap', read_only=True)
-    department_name = serializers.CharField(source='employee.department.name', read_only=True)
+    # Field tambahan virtual khusus dikirim ke Frontend untuk mendeteksi apakah nge-link atau raw data
+    is_linked = serializers.SerializerMethodField()
+    # employee_nik = serializers.CharField(source='employee.nik_karyawan', read_only=True)
+    # employee_name = serializers.CharField(source='employee.nama_lengkap', read_only=True)
+    # department_name = serializers.CharField(source='employee.department.name', read_only=True)
 
     class Meta:
         model = AttendanceLog
         fields = [
-            'id', 'employee', 'employee_nik', 'employee_name', 
-            'department_name', 'timestamp', 'check_type', 'sn_device', 'raw_uid'
+            'id', 'employee', 'is_linked', 'employee_nik', 'employee_name', 
+            'department_name', 'position_name', 'timestamp', 'check_type', 
+            'sn_device', 'raw_uid', 'raw_payload'
         ]
+
+    def get_is_linked(self, obj):
+        print('objemployee', obj.employee)
+        return obj.employee is not None
 
 class ZKTecoSyncSerializer(serializers.Serializer):
     biometric_user_id = serializers.CharField(max_length=50)

@@ -1,0 +1,101 @@
+/* AttendancePage.css */
+
+.att-container {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.att-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.att-header h2 { margin: 0; color: #0f172a; }
+.att-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+
+/* Buttons */
+.att-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+.att-btn-refresh { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+.att-btn-refresh:hover { background: #e2e8f0; }
+.att-btn-clear { background: #ef4444; color: #ffffff; }
+.att-btn-clear:hover { background: #dc2626; }
+
+/* Stats */
+.att-stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.att-stat-card-wrapper {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Filters */
+.att-filter-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.att-input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #ffffff;
+  color: #334155;
+}
+.att-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.att-input-search { flex: 1 1 200px; min-width: 180px; }
+.att-date-group { display: flex; gap: 6px; align-items: center; }
+.att-label { font-size: 12px; font-weight: bold; color: #475569; }
+
+/* Table */
+.att-error-banner { padding: 12px; background: #fee2e2; color: #b91c1c; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
+.att-table-wrapper { max-height: 550px; overflow-y: auto; overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+.att-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 14px; }
+.att-table th { 
+  padding: 12px 16px; color: #475569; font-weight: bold; 
+  border-bottom: 2px solid #e2e8f0; background: #f8fafc; 
+  position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+}
+.att-table td { padding: 12px 16px; color: #334155; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+.att-table tbody tr:hover { background: #f8fafc; }
+.att-empty-td { padding: 30px; text-align: center; color: #94a3b8; }
+
+/* Badges */
+.att-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.att-badge-unlinked { 
+  display: inline-block; background: #fef3c7; color: #d97706; 
+  padding: 3px 6px; border-radius: 4px; font-size: 10px; 
+  font-weight: bold; border: 1px solid #fde68a; margin-top: 4px; 
+}
+.att-code-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #0f172a; font-family: monospace; }
+
+/* Pagination */
+.att-pagination-wrapper { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 15px; }
+.att-pagination-controls { display: flex; gap: 5px; align-items: center; }
+.att-page-btn { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #ffffff; cursor: pointer; color: #334155; }
+.att-page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.att-page-btn.active { background: #2563eb; color: #ffffff; font-weight: bold; border-color: #2563eb; }

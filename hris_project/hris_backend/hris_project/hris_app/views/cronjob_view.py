@@ -63,3 +63,30 @@ class CronJobViewSet(viewsets.ModelViewSet):
             "status": cron.last_status,
             "output": cron.last_message
         }, status=status.HTTP_200_OK)
+
+
+
+    def perform_update(self, serializer):
+        """
+        Intercept saat proses edit/update dari Frontend React.
+        Jika field 'start_time' mengalami perubahan, maka last_run kita reset 
+        agar jadwal otomatis mengulang dari awal menyesuaikan start_time yang baru.
+        """
+        instance = self.get_object()
+        
+        # Cek apakah input baru memiliki start_time yang berbeda dengan yang lama
+        new_start_time = serializer.validated_data.get('start_time', instance.start_time)
+        
+        if new_start_time != instance.start_time:
+            # Kosongkan eksekusi terakhir agar mengikuti start time yang baru
+            serializer.save(
+                last_run=None, 
+                last_status=CronJob.StatusChoices.IDLE, 
+                last_message="Start time diubah, menunggu jadwal eksekusi baru."
+            )
+        else:
+            serializer.save()
+
+
+
+    

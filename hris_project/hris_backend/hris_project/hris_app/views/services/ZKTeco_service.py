@@ -320,19 +320,9 @@ def sync_area_to_zk(area_name, area_obj=None, area_code=None, zk_id=None):
 
 
 def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None):
-    """
-    Helper function untuk penarikan data transaksi absensi dari ZKTeco BioTime.
-    
-    - Default: Menarik data hari ini (00:00:00 s/d 23:59:59).
-    - Menangani pagination secara otomatis hingga seluruh data ditarik.
-    - Mencegah duplikasi log menggunakan `zk_id`.
-    - Cocok digunakan oleh CronJob maupun API Endpoint manual.
-    
-    Returns: (success: bool, result_dict: dict)
-    """
     zk_auth = BiotimeLogin()
     zk_token = zk_auth.get_token()
-    print('att111', zk_token)
+    
     if not zk_token:
         return False, {"detail": "Gagal Melakukan Autentikasi ke Server ZKTeco BioTime."}
 
@@ -341,7 +331,7 @@ def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None)
         "Content-Type": "application/json",
     }
 
-    # 1. Penentuan Rentang Waktu (Default: Hari Ini)
+    # Penentuan Rentang Waktu
     now = datetime.now()
     today_str = now.strftime("%Y-%m-%d")
 
@@ -365,9 +355,22 @@ def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None)
     total_fetched = 0
 
     try:
-        # Pre-fetch seluruh Employee untuk optimasi query (memetakan NIK ke instance Employee)
+        # 1. Pre-fetch seluruh Employee untuk mapping pencarian (Lebih Cepat)
         all_employees = Employee.objects.all()
-        emp_map = {str(e.code if hasattr(e, 'code') and e.code else e.nik): e for e in all_employees if hasattr(e, 'nik') or hasattr(e, 'code')}
+        emp_by_code = {}
+        emp_by_name = {}
+
+        for e in all_employees:
+            # Petakan berdasarkan NIK dan Biometric ID (zk_code)
+            nik = getattr(e, 'nik_karyawan', None)
+            zk_id = getattr(e, 'biometric_user_id', None)
+            zk_code = getattr(e, 'zk_code', None) # Jika Anda punya field terpisah
+            nama = getattr(e, 'nama_lengkap', '').strip().lower()
+
+            if nik: emp_by_code[str(nik)] = e
+            if zk_id: emp_by_code[str(zk_id)] = e
+            if zk_code: emp_by_code[str(zk_code)] = e
+            if nama: emp_by_name[nama] = e
 
         while True:
             response = requests.get(sync_url, headers=headers, params=params, timeout=15)
@@ -392,7 +395,7 @@ def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None)
                 if not punch_time_str:
                     continue
 
-                # 2. Pemetaan Tipe Pindaian (Check In / Check Out)
+                # Pemetaan Tipe Pindaian
                 punch_state = str(item.get('punch_state', '0'))
                 check_type_map = {
                     '0': AttendanceLog.CheckTypeChoices.CHECK_IN,
@@ -402,58 +405,68 @@ def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None)
                 }
                 check_type = check_type_map.get(punch_state, AttendanceLog.CheckTypeChoices.CHECK_IN)
 
-                # 3. Ambil data gabungan Employee (dari DB Local jika ada match NIK)
-                matched_emp = emp_map.get(item_emp_code)
-                first_name = item.get('first_name') or ''
-                last_name = item.get('last_name') or ''
-                emp_name = f"{first_name} {last_name}".strip()
-                if not emp_name and matched_emp:
-                    emp_name = getattr(matched_emp, 'name', '')
+                # ==============================================================
+                # 2. LOGIKA PENCOCOKAN (LINKING) EMPLOYEE BERDASARKAN CODE / NAME
+                # ==============================================================
+                first_name = (item.get('first_name') or '').strip()
+                last_name = (item.get('last_name') or '').strip()
+                zk_full_name = f"{first_name} {last_name}".strip().lower()
 
-                dept_name = item.get('department') or (matched_emp.department.name if matched_emp and getattr(matched_emp, 'department', None) else None)
-                pos_name = item.get('position') or (matched_emp.position.name if matched_emp and getattr(matched_emp, 'position', None) else None)
+                # Coba cari berdasarkan NIK atau ID Biometrik terlebih dahulu
+                matched_emp = emp_by_code.get(item_emp_code)
+                
+                # Jika tidak ketemu by Code, coba cari by Nama (Full Name ZK atau First Name ZK)
+                if not matched_emp:
+                    matched_emp = emp_by_name.get(zk_full_name) or emp_by_name.get(first_name.lower())
+
+                # Ekstrak Relasi Department & Position 
+                if matched_emp:
+                    # Jika ter-link, prioritaskan data dari HRIS Database
+                    emp_name = getattr(matched_emp, 'nama_lengkap', None) or zk_full_name or item_emp_code
+                    emp_nik = getattr(matched_emp, 'nik_karyawan', None) or getattr(matched_emp, 'biometric_user_id', item_emp_code)
+                    dept_name = matched_emp.department.name if getattr(matched_emp, 'department', None) else str(item.get('department', '-'))
+                    pos_name = matched_emp.position.name if getattr(matched_emp, 'position', None) else str(item.get('position', '-'))
+                else:
+                    # Jika TIDAK ter-link, gunakan full raw data dari mesin ZKTeco
+                    emp_name = zk_full_name or item_emp_code
+                    emp_nik = item_emp_code
+                    
+                    raw_dept = item.get('department')
+                    dept_name = raw_dept.get('dept_name') if isinstance(raw_dept, dict) else str(raw_dept or '-')
+                    
+                    raw_pos = item.get('position')
+                    pos_name = raw_pos.get('position_name') if isinstance(raw_pos, dict) else str(raw_pos or '-')
 
                 parsed_time = parse_datetime(punch_time_str) or punch_time_str
 
-                # 4. Simpan Log (Gunakan get_or_create dengan zk_id agar tidak terduplikasi)
+                # Siapkan Default Kolom untuk disimpan
+                log_defaults = {
+                    'employee': matched_emp, # <-- Bisa bernilai None (Artinya "Unlinked")
+                    'employee_nik': emp_nik,
+                    'employee_name': emp_name,
+                    'department_name': dept_name,
+                    'position_name': pos_name,
+                    'timestamp': parsed_time,
+                    'check_type': check_type,
+                    'sn_device': item.get('terminal_sn', ''),
+                    'raw_uid': item_emp_code,
+                    'raw_payload': item
+                }
+
+                # 3. Simpan Log (get_or_create mencegah duplikasi)
                 if zk_tx_id:
-                    obj, created = AttendanceLog.objects.get_or_create(
-                        zk_id=zk_tx_id,
-                        defaults={
-                            'employee': matched_emp,
-                            'employee_nik': item_emp_code,
-                            'employee_name': emp_name or item_emp_code,
-                            'department_name': dept_name,
-                            'position_name': pos_name,
-                            'timestamp': parsed_time,
-                            'check_type': check_type,
-                            'sn_device': item.get('terminal_sn', ''),
-                            'raw_uid': item_emp_code,
-                            'raw_payload': item
-                        }
-                    )
+                    obj, created = AttendanceLog.objects.get_or_create(zk_id=zk_tx_id, defaults=log_defaults)
                 else:
                     obj, created = AttendanceLog.objects.get_or_create(
                         employee_nik=item_emp_code,
                         timestamp=parsed_time,
-                        defaults={
-                            'employee': matched_emp,
-                            'employee_name': emp_name or item_emp_code,
-                            'department_name': dept_name,
-                            'position_name': pos_name,
-                            'check_type': check_type,
-                            'sn_device': item.get('terminal_sn', ''),
-                            'raw_uid': item_emp_code,
-                            'raw_payload': item
-                        }
+                        defaults=log_defaults
                     )
 
-                if created:
-                    total_saved += 1
-                else:
-                    total_skipped += 1
+                if created: total_saved += 1
+                else: total_skipped += 1
 
-            # Pagination: Cek apakah ada halaman berikutnya dari ZKTeco
+            # Pagination
             if res_data.get('next'):
                 params['page'] += 1
             else:
@@ -468,8 +481,6 @@ def sync_attendance_to_zk(start_date_str=None, end_date_str=None, emp_code=None)
 
     except requests.exceptions.RequestException as e:
         return False, {"detail": f"Gagal terhubung ke Server ZKTeco: {str(e)}"}
-
-
 
 
 
