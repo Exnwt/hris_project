@@ -17,19 +17,64 @@ from rest_framework.views import APIView
 from hris_app.views.services.ImportExport_service import DynamicExcelService
 MANUAL_IMPORT_MAPPINGS = {
     "Employee": {
-        # "Nama Kolom di Excel" : "nama_field_di_database"
-        "NIK Karyawan": "nik_karyawan",
+        # --- DATA IDENTITAS & BIO ---
         "Nama Lengkap": "nama_lengkap",
+        "NIK Karyawan": "nik_karyawan",
         "NIK KTP": "nik_ktp",
+        "Nomor Pasport": "passport_number",
+        "Kewarganegaraan (WNI / WNA)": "nationality",
+        "Jenis Kelamin (L / P)": "jenis_kelamin",
+        "Tempat Lahir": "tempat_lahir",
+        "Tanggal Lahir (YYYY-MM-DD)": "tanggal_lahir",
+        "Agama (ISLAM/KRISTEN/KATOLIK/HINDU/BUDDHA/KONGHUCU/LAINNYA)": "agama",
+        "Golongan Darah (A/B/AB/O)": "blood_type",
+        "Pendidikan (SMA/D3/S1/S2/S3/LAINNYA)": "pendidikan",
+        
+        # --- KONTAK & ALAMAT ---
         "No WhatsApp": "phone_number",
         "Email": "email",
-        "Jenis Kelamin": "jenis_kelamin",
-        "Tanggal Masuk": "join_date",
-        "Ukuran Baju": "shirt_size",
-        "Department": "department", # Contoh field relasi
+        "Alamat Lengkap": "address",
+        "Kelurahan": "kelurahan",
+        "Kecamatan": "kecamatan",
+        "Kota/Kabupaten": "city",
+        "Provinsi": "province",
+        "Kode Pos": "pos_code",
+
+        # --- RELASI ORGANISASI ---
+        "Company": "company",
+        "Department": "department",
+        "Section": "section",
+        "Position": "position",
+        "Area (Pisahkan dengan koma jika > 1)": "areas",
+
+        # --- STATUS & PEKERJAAN ---
+        "Tanggal Induksi (YYYY-MM-DD)": "tangal_induksi",
+        "Point of Hire": "poin_of_hire",
+        # "Status Karyawan (draft/progress/active/inactive)": "status",
+        # "Status Form (draft/progress/approved/rejected)": "form_status",
+        "Pekerja Lokal (TRUE / FALSE)": "is_local",
+        "Status Staff (TRUE / FALSE)": "is_staff",
+
+        # --- KELUARGA & KONTAK DARURAT ---
+        "Status Pernikahan (TK/0, K/0, K/1, K/2, K/3, TK/1, TK/2, TK/3)": "Employee_status",
+        "Nama Pasangan": "couple_name",
+        "Tanggal Lahir Pasangan (YYYY-MM-DD)": "couple_date_birth",
+        "Nama Anak Ke-1": "first_child_name",
+        "Tanggal Lahir Anak Ke-1 (YYYY-MM-DD)": "first_child_date_birth",
+        "Nama Anak Ke-2": "second_child_name",
+        "Tanggal Lahir Anak Ke-2 (YYYY-MM-DD)": "second_child_date_birth",
+        "Nama Anak Ke-3": "third_child_name",
+        "Tanggal Lahir Anak Ke-3 (YYYY-MM-DD)": "third_child_date_birth",
+        
+        "Nama Kontak Darurat": "emergency_contact_name",
+        "No HP Kontak Darurat": "emergency_contact_phone",
+        "Hubungan Kontak Darurat (ayah/ibu/kakak/adik/saudara/pasangan)": "emergency_contact_relation",
+
+        # --- UKURAN (SERAGAM & APD) ---
+        "Ukuran Baju (S/M/L/XL/XXL/XXXL)": "shirt_size",
+        "Ukuran Celana (Contoh: 30, 32)": "pants_size",
+        "Ukuran Sepatu (Contoh: 40, 42)": "shoes_size",
     },
-    # Anda bisa menambahkan model lain di sini nantinya...
-    # "Department": { "Kode": "kode_dept", "Nama Dept": "nama_department" }
 }
 
 class UserPermissionView(APIView):

@@ -29,6 +29,7 @@ class DynamicExcelService:
             if not any(row): continue
 
             row_dict = {}
+            m2m_dict = {} # Dictionary baru khusus untuk menampung field ManyToMany
             row_errors = []
 
             for idx, cell_val in enumerate(row):
@@ -40,12 +41,38 @@ class DynamicExcelService:
                 if isinstance(cell_val, str) and cell_val.strip() == "":
                     cell_val = None
 
-                # RELASI LOGIC
-                if field_obj.is_relation and cell_val is not None:
+                # 1. LOGIC UNTUK RELASI MANY-TO-MANY (M2M) - Cth: Areas
+                if field_obj.many_to_many and cell_val is not None:
+                    related_model = field_obj.related_model
+                    lookup_fields = ['name', 'code']
+                    
+                    # Pecah teks berdasarkan koma, dan bersihkan spasinya
+                    m2m_names = [v.strip() for v in str(cell_val).split(',') if v.strip()]
+                    valid_m2m_objs = []
+                    
+                    for m2m_name in m2m_names:
+                        obj = None
+                        for lookup in lookup_fields:
+                            try:
+                                obj = related_model.objects.get(**{f"{lookup}__iexact": m2m_name})
+                                break
+                            except Exception:
+                                continue
+                        
+                        if obj:
+                            valid_m2m_objs.append(obj)
+                        else:
+                            row_errors.append(f"Data M2M '{m2m_name}' pada kolom '{field_obj.verbose_name.title()}' tidak ada di database.")
+                    
+                    # Jika ada objek yang valid, masukkan ke m2m_dict (bukan row_dict)
+                    if valid_m2m_objs:
+                        m2m_dict[field_name] = valid_m2m_objs
+
+                # 2. LOGIC UNTUK RELASI FOREIGN KEY (Satu-ke-Satu / Banyak-ke-Satu)
+                elif field_obj.is_relation and cell_val is not None:
                     related_model = field_obj.related_model
                     obj = None
-                    lookup_fields = ['name', 'nama', 'nama_department', 'nama_company', 'nama_jabatan']
-                    
+                    lookup_fields = ['name', 'code']
                     for lookup in lookup_fields:
                         try:
                             obj = related_model.objects.get(**{f"{lookup}__iexact": str(cell_val).strip()})
@@ -57,14 +84,21 @@ class DynamicExcelService:
                         row_dict[field_name] = obj
                     else:
                         row_errors.append(f"Relasi '{cell_val}' untuk kolom '{field_obj.verbose_name.title()}' tidak ada di database.")
+                
+                # 3. LOGIC UNTUK FIELD BIASA (Teks, Angka, Tanggal)
                 else:
                     row_dict[field_name] = cell_val
 
-            # VALIDASI REQUIRED FIELD (Khusus untuk field yang ada di manual mapping saja)
-            for header_label, field_name in manual_mapping.items():
-                f = model_class._meta.get_field(field_name)
+            # VALIDASI REQUIRED FIELD 
+            for header_label, map_field_name in manual_mapping.items():
+                f = model_class._meta.get_field(map_field_name)
                 is_required = not f.blank and not f.null
-                if is_required and (field_name not in row_dict or row_dict.get(field_name) is None):
+                
+                # Cek kekosongan di kedua tempat (row_dict dan m2m_dict)
+                is_missing_in_row = map_field_name not in row_dict or row_dict.get(map_field_name) is None
+                is_missing_in_m2m = map_field_name not in m2m_dict or not m2m_dict.get(map_field_name)
+                
+                if is_required and is_missing_in_row and is_missing_in_m2m:
                     row_errors.append(f"Kolom '{header_label}' wajib diisi.")
 
             if row_errors:
@@ -72,11 +106,17 @@ class DynamicExcelService:
                 continue
 
             try:
-                model_class.objects.create(**row_dict)
+                # LANGKAH 1: Buat dan simpan objek utama ke Database
+                instance = model_class.objects.create(**row_dict)
+                
+                # LANGKAH 2: Masukkan relasi ManyToMany yang sudah dikumpulkan
+                for m2m_field, m2m_objs in m2m_dict.items():
+                    # getattr(instance, 'areas').set([obj1, obj2])
+                    getattr(instance, m2m_field).set(m2m_objs)
+                    
                 success_count += 1
             except Exception as e:
                 errors.append(f"Baris {row_idx} Error DB: {str(e)}")
-
         return success_count, errors
 
     # -----------------------------------------------------
