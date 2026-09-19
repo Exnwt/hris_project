@@ -4,8 +4,6 @@ from hris_app.models import (
     Company,
     Department,
     Employee,
-    EmployeeContactHistory,
-    EmployeeStatusHistory,
     EmployeeSubmissionStaging,
     Position,
     Section,
@@ -74,24 +72,6 @@ def validate_and_process_onboarding(
         tanggal_lahir=form_data.get('tanggal_lahir'),
         agama=form_data.get('agama'),
         pendidikan=form_data.get('pendidikan'),
-    )
-
-    EmployeeStatusHistory.objects.create(
-        employee=employee,
-        status=form_data.get('employment_status'),
-        start_date=form_data.get('status_start_date'),
-        end_date=form_data.get('status_end_date') or None,
-        is_active=True,
-    )
-
-    EmployeeContactHistory.objects.create(
-        employee=employee,
-        alamat=form_data.get('alamat'),
-        contact_person=form_data.get('contact_person'),
-        emergency_contact_name=form_data.get('emergency_contact_name'),
-        emergency_contact_relation=form_data.get('emergency_contact_relation'),
-        emergency_contact_phone=form_data.get('emergency_contact_phone'),
-        is_active=True,
     )
 
     staging.is_processed = True

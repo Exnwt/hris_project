@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 # ─── IMPORT MODEL DARI APLIKASI EMPLOYEES ──────────────────────────
-from hris_app.models import EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging, Employee
+from hris_app.models import EmployeeSubmissionStaging, Employee
 
 class OnboardingApproveSerializer(serializers.ModelSerializer) :
    class Meta:
@@ -20,17 +20,6 @@ class EmployeeSubmissionStagingSerializer(serializers.ModelSerializer):
     model = EmployeeSubmissionStaging
     fields = ['id', 'raw_payload', 'is_processed', 'created_at']
     read_only_fields = ['id', 'created_at']
-
-class EmployeeStatusHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmployeeStatusHistory
-        fields = '__all__'
-
-
-class EmployeeContactHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmployeeContactHistory
-        fields = '__all__'
 
 
 # class EmployeeSubmissionStagingSerializer(serializers.ModelSerializer):

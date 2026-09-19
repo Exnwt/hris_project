@@ -33,6 +33,18 @@ const EmployeePage = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("ALL");
+  const [FilterCard, setFilterCard] = useState("TOTAL");
+  const isExpiringWithin90Days = (endDateStr) => {
+    if (!endDateStr) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateStr);
+
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays <=90;
+  }
+
 
   const initialFormState = {
     biometric_user_id: "",
@@ -175,12 +187,13 @@ const EmployeePage = () => {
     }
   };
 
-  const filteredData = employees.filter((item) => {
+const filteredData = employees.filter((item) => {
     const name = item.nama_lengkap || "";
     const nik = String(item.nik_karyawan || "");
     const bioId = String(item.biometric_user_id || "");
     const ktp = String(item.nik_ktp || "");
 
+    // Filter by Search Query
     const matchesSearch =
       name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       nik.includes(searchQuery) ||
@@ -193,12 +206,28 @@ const EmployeePage = () => {
         : String(item.department) === String(filterDepartment) ||
           String(item.department?.id) === String(filterDepartment);
 
-    return matchesSearch && matchesDept;
+    let matchesCard = true;
+    if (FilterCard === "EXPIRED") {
+      matchesCard = 
+        item.latest_contract_days_remaining !== null && 
+        item.latest_contract_days_remaining !== undefined && 
+        item.latest_contract_days_remaining <= 90;
+    }
+
+    return matchesSearch && matchesDept && matchesCard;
   });
 
   const totalMale = employees.filter((i) => i.jenis_kelamin === "L").length;
   const totalFemale = employees.filter((i) => i.jenis_kelamin === "P").length;
   const totalZkMapped = employees.filter((i) => i.biometric_user_id).length;
+  
+  // Perbaikan kondisi bug 0 hari:
+  const totalExpired90Days = employees.filter(
+    (i) => i.latest_contract_days_remaining !== null && 
+           i.latest_contract_days_remaining !== undefined && 
+           i.latest_contract_days_remaining <= 90
+  ).length;
+
 
   const handleOpenCreate = () => {
     setFormData(initialFormState);
@@ -1075,8 +1104,8 @@ const EmployeePage = () => {
         <StatCard
           title="Total Karyawan"
           count={employees.length}
-          isActive={filterDepartment === "ALL"}
-          onClick={() => setFilterDepartment("ALL")}
+          isActive={filterDepartment === "ALL" && FilterCard === "TOTAL"}
+          onClick={() => {setFilterDepartment("ALL"); setFilterCard("TOTAL");}}
         />
         <StatCard title="Laki-Laki" count={totalMale} color="#2563eb" />
         <StatCard title="Perempuan" count={totalFemale} color="#ec4899" />
@@ -1087,6 +1116,13 @@ const EmployeePage = () => {
           bgColor="#f0fdf4"
           borderColor="#bbf7d0"
         />
+        <StatCard
+          title="⚠️ Expired Soon (&lt; 90 Hari)"
+          count={totalExpired90Days}
+          isActive={FilterCard === "EXPIRED"}
+          onClick={() => setFilterCard("EXPIRED")}
+        />
+        
       </div>
 
       <FilterBar
@@ -1110,7 +1146,8 @@ const EmployeePage = () => {
               <th>ID ZKTeco</th>
               <th>Department</th>
               <th>Jabatan</th>
-              <th>Join Date</th>
+              <th>Contract Join Date</th>
+              <th>Contract Remaining Days</th>
               <th>Status</th>
               <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
@@ -1149,7 +1186,26 @@ const EmployeePage = () => {
                   </td>
                   <td>{row.department_name || row.department?.name || "-"}</td>
                   <td>{row.position_name || row.position?.name || "-"}</td>
-                  <td>{row.join_date || "-"}</td>
+                  <td>{row.latest_contract_start_date || "-"}</td>
+                  <td>
+                    {row.latest_contract_days_remaining !== null && row.latest_contract_days_remaining !== undefined ? (
+                      row.latest_contract_days_remaining < 0 ? (
+                        <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c" }}>
+                          Expired ({Math.abs(row.latest_contract_days_remaining)} Hari Lalu)
+                        </span>
+                      ) : row.latest_contract_days_remaining <= 90 ? (
+                        <span className="badge" style={{ background: "#ffedd5", color: "#c2410c" }}>
+                          ⚠️ {row.latest_contract_days_remaining} Hari Lagi
+                        </span>
+                      ) : (
+                        <span className="badge badge-default">
+                          {row.latest_contract_days_remaining} Hari Lagi
+                        </span>
+                      )
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td>
                     <span className={`badge ${row.status === 'active' ? 'badge-success' : 'badge-default'}`}>
                       {row.status}

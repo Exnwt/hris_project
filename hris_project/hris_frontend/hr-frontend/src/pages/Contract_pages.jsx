@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import api from "../api"; // Instance axios Anda
+import api from "../api";
+// FilterBar bawaan tidak dipakai karena halaman ini butuh Filter khusus (Select PKWT), jadi kita buat custom filter.
+import { StatCard } from "../components/StatisticCard_component"; 
+import { usePermissions } from "../auth/auth";
+import "../styles/MasterData.css"; // Sesuaikan path jika berbeda
 
 const ContractPage = () => {
   // State Navigasi View ('list' | 'form')
@@ -18,11 +22,7 @@ const ContractPage = () => {
   const [filterType, setFilterType] = useState("ALL"); // ALL | PKWT | PKWTT | EXPIRED_90_DAYS
 
   // State Permission User
-  const [userPermissions, setUserPermissions] = useState({
-    isSuperuser: false,
-    allowedCodenames: [],
-  });
-  const [loadingPermissions, setLoadingPermissions] = useState(true);
+  const { hasAccess, loadingPermissions } = usePermissions();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -36,32 +36,6 @@ const ContractPage = () => {
 
   const BASE_URL = "/api/v1/master-data/ContractList";
   const EMPLOYEE_URL = "/api/v1/master-data/Employees";
-
-  // ----------------------------------------------------
-  // FETCH USER PERMISSIONS
-  // ----------------------------------------------------
-  useEffect(() => {
-    const fetchPermissions = async () => {
-      try {
-        const response = await api.get("api/v2/access/my-permissions/");
-        setUserPermissions({
-          isSuperuser: response.data.is_superuser,
-          allowedCodenames: response.data.allowed_codenames || [],
-        });
-      } catch (error) {
-        console.error("Gagal mengambil permission user:", error);
-      } finally {
-        setLoadingPermissions(false);
-      }
-    };
-
-    fetchPermissions();
-  }, []);
-
-  const hasAccess = (codename) => {
-    if (userPermissions.isSuperuser) return true;
-    return userPermissions.allowedCodenames.includes(codename);
-  };
 
   // ----------------------------------------------------
   // FETCH DATA
@@ -96,40 +70,6 @@ const ContractPage = () => {
     }
   };
 
-  // Helper Ambil Nama Karyawan
-  // const getEmployeeName = (item) => {
-  //   // console.log("getEmployeeName called with item:", item);
-  //   if (item.employee_name) return item.employee_name;
-  //   if (item.employee_detail && typeof item.employee_detail === "object") {
-  //     // console.log("employeename:", item.employee_detail.nama_lengkap);
-  //     return item.employee_detail.nama_lengkap || item.employee_detail.name;
-  //   }
-  //   if (item.employee && typeof item.employee === "object") {
-  //     return item.employee.nama_lengkap || item.employee.name;
-  //   }
-  //   const empId = typeof item.employee === "object" ? item.employee?.id : item.employee;
-  //   if (empId) {
-  //     const found = employees.find((e) => String(e.id) === String(empId));
-  //     if (found) return found.nama_lengkap || found.name;
-  //   }
-  //   return "-";
-  // };
-
-  const getEmployeeNik = (item) => {
-    if (item.employee_detail && typeof item.employee_detail === "object") {
-      return item.employee_detail.nik_karyawan || "-";
-    }
-    if (item.employee && typeof item.employee === "object") {
-      return item.employee.nik_karyawan || "-";
-    }
-    const empId = typeof item.employee === "object" ? item.employee?.id : item.employee;
-    if (empId) {
-      const found = employees.find((e) => String(e.id) === String(empId));
-      if (found) return found.nik_karyawan || "-";
-    }
-    return "-";
-  };
-
   // ----------------------------------------------------
   // HELPER MENGHITUNG SISA HARI / EXPIRED 90 HARI
   // ----------------------------------------------------
@@ -141,12 +81,12 @@ const ContractPage = () => {
 
     const diffTime = endDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    console.log('diffdays', diffDays)
     return diffDays <= 90;
   };
 
   const getDaysLeftLabel = (endDateStr) => {
-    if (!endDateStr) return <span style={{ ...badgeStyle, background: "#e2e8f0", color: "#475569" }}>Permanen</span>;
+    if (!endDateStr) return <span className="badge badge-default">Permanen</span>;
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -156,12 +96,19 @@ const ContractPage = () => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return <span style={{ ...badgeStyle, background: "#fee2e2", color: "#b91c1c" }}>Expired ({Math.abs(diffDays)} Hari Lalu)</span>;
+      return <span className="badge" style={{ background: "#fee2e2", color: "#b91c1c" }}>Expired ({Math.abs(diffDays)} Hari Lalu)</span>;
     } else if (diffDays <= 90) {
-      return <span style={{ ...badgeStyle, background: "#ffedd5", color: "#c2410c" }}>{diffDays} Hari Lagi</span>;
+      return <span className="badge" style={{ background: "#ffedd5", color: "#c2410c" }}>{diffDays} Hari Lagi</span>;
     } else {
-      return <span style={{ ...badgeStyle, background: "#f1f5f9", color: "#334155" }}>{diffDays} Hari Lagi</span>;
+      return <span className="badge badge-default">{diffDays} Hari Lagi</span>;
     }
+  };
+
+  const getTypeBadge = (type) => {
+    if (type === "PKWT") {
+      return <span className="badge" style={{ background: "#fef3c7", color: "#b45309" }}>PKWT</span>;
+    }
+    return <span className="badge badge-success">PKWTT</span>;
   };
 
   // ----------------------------------------------------
@@ -210,7 +157,6 @@ const ContractPage = () => {
     setSelectedId(id);
     try {
       const response = await api.get(`${BASE_URL}/${id}/`);
-      console.log('responseee', response)
       const data = response.data;
 
       let employeeId = "";
@@ -266,7 +212,7 @@ const ContractPage = () => {
       setCurrentView("list");
       fetchContracts();
     } catch (err) {
-      alert("Terjadi kesalahan saat menyimpan data kontrak.");
+      alert("Terjadi kesalahan saat menyimpan data kontrak. Pastikan inputan sudah benar.");
     } finally {
       setLoading(false);
     }
@@ -287,21 +233,13 @@ const ContractPage = () => {
     }
   };
 
-  // Helper Badge Color Tipe
-  const getTypeBadge = (type) => {
-    if (type === "PKWT") {
-      return <span style={{ ...badgeStyle, background: "#fef3c7", color: "#b45309" }}>PKWT</span>;
-    }
-    return <span style={{ ...badgeStyle, background: "#dcfce7", color: "#15803d" }}>PKWTT</span>;
-  };
-
   // ----------------------------------------------------
   // VIEW 1: FORM VIEW
   // ----------------------------------------------------
   if (currentView === "form") {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+      <div className="page-container">
+        <div className="page-header form-header-bordered">
           <div>
             <h3 style={{ margin: 0, color: "#0f172a" }}>
               {formMode === "create" ? "Buat Kontrak Baru" : `Detail Kontrak: ${formData.name}`}
@@ -310,33 +248,33 @@ const ContractPage = () => {
               Isi parameter dan durasi perjanjian kerja karyawan
             </p>
           </div>
-          <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+          <button onClick={() => setCurrentView("list")} className="btn btn-cancel">
             ← Kembali ke List
           </button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-          <div style={formGridStyle}>
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>Nama / No. Kontrak *</label>
+          <div className="form-grid">
+            <div className="form-group-full">
+              <label className="form-label">Nama / No. Kontrak *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: PKWT-2026/001"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Tipe Kontrak *</label>
+              <label className="form-label">Tipe Kontrak *</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.contract_type}
                 onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
-                style={inputSearchStyle}
+                className="select-control"
                 required
               >
                 <option value="PKWT">PKWT (Waktu Tentu)</option>
@@ -345,16 +283,16 @@ const ContractPage = () => {
             </div>
 
             <div>
-              <label style={labelStyle}>Karyawan</label>
+              <label className="form-label">Karyawan</label>
               <select
                 disabled={formMode === "detail"}
                 value={formData.employee}
                 onChange={(e) => setFormData({ ...formData, employee: e.target.value })}
-                style={inputSearchStyle}
+                className="select-control"
               >
                 <option value="">-- Pilih Karyawan --</option>
-                {employees.map((emp, index) => (
-                  <option key={emp.id || index} value={emp.id}>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
                     {emp.nama_lengkap || emp.name} ({emp.nik_ktp || emp.nik_karyawan || "Tanpa NIK"})
                   </option>
                 ))}
@@ -362,36 +300,37 @@ const ContractPage = () => {
             </div>
 
             <div>
-              <label style={labelStyle}>Tanggal Mulai</label>
+              <label className="form-label">Tanggal Mulai</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Tanggal Selesai</label>
+              <label className="form-label">Tanggal Selesai</label>
               <input
                 type="date"
                 disabled={formMode === "detail"}
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                style={inputDateStyle}
+                className="input-control"
               />
             </div>
 
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>Deskripsi / Catatan</label>
+            <div className="form-group-full">
+              <label className="form-label">Deskripsi / Catatan</label>
               <textarea
                 rows="3"
                 disabled={formMode === "detail"}
                 placeholder="Catatan tambahan kontrak..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                style={{ ...inputSearchStyle, width: "100%", boxSizing: "border-box" }}
+                className="input-control"
+                style={{ resize: "vertical" }}
               ></textarea>
             </div>
           </div>
@@ -400,20 +339,35 @@ const ContractPage = () => {
             {formMode === "detail" ? (
               <>
                 {!loadingPermissions && hasAccess("ContractUpdate") && (
-                  <button type="button" onClick={() => setFormMode("edit")} style={primaryButtonStyle}>
-                    Edit Kontrak
+                  <button type="button" onClick={() => setFormMode("edit")} className="btn btn-primary">
+                    ✏️ Edit Kontrak
                   </button>
                 )}
                 {!loadingPermissions && hasAccess("ContractDelete") && (
-                  <button type="button" onClick={() => handleDelete(selectedId)} style={clearFilterButtonStyle}>
-                    Hapus
+                  <button type="button" onClick={() => handleDelete(selectedId)} className="btn btn-danger">
+                    🗑️ Hapus
                   </button>
                 )}
               </>
             ) : (
-              <button type="submit" disabled={loading} style={primaryButtonStyle}>
-                {loading ? "Menyimpan..." : "Simpan Kontrak"}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (formMode === "edit") {
+                      setFormMode("detail");
+                    } else {
+                      setCurrentView("list");
+                    }
+                  }}
+                  className="btn btn-cancel"
+                >
+                  Batal
+                </button>
+                <button type="submit" disabled={loading} className="btn btn-primary">
+                  {loading ? "Menyimpan..." : (formMode === "edit" ? "Perbarui Kontrak" : "Simpan Kontrak")}
+                </button>
+              </>
             )}
           </div>
         </form>
@@ -425,94 +379,86 @@ const ContractPage = () => {
   // VIEW 2: LIST VIEW
   // ----------------------------------------------------
   return (
-    <div style={containerStyle}>
+    <div className="page-container">
       {/* TITLE & SUBTITLE */}
-      <div style={headerStyle}>
+      <div className="page-header">
         <div>
           <h2 style={{ margin: 0, color: "#0f172a" }}>Master Data Kontrak</h2>
           <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
             Kelola daftar dan tipe kontrak kerja karyawan
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchContracts} style={refreshButtonStyle}>
+        <div className="page-header-actions">
+          <button onClick={fetchContracts} className="btn btn-secondary">
             🔄 Refresh Data
           </button>
           {!loadingPermissions && hasAccess("ContractCreate") && (
-            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+            <button onClick={handleOpenCreate} className="btn btn-primary">
               + Buat Kontrak Baru
             </button>
           )}
         </div>
       </div>
 
-      {/* STATISTIC CARDS */}
-      <div style={statsContainerStyle}>
+      {/* STATISTIC CARDS (Clickable for Filtering) */}
+      <div className="stats-grid">
         <div 
           onClick={() => setFilterType("ALL")}
-          style={{
-            ...statCardStyle,
-            borderColor: filterType === "ALL" ? "#2563eb" : "#e2e8f0",
-            cursor: "pointer"
-          }}
+          className="stat-card-box"
+          style={{ borderColor: filterType === "ALL" ? "#2563eb" : "#e2e8f0", cursor: "pointer" }}
         >
-          <span style={statTitleStyle}>Total Kontrak</span>
-          <span style={statNumberStyle}>{contracts.length}</span>
+          <span className="stat-card-title">Total Kontrak</span>
+          <span className="stat-card-number">{contracts.length}</span>
         </div>
 
         <div 
           onClick={() => setFilterType("PKWT")}
-          style={{
-            ...statCardStyle,
-            borderColor: filterType === "PKWT" ? "#d97706" : "#e2e8f0",
-            cursor: "pointer"
-          }}
+          className="stat-card-box"
+          style={{ borderColor: filterType === "PKWT" ? "#d97706" : "#e2e8f0", cursor: "pointer" }}
         >
-          <span style={statTitleStyle}>Kontrak PKWT</span>
-          <span style={{ ...statNumberStyle, color: "#d97706" }}>{totalPKWT}</span>
+          <span className="stat-card-title">Kontrak PKWT</span>
+          <span className="stat-card-number" style={{ color: "#d97706" }}>{totalPKWT}</span>
         </div>
 
         <div 
           onClick={() => setFilterType("PKWTT")}
-          style={{
-            ...statCardStyle,
-            borderColor: filterType === "PKWTT" ? "#16a34a" : "#e2e8f0",
-            cursor: "pointer"
-          }}
+          className="stat-card-box"
+          style={{ borderColor: filterType === "PKWTT" ? "#16a34a" : "#e2e8f0", cursor: "pointer" }}
         >
-          <span style={statTitleStyle}>Kontrak PKWTT</span>
-          <span style={{ ...statNumberStyle, color: "#16a34a" }}>{totalPKWTT}</span>
+          <span className="stat-card-title">Kontrak PKWTT</span>
+          <span className="stat-card-number" style={{ color: "#16a34a" }}>{totalPKWTT}</span>
         </div>
 
-        {/* STAT CARD KHUSUS EXPIRED SOON 90 HARI */}
         <div 
           onClick={() => setFilterType("EXPIRED_90_DAYS")}
+          className="stat-card-box"
           style={{
-            ...statCardStyle,
             background: filterType === "EXPIRED_90_DAYS" ? "#fff7ed" : "#f8fafc",
             borderColor: filterType === "EXPIRED_90_DAYS" ? "#ea580c" : "#e2e8f0",
             cursor: "pointer"
           }}
         >
-          <span style={{ ...statTitleStyle, color: "#c2410c" }}>⚠️ Expired Soon (&lt; 90 Hari)</span>
-          <span style={{ ...statNumberStyle, color: "#ea580c" }}>{totalExpired90Days}</span>
+          <span className="stat-card-title" style={{ color: "#c2410c" }}>⚠️ Expired Soon (&lt; 90 Hari)</span>
+          <span className="stat-card-number" style={{ color: "#ea580c" }}>{totalExpired90Days}</span>
         </div>
       </div>
 
-      {/* FILTER BAR */}
-      <div style={filterBarStyle}>
+      {/* CUSTOM FILTER BAR UNTUK KONTRAK */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
         <input
           type="text"
           placeholder="Cari No. Kontrak, Nama, NIK..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={inputSearchStyle}
+          className="input-control"
+          style={{ flex: 1, minWidth: "200px" }}
         />
 
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          style={selectStyle}
+          className="select-control"
+          style={{ width: "auto", minWidth: "200px" }}
         >
           <option value="ALL">Semua Tipe Kontrak</option>
           <option value="PKWT">PKWT (Waktu Tentu)</option>
@@ -521,81 +467,78 @@ const ContractPage = () => {
         </select>
 
         {filterType !== "ALL" && (
-          <button onClick={() => setFilterType("ALL")} style={clearFilterButtonStyle}>
+          <button type="button" onClick={() => setFilterType("ALL")} className="btn btn-danger">
             Reset Filter
           </button>
         )}
       </div>
 
       {/* ERROR MESSAGE */}
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
       {/* TABLE DATA */}
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>Nama Kontrak</th>
-              <th style={thStyle}>Tipe</th>
-              <th style={thStyle}>Karyawan</th>
-              <th style={thStyle}>Tanggal Mulai</th>
-              <th style={thStyle}>Tanggal Selesai</th>
-              <th style={thStyle}>Sisa Waktu</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            <tr>
+              <th>Nama Kontrak</th>
+              <th>Tipe</th>
+              <th>Karyawan</th>
+              <th>Tanggal Mulai</th>
+              <th>Tanggal Selesai</th>
+              <th>Sisa Waktu</th>
+              <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" style={emptyTdStyle}>
-                  Memuat data kontrak...
-                </td>
+                <td colSpan="7" className="table-empty-td">Memuat data kontrak...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="7" style={emptyTdStyle}>
-                  Tidak ada data kontrak ditemukan.
-                </td>
+                <td colSpan="7" className="table-empty-td">Tidak ada data kontrak ditemukan.</td>
               </tr>
             ) : (
-              console.log("Rendering filteredData:", filteredData) ||
               filteredData.map((row, index) => (
-                <tr key={row.id || index} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>
+                <tr key={row.id || index}>
+                  <td>
                     <strong style={{ color: "#2563eb" }}>{row.name}</strong>
                   </td>
-                  <td style={tdStyle}>{getTypeBadge(row.contract_type)}</td>
-                  <td style={tdStyle}>
-                    <strong>{row.employee_detail.nama_lengkap || "-"}</strong>
+                  <td>{getTypeBadge(row.contract_type)}</td>
+                  <td>
+                    {/* ✅ Perbaikan Optional Chaining di sini agar tidak crash */}
+                    <strong>{row.employee_detail?.nama_lengkap || row.employee_name || "-"}</strong>
                     <br />
                     <small style={{ color: "#64748b" }}>
-                      NIK: {row.employee_detail.nik_karyawan || "-"}
+                      NIK: {row.employee_detail?.nik_karyawan || "-"}
                     </small>
                   </td>
-                  <td style={tdStyle}>{row.start_date || "-"}</td>
-                  <td style={tdStyle}>{row.end_date || "-"}</td>
-                  <td style={tdStyle}>{getDaysLeftLabel(row.end_date)}</td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                  <td>{row.start_date || "-"}</td>
+                  <td>{row.end_date || "-"}</td>
+                  <td>{getDaysLeftLabel(row.end_date)}</td>
+                  <td>
                     {!loadingPermissions && (
-                      <>
+                      <div className="action-group">
                         {hasAccess("ContractRead") && (
                           <button
+                            type="button"
                             onClick={() => handleOpenDetail(row.id)}
-                            style={actionButtonStyle}
+                            className="btn-action-view"
                           >
                             Buka
                           </button>
                         )}
-                        {" "}
                         {hasAccess("ContractDelete") && (
                           <button
+                            type="button"
                             onClick={() => handleDelete(row.id)}
-                            style={actionDeleteStyle}
+                            className="btn-action-delete"
                           >
                             Hapus
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -606,224 +549,6 @@ const ContractPage = () => {
       </div>
     </div>
   );
-};
-
-// ==========================================
-// STYLES
-// ==========================================
-
-const containerStyle = {
-  background: "#ffffff",
-  padding: "24px",
-  borderRadius: "12px",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-  fontFamily: "Arial, sans-serif",
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "20px",
-};
-
-const refreshButtonStyle = {
-  padding: "8px 16px",
-  background: "#f1f5f9",
-  color: "#334155",
-  border: "1px solid #cbd5e1",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  fontSize: "13px",
-};
-
-const primaryButtonStyle = {
-  padding: "8px 16px",
-  background: "#2563eb",
-  color: "#ffffff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  fontSize: "13px",
-};
-
-const cancelButtonStyle = {
-  padding: "8px 16px",
-  background: "#64748b",
-  color: "#ffffff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  fontSize: "13px",
-};
-
-const statsContainerStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-  gap: "15px",
-  marginBottom: "20px",
-};
-
-const statCardStyle = {
-  background: "#f8fafc",
-  padding: "16px",
-  borderRadius: "8px",
-  border: "1px solid #e2e8f0",
-  display: "flex",
-  flexDirection: "column",
-  transition: "all 0.2s ease-in-out",
-};
-
-const statTitleStyle = {
-  fontSize: "12px",
-  color: "#64748b",
-  fontWeight: "bold",
-};
-
-const statNumberStyle = {
-  fontSize: "22px",
-  fontWeight: "bold",
-  marginTop: "5px",
-  color: "#0f172a",
-};
-
-const filterBarStyle = {
-  display: "flex",
-  gap: "12px",
-  marginBottom: "20px",
-  flexWrap: "wrap",
-};
-
-const inputSearchStyle = {
-  flex: 1,
-  minWidth: "200px",
-  padding: "10px 12px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "6px",
-  fontSize: "14px",
-};
-
-const inputDateStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "6px",
-  fontSize: "14px",
-  boxSizing: "border-box",
-};
-
-const selectStyle = {
-  padding: "10px 12px",
-  border: "1px solid #cbd5e1",
-  borderRadius: "6px",
-  fontSize: "14px",
-  background: "#fff",
-  minWidth: "180px",
-  boxSizing: "border-box",
-};
-
-const clearFilterButtonStyle = {
-  padding: "10px 12px",
-  background: "#ef4444",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontSize: "13px",
-};
-
-const errorBannerStyle = {
-  padding: "12px",
-  background: "#fee2e2",
-  color: "#b91c1c",
-  borderRadius: "6px",
-  marginBottom: "15px",
-  fontSize: "14px",
-};
-
-const tableWrapperStyle = {
-  overflowX: "auto",
-  border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-};
-
-const tableStyle = {
-  width: "100%",
-  borderCollapse: "collapse",
-  textAlign: "left",
-  fontSize: "14px",
-};
-
-const tableHeaderRowStyle = {
-  background: "#f8fafc",
-  borderBottom: "2px solid #e2e8f0",
-};
-
-const thStyle = {
-  padding: "12px 16px",
-  color: "#475569",
-  fontWeight: "bold",
-};
-
-const tableBodyRowStyle = {
-  borderBottom: "1px solid #f1f5f9",
-};
-
-const tdStyle = {
-  padding: "12px 16px",
-  color: "#334155",
-  verticalAlign: "middle",
-};
-
-const emptyTdStyle = {
-  padding: "30px",
-  textAlign: "center",
-  color: "#94a3b8",
-};
-
-const badgeStyle = {
-  display: "inline-block",
-  padding: "4px 10px",
-  borderRadius: "20px",
-  fontSize: "12px",
-  fontWeight: "bold",
-};
-
-const actionButtonStyle = {
-  padding: "6px 12px",
-  background: "#f1f5f9",
-  color: "#334155",
-  border: "1px solid #cbd5e1",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "12px",
-};
-
-const actionDeleteStyle = {
-  padding: "6px 12px",
-  background: "#fee2e2",
-  color: "#b91c1c",
-  border: "1px solid #fca5a5",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "12px",
-};
-
-const formGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "16px",
-};
-
-const labelStyle = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: "bold",
-  color: "#475569",
-  marginBottom: "6px",
 };
 
 export default ContractPage;

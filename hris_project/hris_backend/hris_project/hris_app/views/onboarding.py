@@ -9,8 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from hris_app.permissions import HasAPIAccessPermission
 from rest_framework import viewsets, permissions, status, generics
-from hris_app.models import Employee, EmployeeStatusHistory, EmployeeContactHistory, EmployeeSubmissionStaging
-from hris_app.serializers.onboarding_serializer import EmployeeStatusHistorySerializer, EmployeeContactHistorySerializer, EmployeeSubmissionStagingSerializer, OnboardingApproveSerializer
+from hris_app.models import Employee,  EmployeeSubmissionStaging
+from hris_app.serializers.onboarding_serializer import  EmployeeSubmissionStagingSerializer, OnboardingApproveSerializer
 from hris_app.serializers.employee_serializer import EmployeeSerializer
 
 import hmac
@@ -97,23 +97,6 @@ def employee_submission_detail(request, pk):
   return Response({
       "data": serializer.data[0]['raw_payload'] if serializer.data else None,
       "message": f"Detail submission dengan ID {pk} akan ditampilkan di sini."}, status=status.HTTP_200_OK)
-
-
-
-
-class EmployeeStatusHistoryViewSet(viewsets.ModelViewSet):
-    queryset = EmployeeStatusHistory.objects.all()
-    serializer_class = EmployeeStatusHistorySerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class EmployeeContactHistoryViewSet(viewsets.ModelViewSet):
-    queryset = EmployeeContactHistory.objects.all()
-    serializer_class = EmployeeContactHistorySerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
 
 class EmployeeSubmissionStagingViewSet(viewsets.ModelViewSet):
     queryset = EmployeeSubmissionStaging.objects.all()

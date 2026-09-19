@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
+import ExcelManagerModal from "../components/ExcelManagerModal";
+import "../styles/MasterData.css";
 
 const CompanyPage = () => {
+  const [showExcelModal, setShowExcelModal] = useState(false);
   // ==========================================
   // 1. STATE PERMISSION HAK AKSES
   // ==========================================
@@ -58,7 +61,6 @@ const CompanyPage = () => {
     }
   };
 
-  // Helper Hak Akses (Mendukung Superuser & Wildcard "*")
   const hasAccess = (codename) => {
     if (userPermissions.isSuperuser) return true;
     if (userPermissions.allowedCodenames.includes("*")) return true;
@@ -179,8 +181,8 @@ const CompanyPage = () => {
   // ==========================================
   if (currentView === "form") {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+      <div className="page-container">
+        <div className="page-header form-header-bordered">
           <div>
             <h3 style={{ margin: 0, color: "#0f172a" }}>
               {formMode === "create"
@@ -193,65 +195,62 @@ const CompanyPage = () => {
               Kelola entitas bisnis dan informasi kontak utama perusahaan
             </p>
           </div>
-          <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+          <button onClick={() => setCurrentView("list")} className="btn btn-cancel">
             ← Kembali ke List
           </button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-          <div style={formGridStyle}>
+          <div className="form-grid">
             <div>
-              <label style={labelStyle}>Nama Company *</label>
+              <label className="form-label">Nama Company *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: PT Utama Karya"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Kode Company *</label>
+              <label className="form-label">Kode Company *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: CMP-001"
                 value={formData.company_code}
                 onChange={(e) => setFormData({ ...formData, company_code: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
 
             <div>
-              <label style={labelStyle}>Nomor Telepon *</label>
+              <label className="form-label">Nomor Telepon *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: 021-5551234"
                 value={formData.phone_number}
                 onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
 
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>Alamat Perusahaan</label>
+            <div className="form-group-full">
+              <label className="form-label">Alamat Perusahaan</label>
               <textarea
                 disabled={formMode === "detail"}
                 placeholder="Alamat lengkap lokasi kantor..."
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 rows={4}
-                style={{
-                  ...inputSearchStyle,
-                  resize: "vertical",
-                  fontFamily: "Arial, sans-serif",
-                }}
+                className="input-control"
+                style={{ resize: "vertical", fontFamily: "Arial, sans-serif" }}
               />
             </div>
           </div>
@@ -260,21 +259,12 @@ const CompanyPage = () => {
             {formMode === "detail" ? (
               <>
                 {!loadingPermissions && hasAccess("CompanyEdit") && (
-                  <button
-                    type="button"
-                    onClick={() => setFormMode("edit")}
-                    style={primaryButtonStyle}
-                  >
+                  <button type="button" onClick={() => setFormMode("edit")} className="btn btn-primary">
                     ✏️ Edit Company
                   </button>
                 )}
-
                 {!loadingPermissions && hasAccess("CompanyDelete") && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selectedId)}
-                    style={clearFilterButtonStyle}
-                  >
+                  <button type="button" onClick={() => handleDelete(selectedId)} className="btn btn-danger">
                     🗑️ Hapus
                   </button>
                 )}
@@ -290,12 +280,11 @@ const CompanyPage = () => {
                       setCurrentView("list");
                     }
                   }}
-                  style={cancelButtonStyle}
+                  className="btn btn-cancel"
                 >
                   Batal
                 </button>
-
-                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                <button type="submit" disabled={loading} className="btn btn-primary">
                   {loading
                     ? "Menyimpan..."
                     : formMode === "edit"
@@ -314,21 +303,29 @@ const CompanyPage = () => {
   // VIEW 2: LIST VIEW
   // ==========================================
   return (
-    <div style={containerStyle}>
+    <div className="page-container">
       {/* HEADER */}
-      <div style={headerStyle}>
+      <div className="page-header">
         <div>
           <h2 style={{ margin: 0, color: "#0f172a" }}>Master Data Company</h2>
           <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
             Kelola daftar dan entitas bisnis perusahaan
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchCompanies} style={refreshButtonStyle}>
+        <div className="page-header-actions">
+          <button onClick={() => setShowExcelModal(true)} className="btn btn-secondary">
+            📊 Import / Export Excel
+          </button>
+          <ExcelManagerModal
+            isOpen={showExcelModal}
+            onClose={() => setShowExcelModal(false)}
+            targetModel="Company"
+          />
+          <button onClick={fetchCompanies} className="btn btn-secondary">
             🔄 Refresh Data
           </button>
           {!loadingPermissions && hasAccess("CompanyCreate") && (
-            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+            <button onClick={handleOpenCreate} className="btn btn-primary">
               + Tambah Company Baru
             </button>
           )}
@@ -336,12 +333,8 @@ const CompanyPage = () => {
       </div>
 
       {/* STATISTIC CARDS */}
-      <div style={statsContainerStyle}>
-        <StatCard
-          title="Total Company"
-          count={totalCompanies}
-          isActive={true}
-        />
+      <div className="stats-grid">
+        <StatCard title="Total Company" count={totalCompanies} isActive={true} />
         <StatCard
           title="Memiliki Alamat"
           count={withAddressCount}
@@ -358,57 +351,54 @@ const CompanyPage = () => {
         placeholder="Cari Kode, Nama Company, atau No Telepon..."
       />
 
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
       {/* TABLE DATA */}
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>Kode Company</th>
-              <th style={thStyle}>Nama Company</th>
-              <th style={thStyle}>No. Telepon</th>
-              <th style={thStyle}>Alamat</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            <tr>
+              <th>Kode Company</th>
+              <th>Nama Company</th>
+              <th>No. Telepon</th>
+              <th>Alamat</th>
+              <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" style={emptyTdStyle}>Memuat data perusahaan...</td>
+                <td colSpan="5" className="table-empty-td">Memuat data perusahaan...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="5" style={emptyTdStyle}>Tidak ada data perusahaan ditemukan.</td>
+                <td colSpan="5" className="table-empty-td">Tidak ada data perusahaan ditemukan.</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={row.id || index} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>
+                <tr key={row.id || index}>
+                  <td>
                     <strong style={{ color: "#2563eb" }}>{row.company_code}</strong>
                   </td>
-                  <td style={tdStyle}>
+                  <td>
                     <strong>{row.name}</strong>
                   </td>
-                  <td style={tdStyle}>{row.phone_number || "-"}</td>
-                  <td style={{ ...tdStyle, maxWidth: "250px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {row.address || "-"}
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                  <td>{row.phone_number || "-"}</td>
+                  <td className="table-cell-truncate">{row.address || "-"}</td>
+                  <td>
                     {!loadingPermissions && (
-                      <>
+                      <div className="action-group">
                         {hasAccess("CompanyDetail") && (
-                          <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
+                          <button onClick={() => handleOpenDetail(row.id)} className="btn-action-view">
                             Buka
                           </button>
                         )}
-                        {" "}
                         {hasAccess("CompanyDelete") && (
-                          <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
+                          <button onClick={() => handleDelete(row.id)} className="btn-action-delete">
                             Hapus
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -420,28 +410,5 @@ const CompanyPage = () => {
     </div>
   );
 };
-// ==========================================
-// STYLES
-// ==========================================
-const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
-const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const primaryButtonStyle = { padding: "8px 16px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const cancelButtonStyle = { padding: "8px 16px", background: "#64748b", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const clearFilterButtonStyle = { padding: "8px 16px", background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const statsContainerStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "15px", marginBottom: "20px" };
-const inputSearchStyle = { flex: 1, minWidth: "200px", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", width: "100%", boxSizing: "border-box" };
-const errorBannerStyle = { padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "14px" };
-const tableWrapperStyle = { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" };
-const tableHeaderRowStyle = { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" };
-const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
-const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
-const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
-const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
-const actionButtonStyle = { padding: "6px 12px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
-const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "6px" };
 
 export default CompanyPage;

@@ -208,58 +208,6 @@ class EmployeeEditStagging(models.Model):
         return f"Request Update {self.employee.nama_lengkap} ({self.status})"
 
 
-
-
-
-class EmployeeStatusHistory(models.Model):
-
-    class EmploymentStatusChoices(models.TextChoices):
-        PERMANENT = 'PKWTT', 'Karyawan Tetap'
-        CONTRACT = 'PKWT', 'Karyawan Kontrak'
-        INTERN = 'INTERN', 'Magang/Internship'
-        PROBATION = 'PROBATION', 'Karyawan Probation'
-
-    # Menggunakan ForeignKey agar bisa menyimpan riwayat (One-to-Many)
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name='status_histories'
-    )
-    status = models.CharField(
-        max_length=20, choices=EmploymentStatusChoices.choices
-    )
-    start_date = models.DateField()
-    end_date = models.DateField(
-        null=True, blank=True
-    )  # Kosong jika PKWTT / Tetap
-    is_active = models.BooleanField(
-        default=True
-    )  # Penanda status mana yang sedang berlaku saat ini
-
-    def __str__(self):
-        return f'{self.employee.nama_lengkap} - {self.status} (Active: {self.is_active})'
-
-
-# TABEL 3: Alamat & Kontak (Mendukung History Perubahan Alamat/Kontak)
-class EmployeeContactHistory(models.Model):
-    employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name='contact_histories'
-    )
-    alamat = models.TextField()
-    contact_person = models.CharField(max_length=20)  # No HP Karyawan
-
-    # Emergency Contact ikut di sini karena sering sepaket dengan data kontak
-    emergency_contact_name = models.CharField(max_length=255)
-    emergency_contact_relation = models.CharField(max_length=50)
-    emergency_contact_phone = models.CharField(max_length=20)
-
-    is_active = models.BooleanField(default=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return (
-            f'Kontak/Alamat {self.employee.nama_lengkap} (Active: {self.is_active})'
-        )
-
-
 class EmployeeSubmissionStaging(models.Model):
   # Menyimpan seluruh data mentah dari Google/Microsoft Form dalam bentuk JSON
   raw_payload = models.JSONField()

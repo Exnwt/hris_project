@@ -74,6 +74,19 @@ html, body, #root {
   margin-bottom: 6px;
 }
 
+.form-header-bordered {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 15px;
+}
+
+/* Gunakan ini untuk <tr><td> saat tabel kosong / loading */
+.table-empty-td {
+  padding: 30px !important;
+  text-align: center !important;
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
 .btn-sidebar-menu {
   display: block;
   width: 100%;

@@ -2,8 +2,12 @@ import React, { useState, useEffect } from "react";
 import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
 import { usePermissions } from "../auth/auth";
+import "../styles/MasterData.css";
+import ExcelManagerModal from "../components/ExcelManagerModal";
+
 
 const DepartmentPage = () => {
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const { hasAccess, loadingPermissions } = usePermissions();
   const [currentView, setCurrentView] = useState("list");
   const [formMode, setFormMode] = useState("create");
@@ -180,11 +184,13 @@ const DepartmentPage = () => {
   // Cek apakah zk_id sudah ada
   const isZkMapped = Boolean(formData.zk_id);
 
+  // ==========================================
   // VIEW 1: FORM VIEW
+  // ==========================================
   if (currentView === "form") {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+      <div className="page-container">
+        <div className="page-header form-header-bordered">
           <div>
             <h3 style={{ margin: 0, color: "#0f172a" }}>
               {formMode === "create"
@@ -194,12 +200,12 @@ const DepartmentPage = () => {
                 : `Detail Department: ${formData.name}`}
             </h3>
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+          <div className="page-header-actions">
+            <button onClick={() => setCurrentView("list")} className="btn btn-cancel">
               ← Kembali ke List
             </button>
             {formMode === "detail" && (
-              <button onClick={departmentZKTecoSync} disabled={loading} style={primaryButtonStyle}>
+              <button onClick={departmentZKTecoSync} disabled={loading} className="btn btn-primary">
                 Sync to ZKTeco
               </button>
             )}
@@ -207,24 +213,24 @@ const DepartmentPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-          <div style={formGridStyle}>
+          <div className="form-grid">
             {/* Nama Department */}
             <div>
-              <label style={labelStyle}>Nama Department *</label>
+              <label className="form-label">Nama Department *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: Information Technology"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
 
             {/* Department Code: Readonly jika sudah terhubung zk_id atau dalam mode detail */}
             <div>
-              <label style={labelStyle}>
+              <label className="form-label">
                 Department Code {isZkMapped && <span style={{ color: "#2563eb", fontSize: "11px" }}>(Locked by ZKTeco)</span>}
               </label>
               <input
@@ -233,22 +239,21 @@ const DepartmentPage = () => {
                 placeholder={isZkMapped ? "Otomatis tersinkron dari ZKTeco" : "misal: DEPT-IT"}
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                style={{
-                  ...inputSearchStyle,
-                  ...(isZkMapped ? { backgroundColor: "#f1f5f9", cursor: "not-allowed" } : {}),
-                }}
+                className="input-control"
+                style={isZkMapped ? { backgroundColor: "#f1f5f9", cursor: "not-allowed" } : {}}
               />
             </div>
 
             {/* ZKTeco Department ID: Selalu Readonly */}
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>ZKTeco Department ID (BioTime Auto Sync)</label>
+            <div className="form-group-full">
+              <label className="form-label">ZKTeco Department ID (BioTime Auto Sync)</label>
               <input
                 type="text"
                 disabled={true}
                 placeholder="Unmapped (Klik 'Sync to ZKTeco' untuk menghubungkan)"
                 value={formData.zk_id || ""}
-                style={{ ...inputSearchStyle, backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#1e293b", fontWeight: "bold" }}
+                className="input-control"
+                style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#1e293b", fontWeight: "bold" }}
               />
             </div>
           </div>
@@ -257,21 +262,12 @@ const DepartmentPage = () => {
             {formMode === "detail" ? (
               <>
                 {!loadingPermissions && hasAccess("DepartmentEdit") && (
-                  <button
-                    type="button"
-                    onClick={() => setFormMode("edit")}
-                    style={primaryButtonStyle}
-                  >
+                  <button type="button" onClick={() => setFormMode("edit")} className="btn btn-primary">
                     ✏️ Edit Department
                   </button>
                 )}
-
                 {!loadingPermissions && hasAccess("DepartmentDelete") && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selectedId)}
-                    style={clearFilterButtonStyle}
-                  >
+                  <button type="button" onClick={() => handleDelete(selectedId)} className="btn btn-danger">
                     🗑️ Hapus
                   </button>
                 )}
@@ -287,12 +283,11 @@ const DepartmentPage = () => {
                       setCurrentView("list");
                     }
                   }}
-                  style={cancelButtonStyle}
+                  className="btn btn-cancel"
                 >
                   Batal
                 </button>
-
-                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                <button type="submit" disabled={loading} className="btn btn-primary">
                   {loading
                     ? "Menyimpan..."
                     : formMode === "edit"
@@ -307,31 +302,47 @@ const DepartmentPage = () => {
     );
   }
 
+  // ==========================================
   // VIEW 2: LIST VIEW
+  // ==========================================
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
+    <div className="page-container">
+      <div className="page-header">
         <div>
           <h2 style={{ margin: 0, color: "#0f172a" }}>Department Master Data</h2>
           <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
             Kelola Master Data Department dan Pemetaan ZKTeco BioTime
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchDepartment} style={refreshButtonStyle}>
+        <div className="page-header-actions">
+          <button onClick={() => setShowExcelModal(true)} className="btn btn-secondary">
+            📊 Import / Export Excel
+          </button>
+          <ExcelManagerModal
+            isOpen={showExcelModal}
+            onClose={()=> setShowExcelModal(false)}
+            targetModel="Department"
+          />
+          <button onClick={fetchDepartment} className="btn btn-secondary">
             🔄 Refresh Data
           </button>
           {!loadingPermissions && hasAccess("DepartmentCreate") && (
-            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+            <button onClick={handleOpenCreate} className="btn btn-primary">
               + Tambah Department Baru
             </button>
           )}
         </div>
       </div>
 
-      <div style={statsContainerStyle}>
+      <div className="stats-grid">
         <StatCard title="Total Department" count={totalDepartments} isActive={true} />
-        <StatCard title="Terhubung ZKTeco" count={totalZkMapped} color="#16a34a" bgColor="#f0fdf4" borderColor="#bbf7d0" />
+        <StatCard 
+          title="Terhubung ZKTeco" 
+          count={totalZkMapped} 
+          color="#16a34a" 
+          bgColor="#f0fdf4" 
+          borderColor="#bbf7d0" 
+        />
       </div>
 
       <FilterBar
@@ -340,58 +351,57 @@ const DepartmentPage = () => {
         placeholder="Cari Kode, Nama Department, atau ZK ID..."
       />
 
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={thStyle}>Nama Department</th>
-              <th style={thStyle}>Department Code</th>
-              <th style={thStyle}>ZKTeco ID</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Aksi</th>
+            <tr>
+              <th>Nama Department</th>
+              <th>Department Code</th>
+              <th>ZKTeco ID</th>
+              <th style={{ textAlign: "center" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4" style={emptyTdStyle}>Memuat data Department...</td>
+                <td colSpan="4" className="table-empty-td">Memuat data Department...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="4" style={emptyTdStyle}>Tidak ada data Department ditemukan.</td>
+                <td colSpan="4" className="table-empty-td">Tidak ada data Department ditemukan.</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={row.id || index} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>
+                <tr key={row.id || index}>
+                  <td>
                     <strong>{row.name}</strong>
                   </td>
-                  <td style={tdStyle}>{row.code || "-"}</td>
-                  <td style={tdStyle}>
+                  <td>{row.code || "-"}</td>
+                  <td>
                     {row.zk_id ? (
-                      <span style={{ ...badgeStyle, background: "#dcfce7", color: "#15803d" }}>
+                      <span className="badge badge-success">
                         ZK ID: {row.zk_id}
                       </span>
                     ) : (
                       <span style={{ color: "#94a3b8", fontSize: "12px" }}>Unmapped</span>
                     )}
                   </td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                  <td>
                     {!loadingPermissions && (
-                      <>
+                      <div className="action-group">
                         {hasAccess("DepartmentDetail") && (
-                          <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
+                          <button onClick={() => handleOpenDetail(row.id)} className="btn-action-view">
                             Buka
                           </button>
                         )}
-                        {" "}
                         {hasAccess("DepartmentDelete") && (
-                          <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
+                          <button onClick={() => handleDelete(row.id)} className="btn-action-delete">
                             Hapus
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -403,28 +413,5 @@ const DepartmentPage = () => {
     </div>
   );
 };
-
-// STYLES
-const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
-const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const primaryButtonStyle = { padding: "8px 16px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const cancelButtonStyle = { padding: "8px 16px", background: "#64748b", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const clearFilterButtonStyle = { padding: "8px 16px", background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const statsContainerStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "15px", marginBottom: "20px" };
-const inputSearchStyle = { flex: 1, minWidth: "200px", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", width: "100%", boxSizing: "border-box" };
-const errorBannerStyle = { padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "14px" };
-const tableWrapperStyle = { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" };
-const tableHeaderRowStyle = { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" };
-const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
-const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
-const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
-const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
-const badgeStyle = { display: "inline-block", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" };
-const actionButtonStyle = { padding: "6px 12px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
-const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "6px" };
 
 export default DepartmentPage;

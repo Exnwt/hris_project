@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import { StatCard, FilterBar } from "../components/StatisticCard_component";
+import ExcelManagerModal from "../components/ExcelManagerModal";
+import "../styles/MasterData.css";
 
 const SectionPage = () => {
   // ==========================================
   // 1. STATE PERMISSION HAK AKSES
   // ==========================================
+  const [showExcelModal, setShowExcelModal] = useState(false);
   const [userPermissions, setUserPermissions] = useState({
     isSuperuser: false,
     allowedCodenames: [],
@@ -159,8 +162,8 @@ const SectionPage = () => {
   // ==========================================
   if (currentView === "form") {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...headerStyle, borderBottom: "1px solid #e2e8f0", paddingBottom: "15px" }}>
+      <div className="page-container">
+        <div className="page-header form-header-bordered">
           <div>
             <h3 style={{ margin: 0, color: "#0f172a" }}>
               {formMode === "create"
@@ -173,22 +176,22 @@ const SectionPage = () => {
               Kelola entitas unit section / seksi kerja perusahaan
             </p>
           </div>
-          <button onClick={() => setCurrentView("list")} style={cancelButtonStyle}>
+          <button onClick={() => setCurrentView("list")} className="btn btn-cancel">
             ← Kembali ke List
           </button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-          <div style={formGridStyle}>
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={labelStyle}>Nama Section *</label>
+          <div className="form-grid">
+            <div className="form-group-full">
+              <label className="form-label">Nama Section *</label>
               <input
                 type="text"
                 disabled={formMode === "detail"}
                 placeholder="misal: Recruitment & Onboarding"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={inputSearchStyle}
+                className="input-control"
                 required
               />
             </div>
@@ -198,21 +201,13 @@ const SectionPage = () => {
             {formMode === "detail" ? (
               <>
                 {!loadingPermissions && hasAccess("SectionEdit") && (
-                  <button
-                    type="button"
-                    onClick={() => setFormMode("edit")}
-                    style={primaryButtonStyle}
-                  >
+                  <button type="button" onClick={() => setFormMode("edit")} className="btn btn-primary">
                     ✏️ Edit Section
                   </button>
                 )}
 
                 {!loadingPermissions && hasAccess("SectionDelete") && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selectedId)}
-                    style={clearFilterButtonStyle}
-                  >
+                  <button type="button" onClick={() => handleDelete(selectedId)} className="btn btn-danger">
                     🗑️ Hapus
                   </button>
                 )}
@@ -228,12 +223,12 @@ const SectionPage = () => {
                       setCurrentView("list");
                     }
                   }}
-                  style={cancelButtonStyle}
+                  className="btn btn-cancel"
                 >
                   Batal
                 </button>
 
-                <button type="submit" disabled={loading} style={primaryButtonStyle}>
+                <button type="submit" disabled={loading} className="btn btn-primary">
                   {loading
                     ? "Menyimpan..."
                     : formMode === "edit"
@@ -252,21 +247,29 @@ const SectionPage = () => {
   // VIEW 2: LIST VIEW
   // ==========================================
   return (
-    <div style={containerStyle}>
+    <div className="page-container">
       {/* HEADER */}
-      <div style={headerStyle}>
+      <div className="page-header">
         <div>
           <h2 style={{ margin: 0, color: "#0f172a" }}>Master Data Section</h2>
           <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "14px" }}>
             Kelola daftar section / sub-unit kerja
           </p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button onClick={fetchSections} style={refreshButtonStyle}>
+        <div className="page-header-actions">
+          <button onClick={fetchSections} className="btn btn-secondary">
             🔄 Refresh Data
           </button>
+          <button onClick={() => setShowExcelModal(true)} className="btn btn-secondary">
+            📊 Import / Export Excel
+          </button>
+          <ExcelManagerModal
+            isOpen={showExcelModal}
+            onClose={() => setShowExcelModal(false)}
+            targetModel="Employee"
+          />
           {!loadingPermissions && hasAccess("SectionCreate") && (
-            <button onClick={handleOpenCreate} style={primaryButtonStyle}>
+            <button onClick={handleOpenCreate} className="btn btn-primary">
               + Tambah Section Baru
             </button>
           )}
@@ -274,7 +277,7 @@ const SectionPage = () => {
       </div>
 
       {/* STATISTIC CARDS */}
-      <div style={statsContainerStyle}>
+      <div className="stats-grid">
         <StatCard
           title="Total Section"
           count={totalSections}
@@ -289,49 +292,48 @@ const SectionPage = () => {
         placeholder="Cari Nama Section..."
       />
 
-      {error && <div style={errorBannerStyle}>{error}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
       {/* TABLE DATA */}
-      <div style={tableWrapperStyle}>
-        <table style={tableStyle}>
+      <div className="table-wrapper">
+        <table className="custom-table">
           <thead>
-            <tr style={tableHeaderRowStyle}>
-              <th style={{ ...thStyle, width: "80px" }}>No</th>
-              <th style={thStyle}>Nama Section</th>
-              <th style={{ ...thStyle, textAlign: "center", width: "180px" }}>Aksi</th>
+            <tr>
+              <th style={{ width: "80px" }}>No</th>
+              <th>Nama Section</th>
+              <th style={{ textAlign: "center", width: "180px" }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="3" style={emptyTdStyle}>Memuat data section...</td>
+                <td colSpan="3" className="table-empty-td">Memuat data section...</td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="3" style={emptyTdStyle}>Tidak ada data section ditemukan.</td>
+                <td colSpan="3" className="table-empty-td">Tidak ada data section ditemukan.</td>
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={row.id || index} style={tableBodyRowStyle}>
-                  <td style={tdStyle}>{index + 1}</td>
-                  <td style={tdStyle}>
+                <tr key={row.id || index}>
+                  <td>{index + 1}</td>
+                  <td>
                     <strong>{row.name}</strong>
                   </td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                  <td>
                     {!loadingPermissions && (
-                      <>
+                      <div className="action-group">
                         {hasAccess("SectionDetail") && (
-                          <button onClick={() => handleOpenDetail(row.id)} style={actionButtonStyle}>
+                          <button onClick={() => handleOpenDetail(row.id)} className="btn-action-view">
                             Buka
                           </button>
                         )}
-                        {" "}
                         {hasAccess("SectionDelete") && (
-                          <button onClick={() => handleDelete(row.id)} style={actionDeleteStyle}>
+                          <button onClick={() => handleDelete(row.id)} className="btn-action-delete">
                             Hapus
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -343,29 +345,5 @@ const SectionPage = () => {
     </div>
   );
 };
-
-// ==========================================
-// STYLES
-// ==========================================
-const containerStyle = { background: "#ffffff", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontFamily: "Arial, sans-serif" };
-const headerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" };
-const refreshButtonStyle = { padding: "8px 16px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const primaryButtonStyle = { padding: "8px 16px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const cancelButtonStyle = { padding: "8px 16px", background: "#64748b", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const clearFilterButtonStyle = { padding: "8px 16px", background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" };
-const statsContainerStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "15px", marginBottom: "20px" };
-const inputSearchStyle = { flex: 1, minWidth: "200px", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", width: "100%", boxSizing: "border-box" };
-const errorBannerStyle = { padding: "12px", background: "#fee2e2", color: "#b91c1c", borderRadius: "6px", marginBottom: "15px", fontSize: "14px" };
-const tableWrapperStyle = { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" };
-const tableStyle = { width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" };
-const tableHeaderRowStyle = { background: "#f8fafc", borderBottom: "2px solid #e2e8f0" };
-const thStyle = { padding: "12px 16px", color: "#475569", fontWeight: "bold" };
-const tableBodyRowStyle = { borderBottom: "1px solid #f1f5f9" };
-const tdStyle = { padding: "12px 16px", color: "#334155", verticalAlign: "middle" };
-const emptyTdStyle = { padding: "30px", textAlign: "center", color: "#94a3b8" };
-const actionButtonStyle = { padding: "6px 12px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const actionDeleteStyle = { padding: "6px 12px", background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "12px" };
-const formGridStyle = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
-const labelStyle = { display: "block", fontSize: "12px", fontWeight: "bold", color: "#475569", marginBottom: "6px" };
 
 export default SectionPage;

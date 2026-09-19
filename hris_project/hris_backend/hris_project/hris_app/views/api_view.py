@@ -16,6 +16,28 @@ from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
 from hris_app.views.services.ImportExport_service import DynamicExcelService
 MANUAL_IMPORT_MAPPINGS = {
+    "Company": {
+        "Nama Perusahaan": "name",
+        "Kode Perusahaan": "company_code",
+        "Alamat Perusahaan": "address",
+        "Nomor TLP Perusahaan": "phone_number",
+    },
+    "Area": {
+        "Nama Area": "name",
+        "Kode Area": "code",
+    },
+    "Department": {
+            "Nama Department": "name",
+            "Kode Department": "code",
+    },
+    "Section": {
+            "Nama Section": "name",
+            "Kode Section": "code",
+    },
+    "Position": {
+            "Nama Position": "name",
+            "Kode Position": "code",
+    },
     "Employee": {
         # --- DATA IDENTITAS & BIO ---
         "Nama Lengkap": "nama_lengkap",
@@ -75,6 +97,7 @@ MANUAL_IMPORT_MAPPINGS = {
         "Ukuran Celana (Contoh: 30, 32)": "pants_size",
         "Ukuran Sepatu (Contoh: 40, 42)": "shoes_size",
     },
+
 }
 
 class UserPermissionView(APIView):

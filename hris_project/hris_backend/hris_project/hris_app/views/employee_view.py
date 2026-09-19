@@ -18,6 +18,7 @@ from hris_app.models import Employee, EmployeeEditStagging
 from django.utils import timezone
 import datetime
 from django.db.models import Q
+
 class EmployeeListView(generics.ListAPIView):
     api_codename = 'EmployeeRead'
     serializer_class = EmployeeSerializer

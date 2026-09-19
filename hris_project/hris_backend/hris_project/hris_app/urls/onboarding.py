@@ -9,14 +9,12 @@ from hris_app.views.onboarding import (
           employee_submission_detail,
  )
 
-from hris_app.views.onboarding import EmployeeStatusHistoryViewSet, EmployeeContactHistoryViewSet, EmployeeSubmissionStagingViewSet, OnboardingListView, OnboardingApproveView, OnboardingCreateView, OnboardingDetailView
+from hris_app.views.onboarding import EmployeeSubmissionStagingViewSet, OnboardingListView, OnboardingApproveView, OnboardingCreateView, OnboardingDetailView
 
 app_name = 'onboarding'
 
 router = DefaultRouter()
 
-router.register(r'employee-status-histories', EmployeeStatusHistoryViewSet, basename='employee-status-history')
-router.register(r'employee-contact-histories', EmployeeContactHistoryViewSet, basename='employee-contact-history')
 router.register(r'staging-submissions', EmployeeSubmissionStagingViewSet, basename='staging-submission')
 
 urlpatterns = [
